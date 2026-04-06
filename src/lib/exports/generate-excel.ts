@@ -130,5 +130,95 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
   ws3['!freeze'] = { xSplit: 0, ySplit: 1 }
   XLSX.utils.book_append_sheet(wb, ws3, 'Supplies & Materials')
 
+  // Sheet 4: Discovery Questionnaire
+  const yesNo = (v: unknown) => v === true ? 'Yes' : v === false ? 'No' : ''
+  const str = (v: unknown) => (v as string) || ''
+  const num = (v: unknown) => v != null ? String(v) : ''
+
+  const discoveryRows = [
+    // Company info
+    { 'Section': 'COMPANY INFORMATION', 'Question': '', 'Answer': '' },
+    { 'Section': '', 'Question': 'Legal Business Name', 'Answer': str(submission.company_name) },
+    { 'Section': '', 'Question': 'DBA', 'Answer': str(submission.dba_name) },
+    { 'Section': '', 'Question': 'Business Address', 'Answer': [str(submission.street_address), str(submission.street_address_2), str(submission.city), str(submission.address_state), str(submission.zip_code)].filter(Boolean).join(', ') },
+    { 'Section': '', 'Question': 'Tax Return Address Same?', 'Answer': yesNo(submission.tax_return_address_same) },
+    { 'Section': '', 'Question': 'Business Owner Name', 'Answer': str(submission.contact_name) },
+    { 'Section': '', 'Question': 'Additional Owners?', 'Answer': yesNo(submission.has_additional_owners) },
+    { 'Section': '', 'Question': 'Additional Owner Names', 'Answer': str(submission.additional_owners) },
+    { 'Section': '', 'Question': 'Phone Number', 'Answer': str(submission.contact_phone) },
+    { 'Section': '', 'Question': 'Business Contact Email', 'Answer': str(submission.contact_email) },
+    { 'Section': '', 'Question': 'Industry', 'Answer': str(submission.industry) },
+    { 'Section': '', 'Question': 'SIC Code', 'Answer': str(submission.sic_code) },
+    { 'Section': '', 'Question': 'Total Number of Employees', 'Answer': num(submission.total_employees) },
+    { 'Section': '', 'Question': 'Total Full-Time Employees', 'Answer': num(submission.total_ft_employees) },
+    { 'Section': '', 'Question': 'States Employees Located In', 'Answer': str(submission.employee_states) },
+    { 'Section': '', 'Question': 'FEIN', 'Answer': str(submission.fein) },
+    { 'Section': '', 'Question': 'State Tax ID', 'Answer': str(submission.state_tax_id) },
+    { 'Section': '', 'Question': 'Primary State of Operations', 'Answer': str(submission.business_state) },
+    { 'Section': '', 'Question': 'Date Company Incorporated', 'Answer': str(submission.date_incorporated) },
+    { 'Section': '', 'Question': 'Tax Year End', 'Answer': str(submission.tax_year_end) },
+
+    // Consultant
+    { 'Section': 'FIELD CONSULTANT', 'Question': '', 'Answer': '' },
+    { 'Section': '', 'Question': 'Consultant Name', 'Answer': str(submission.field_consultant_name) },
+    { 'Section': '', 'Question': 'Consultant Email', 'Answer': str(submission.field_consultant_email) },
+
+    // Filing status
+    { 'Section': 'TAX FILING INFORMATION', 'Question': '', 'Answer': '' },
+    { 'Section': '', 'Question': '2022 Filing Status', 'Answer': str(submission.filing_status_2022) },
+    { 'Section': '', 'Question': 'Date Filed 2022 Original Return', 'Answer': str(submission.filing_date_2022) },
+    { 'Section': '', 'Question': '2023 Filing Status', 'Answer': str(submission.filing_status_2023) },
+    { 'Section': '', 'Question': 'Date Filed 2023 Original Return', 'Answer': str(submission.filing_date_2023) },
+    { 'Section': '', 'Question': '2024 Filing Status', 'Answer': str(submission.filing_status_2024) },
+    { 'Section': '', 'Question': 'Date Filed 2024 Original Return', 'Answer': str(submission.filing_date_2024) },
+    { 'Section': '', 'Question': '2025 Filing Status', 'Answer': str(submission.filing_status_2025) },
+    { 'Section': '', 'Question': 'Computing Credit for Short Year?', 'Answer': yesNo(submission.short_year_credit) },
+    { 'Section': '', 'Question': 'Part of a Controlled Group?', 'Answer': yesNo(submission.controlled_group) },
+    { 'Section': '', 'Question': 'Tax Years Being Filed For', 'Answer': str(submission.tax_years_filed_for) },
+
+    // Credit method
+    { 'Section': 'CREDIT METHOD ELIGIBILITY', 'Question': '', 'Answer': '' },
+    { 'Section': '', 'Question': 'Year Started Making Revenue', 'Answer': num(submission.year_started_revenue) },
+    { 'Section': '', 'Question': 'Year Started R&D Efforts', 'Answer': num(submission.year_started_rd) },
+    { 'Section': '', 'Question': 'Gross Revenue Exceed $5M in 2024?', 'Answer': yesNo(submission.gross_revenue_over_5m) },
+
+    // Contracts
+    { 'Section': 'CONTRACTS / RIGHTS', 'Question': '', 'Answer': '' },
+    { 'Section': '', 'Question': 'Owns Substantial Rights to R&D Results?', 'Answer': yesNo(submission.owns_substantial_rights) },
+    { 'Section': '', 'Question': 'R&D Activities Under Contract?', 'Answer': yesNo(submission.activities_under_contract) },
+    { 'Section': '', 'Question': 'Typical Fee Structure', 'Answer': str(submission.contract_fee_structure) },
+
+    // R&D indicators
+    { 'Section': 'R&D PROJECT INDICATORS', 'Question': '', 'Answer': '' },
+    { 'Section': '', 'Question': 'New processes researched, developed, or implemented?', 'Answer': yesNo(submission.rd_new_processes) },
+    { 'Section': '', 'Question': 'Products designed, developed, or improved?', 'Answer': yesNo(submission.rd_products_designed) },
+    { 'Section': '', 'Question': 'Tested new materials or concepts?', 'Answer': yesNo(submission.rd_new_materials) },
+    { 'Section': '', 'Question': 'Developed or improved formulas or manufacturing methods?', 'Answer': yesNo(submission.rd_formulas_methods) },
+    { 'Section': '', 'Question': 'Developed, customized, or updated software technology?', 'Answer': yesNo(submission.rd_software) },
+    { 'Section': '', 'Question': 'Developed or improved prototypes or models?', 'Answer': yesNo(submission.rd_prototypes) },
+    { 'Section': '', 'Question': 'Developed or improved equipment for new tasks?', 'Answer': yesNo(submission.rd_equipment) },
+    { 'Section': '', 'Question': 'Maintained or improved laboratory equipment?', 'Answer': yesNo(submission.rd_lab_equipment) },
+    { 'Section': '', 'Question': 'Documented research activities?', 'Answer': yesNo(submission.rd_documented_research) },
+    { 'Section': '', 'Question': 'Completed certification testing?', 'Answer': yesNo(submission.rd_certification_testing) },
+    { 'Section': '', 'Question': 'Completed environmental upgrades?', 'Answer': yesNo(submission.rd_environmental) },
+    { 'Section': '', 'Question': 'Developed or improved acoustical qualities?', 'Answer': yesNo(submission.rd_acoustical) },
+    { 'Section': '', 'Question': 'Developed or improved electricity/lighting systems?', 'Answer': yesNo(submission.rd_electrical_lighting) },
+    { 'Section': '', 'Question': 'Developed or improved ventilation systems?', 'Answer': yesNo(submission.rd_ventilation) },
+    { 'Section': '', 'Question': 'Developed or improved water/plumbing systems?', 'Answer': yesNo(submission.rd_water_plumbing) },
+    { 'Section': '', 'Question': 'Developed cybersecurity or anti-terrorism systems?', 'Answer': yesNo(submission.rd_cybersecurity) },
+    { 'Section': '', 'Question': 'Developed or improved underground infrastructure?', 'Answer': yesNo(submission.rd_underground_infra) },
+    { 'Section': '', 'Question': 'Developed or improved value engineering/construction methods?', 'Answer': yesNo(submission.rd_value_engineering) },
+  ]
+
+  const ws4 = XLSX.utils.json_to_sheet(discoveryRows)
+  const colCount4 = 3
+  for (let c = 0; c < colCount4; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c })
+    if (ws4[addr]) ws4[addr].s = headerStyle
+  }
+  ws4['!cols'] = [{ wch: 28 }, { wch: 52 }, { wch: 40 }]
+  ws4['!freeze'] = { xSplit: 0, ySplit: 1 }
+  XLSX.utils.book_append_sheet(wb, ws4, 'Discovery Questionnaire')
+
   return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }))
 }
