@@ -7,6 +7,11 @@ interface ExportPanelProps {
   submissionId: string
   companyName?: string
   documentCount?: number
+  employeeCount?: number
+  projectCount?: number
+  hasCompanyInfo?: boolean
+  hasDiscovery?: boolean
+  exportSentAt?: string | null
   onExportGenerated: () => void
 }
 
@@ -33,6 +38,11 @@ export default function ExportPanel({
   submissionId,
   companyName,
   documentCount = 0,
+  employeeCount = 0,
+  projectCount = 0,
+  hasCompanyInfo = false,
+  hasDiscovery = false,
+  exportSentAt,
   onExportGenerated,
 }: ExportPanelProps) {
   const [selected, setSelected] = useState<Record<ItemKey, boolean>>({
@@ -46,12 +56,26 @@ export default function ExportPanel({
   const [result, setResult] = useState<ExportResult | null>(null)
   const [showEmail, setShowEmail] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
+  const [markingSent, setMarkingSent] = useState(false)
+  const [markedSent, setMarkedSent] = useState(!!exportSentAt)
 
   const toggle = (key: ItemKey) => {
     setSelected(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
   const selectedCount = Object.values(selected).filter(Boolean).length
+
+  // Pre-flight checklist
+  const checks = [
+    { label: 'Business information', ready: hasCompanyInfo, detail: hasCompanyInfo ? 'Complete' : 'Missing — add company details first' },
+    { label: 'Employee & expense data', ready: employeeCount > 0, detail: employeeCount > 0 ? `${employeeCount} employee${employeeCount !== 1 ? 's' : ''} entered` : 'No employees entered yet' },
+    { label: 'Supporting documents', ready: documentCount > 0, detail: documentCount > 0 ? `${documentCount} file${documentCount !== 1 ? 's' : ''} uploaded` : 'No documents uploaded' },
+    { label: 'R&D project narratives', ready: projectCount > 0, detail: projectCount > 0 ? `${projectCount} project${projectCount !== 1 ? 's' : ''} documented` : 'No projects documented' },
+    { label: 'Discovery questionnaire', ready: hasDiscovery, detail: hasDiscovery ? 'Complete' : 'Not started — fill out in Discovery tab' },
+  ]
+
+  const readyCount = checks.filter(c => c.ready).length
+  const allReady = readyCount === checks.length
 
   const handleGenerate = async () => {
     setGenerating(true)
@@ -77,6 +101,18 @@ export default function ExportPanel({
     }
 
     setGenerating(false)
+  }
+
+  const handleMarkSent = async () => {
+    setMarkingSent(true)
+    await fetch(`/api/submissions/${submissionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ export_sent_at: new Date().toISOString() }),
+    })
+    setMarkingSent(false)
+    setMarkedSent(true)
+    onExportGenerated()
   }
 
   const handleCopy = async (text: string, label: string) => {
@@ -125,7 +161,50 @@ admin@forbesmgt.com`
           Export Package Builder
         </div>
         <div style={{ fontSize: 12, color: 'rgba(240,231,215,0.7)', fontWeight: 300, marginBottom: 20 }}>
-          Select what to include, generate, then download and email from your account.
+          Review what&apos;s ready, generate the package, then download and email from your account.
+        </div>
+
+        {/* Pre-flight checklist */}
+        <div
+          style={{
+            background: 'rgba(0,0,0,0.2)',
+            borderRadius: 4,
+            padding: '16px 18px',
+            marginBottom: 20,
+          }}
+        >
+          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(240,231,215,0.5)' }}>
+              Pre-Flight Check
+            </span>
+            <span style={{
+              fontSize: 10,
+              fontWeight: 700,
+              padding: '2px 10px',
+              borderRadius: 100,
+              background: allReady ? 'var(--emerald)' : 'rgba(240,231,215,0.15)',
+              color: allReady ? 'var(--white)' : 'var(--champagne)',
+            }}>
+              {readyCount}/{checks.length} ready
+            </span>
+          </div>
+          {checks.map((check) => (
+            <div
+              key={check.label}
+              className="flex items-center"
+              style={{ gap: 10, padding: '6px 0', borderBottom: '1px solid rgba(240,231,215,0.06)' }}
+            >
+              <span style={{ fontSize: 14, width: 20, textAlign: 'center', flexShrink: 0 }}>
+                {check.ready ? '✅' : '⚠️'}
+              </span>
+              <span style={{ fontSize: 12, color: check.ready ? 'var(--ivory)' : 'var(--champagne)', fontWeight: check.ready ? 400 : 500, flex: 1 }}>
+                {check.label}
+              </span>
+              <span style={{ fontSize: 11, color: check.ready ? 'rgba(240,231,215,0.4)' : 'var(--champagne)', fontWeight: 300 }}>
+                {check.detail}
+              </span>
+            </div>
+          ))}
         </div>
 
         {/* Selection grid */}
@@ -152,18 +231,11 @@ admin@forbesmgt.com`
                 <div className="flex items-center" style={{ gap: 10, marginBottom: 6 }}>
                   <div
                     style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 3,
+                      width: 18, height: 18, borderRadius: 3,
                       border: isChecked ? '2px solid var(--champagne)' : '2px solid rgba(240,231,215,0.3)',
                       background: isChecked ? 'var(--champagne)' : 'transparent',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 11,
-                      color: 'var(--cherry)',
-                      fontWeight: 700,
-                      flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, color: 'var(--cherry)', fontWeight: 700, flexShrink: 0,
                     }}
                   >
                     {isChecked ? '✓' : ''}
@@ -196,59 +268,37 @@ admin@forbesmgt.com`
               Export ready — download your files:
             </div>
 
-            {/* Full package */}
             {result.full_package_url && (
               <a
                 href={result.full_package_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  background: 'var(--champagne)',
-                  color: 'var(--charcoal)',
-                  borderRadius: 3,
-                  padding: '12px 20px',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: '1.5px',
-                  textTransform: 'uppercase',
-                  textDecoration: 'none',
-                  marginBottom: 12,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  background: 'var(--champagne)', color: 'var(--charcoal)', borderRadius: 3,
+                  padding: '12px 20px', fontSize: 12, fontWeight: 700, letterSpacing: '1.5px',
+                  textTransform: 'uppercase', textDecoration: 'none', marginBottom: 12,
                 }}
               >
                 📦 Download Full Package (ZIP)
               </a>
             )}
 
-            {/* Individual links */}
             <div className="flex flex-wrap" style={{ gap: 8 }}>
               {result.discovery_pdf_url && (
-                <a href={result.discovery_pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-                  📋 Discovery PDF
-                </a>
+                <a href={result.discovery_pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>📋 Discovery PDF</a>
               )}
               {result.qra_pdf_url && (
-                <a href={result.qra_pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-                  🔬 QRA Report
-                </a>
+                <a href={result.qra_pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>🔬 QRA Report</a>
               )}
               {result.pdf_url && (
-                <a href={result.pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-                  📄 Summary PDF
-                </a>
+                <a href={result.pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>📄 Summary PDF</a>
               )}
               {result.excel_url && (
-                <a href={result.excel_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-                  📊 Excel
-                </a>
+                <a href={result.excel_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>📊 Excel</a>
               )}
               {result.document_zip_url && (
-                <a href={result.document_zip_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-                  📁 Documents ZIP
-                </a>
+                <a href={result.document_zip_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>📁 Documents ZIP</a>
               )}
             </div>
           </div>
@@ -260,106 +310,96 @@ admin@forbesmgt.com`
             <button
               onClick={() => setShowEmail(!showEmail)}
               style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--champagne)',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                padding: 0,
-                marginBottom: showEmail ? 12 : 0,
-                textDecoration: 'underline',
-                textUnderlineOffset: 3,
+                background: 'none', border: 'none', color: 'var(--champagne)',
+                fontSize: 12, fontWeight: 500, cursor: 'pointer', padding: 0,
+                marginBottom: showEmail ? 12 : 0, textDecoration: 'underline', textUnderlineOffset: 3,
               }}
             >
               {showEmail ? 'Hide email helper ▾' : 'Show email helper — copy & paste into Gmail ▸'}
             </button>
 
             {showEmail && (
-              <div
-                style={{
-                  background: 'rgba(0,0,0,0.2)',
-                  borderRadius: 4,
-                  padding: 18,
-                }}
-              >
+              <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 4, padding: 18 }}>
                 <div style={{ marginBottom: 14 }}>
                   <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(240,231,215,0.5)' }}>
-                      Subject
-                    </span>
-                    <button
-                      onClick={() => handleCopy(emailSubject, 'subject')}
-                      style={{
-                        background: 'rgba(240,231,215,0.1)',
-                        border: '1px solid rgba(240,231,215,0.2)',
-                        borderRadius: 3,
-                        padding: '3px 10px',
-                        fontSize: 9,
-                        fontWeight: 600,
-                        color: 'var(--champagne)',
-                        cursor: 'pointer',
-                        letterSpacing: '1px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
+                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(240,231,215,0.5)' }}>Subject</span>
+                    <button onClick={() => handleCopy(emailSubject, 'subject')} style={copyBtnStyle}>
                       {copied === 'subject' ? '✓ Copied' : 'Copy'}
                     </button>
                   </div>
-                  <div
-                    style={{
-                      background: 'rgba(240,231,215,0.08)',
-                      borderRadius: 3,
-                      padding: '10px 14px',
-                      fontSize: 13,
-                      color: 'var(--ivory)',
-                      fontWeight: 400,
-                    }}
-                  >
+                  <div style={{ background: 'rgba(240,231,215,0.08)', borderRadius: 3, padding: '10px 14px', fontSize: 13, color: 'var(--ivory)', fontWeight: 400 }}>
                     {emailSubject}
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(240,231,215,0.5)' }}>
-                      Email Body
-                    </span>
-                    <button
-                      onClick={() => handleCopy(emailBody, 'body')}
-                      style={{
-                        background: 'rgba(240,231,215,0.1)',
-                        border: '1px solid rgba(240,231,215,0.2)',
-                        borderRadius: 3,
-                        padding: '3px 10px',
-                        fontSize: 9,
-                        fontWeight: 600,
-                        color: 'var(--champagne)',
-                        cursor: 'pointer',
-                        letterSpacing: '1px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
+                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(240,231,215,0.5)' }}>Email Body</span>
+                    <button onClick={() => handleCopy(emailBody, 'body')} style={copyBtnStyle}>
                       {copied === 'body' ? '✓ Copied' : 'Copy'}
                     </button>
                   </div>
-                  <div
-                    style={{
-                      background: 'rgba(240,231,215,0.08)',
-                      borderRadius: 3,
-                      padding: '12px 14px',
-                      fontSize: 12,
-                      color: 'rgba(240,231,215,0.8)',
-                      fontWeight: 300,
-                      lineHeight: 1.7,
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
+                  <div style={{ background: 'rgba(240,231,215,0.08)', borderRadius: 3, padding: '12px 14px', fontSize: 12, color: 'rgba(240,231,215,0.8)', fontWeight: 300, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
                     {emailBody}
                   </div>
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Mark as Sent */}
+        {result && !markedSent && (
+          <div
+            style={{
+              background: 'rgba(0,79,53,0.15)',
+              border: '1px solid rgba(0,79,53,0.3)',
+              borderRadius: 4,
+              padding: '16px 18px',
+              marginBottom: 16,
+            }}
+          >
+            <div style={{ fontSize: 13, color: 'var(--ivory)', fontWeight: 500, marginBottom: 8 }}>
+              Did you send the package to Solutions Made Simple?
+            </div>
+            <div style={{ fontSize: 11, color: 'rgba(240,231,215,0.5)', fontWeight: 300, marginBottom: 12, lineHeight: 1.6 }}>
+              After you&apos;ve emailed the files, click below to mark this client as sent. This helps you track which packages have been delivered.
+            </div>
+            <Button
+              variant="emerald"
+              size="sm"
+              onClick={handleMarkSent}
+              disabled={markingSent}
+            >
+              {markingSent ? 'Saving...' : 'Yes, I\'ve Sent It ✓'}
+            </Button>
+          </div>
+        )}
+
+        {markedSent && (
+          <div
+            style={{
+              background: 'rgba(0,79,53,0.15)',
+              border: '1px solid rgba(0,79,53,0.3)',
+              borderRadius: 4,
+              padding: '14px 18px',
+              marginBottom: 16,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <span style={{ fontSize: 18 }}>✅</span>
+            <div>
+              <div style={{ fontSize: 13, color: 'var(--ivory)', fontWeight: 500 }}>
+                Package sent to partner
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(240,231,215,0.5)', fontWeight: 300 }}>
+                {exportSentAt
+                  ? `Marked as sent ${new Date(exportSentAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                  : 'Just now'}
+              </div>
+            </div>
           </div>
         )}
 
@@ -374,15 +414,13 @@ admin@forbesmgt.com`
               {generating ? 'Generating...' : `Generate Package (${selectedCount} item${selectedCount !== 1 ? 's' : ''})`}
             </Button>
           ) : (
-            <>
-              <Button
-                variant="ghost-light"
-                size="sm"
-                onClick={() => { setResult(null); setShowEmail(false) }}
-              >
-                Regenerate
-              </Button>
-            </>
+            <Button
+              variant="ghost-light"
+              size="sm"
+              onClick={() => { setResult(null); setShowEmail(false) }}
+            >
+              Regenerate
+            </Button>
           )}
         </div>
       </div>
@@ -391,15 +429,14 @@ admin@forbesmgt.com`
 }
 
 const linkStyle: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 6,
-  background: 'rgba(240,231,215,0.08)',
-  border: '1px solid rgba(240,231,215,0.15)',
-  borderRadius: 3,
-  padding: '7px 14px',
-  fontSize: 11,
-  fontWeight: 500,
-  color: 'var(--champagne)',
-  textDecoration: 'none',
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  background: 'rgba(240,231,215,0.08)', border: '1px solid rgba(240,231,215,0.15)',
+  borderRadius: 3, padding: '7px 14px', fontSize: 11, fontWeight: 500,
+  color: 'var(--champagne)', textDecoration: 'none',
+}
+
+const copyBtnStyle: React.CSSProperties = {
+  background: 'rgba(240,231,215,0.1)', border: '1px solid rgba(240,231,215,0.2)',
+  borderRadius: 3, padding: '3px 10px', fontSize: 9, fontWeight: 600,
+  color: 'var(--champagne)', cursor: 'pointer', letterSpacing: '1px', textTransform: 'uppercase',
 }

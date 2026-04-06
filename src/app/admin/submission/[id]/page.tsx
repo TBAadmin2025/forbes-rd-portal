@@ -47,6 +47,8 @@ export default function SubmissionDetailPage() {
   const [credits, setCredits] = useState<CreditRow[]>([])
   const [loading, setLoading] = useState(true)
   const [activating, setActivating] = useState(false)
+  const [employeeCount, setEmployeeCount] = useState(0)
+  const [projectCount, setProjectCount] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -111,6 +113,21 @@ export default function SubmissionDetailPage() {
           },
         ])
       }
+
+      // Employee count
+      const { count: empCount } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('submission_id', id)
+      setEmployeeCount(empCount || 0)
+
+      // QRA project count
+      const { count: projCount } = await supabase
+        .from('qra_projects')
+        .select('*', { count: 'exact', head: true })
+        .eq('submission_id', id)
+      setProjectCount(projCount || 0)
+
       } catch (err) {
         console.error('Failed to load submission:', err)
       }
@@ -493,15 +510,20 @@ export default function SubmissionDetailPage() {
         submissionId={id}
         companyName={submission?.company_name || undefined}
         documentCount={documents.length}
+        employeeCount={employeeCount}
+        projectCount={projectCount}
+        hasCompanyInfo={!!(submission?.company_name && submission?.fein)}
+        hasDiscovery={!!(submission?.field_consultant_name || submission?.filing_status_2022)}
+        exportSentAt={submission?.export_sent_at}
         onExportGenerated={() => {
-          // Refresh submission data
-          supabase
-            .from('submissions')
-            .select('*')
-            .eq('id', id)
-            .single()
-            .then(({ data }) => {
-              if (data) setSubmission(data as Submission)
+          // Refresh submission data via API
+          fetch(`/api/submissions/${id}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data?.id) {
+                const { documents: _, qre_summary: __, ...sub } = data
+                setSubmission(sub as Submission)
+              }
             })
         }}
       />

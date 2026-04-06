@@ -57,9 +57,10 @@ export default function DashboardPage() {
 
   const stats = {
     total: submissions.length,
-    invited: submissions.filter((s) => s.status === 'invited').length,
+    submitted: submissions.filter((s) => s.status === 'submitted' || s.status === 'in_review').length,
     inProgress: submissions.filter((s) => s.status === 'in_progress').length,
     complete: submissions.filter((s) => s.status === 'complete').length,
+    sent: submissions.filter((s) => s.export_sent_at).length,
   }
 
   const submitted = submissions.filter((s) => s.status === 'submitted' || s.status === 'in_review')
