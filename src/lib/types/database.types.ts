@@ -101,6 +101,9 @@ export interface Submission {
   export_sent_at: string | null
   export_pdf_url: string | null
   export_excel_url: string | null
+  export_discovery_pdf_url: string | null
+  export_document_zip_url: string | null
+  export_full_package_url: string | null
   created_at: string
   updated_at: string
 }

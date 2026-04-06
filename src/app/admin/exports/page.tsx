@@ -22,14 +22,19 @@ export default function ExportsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const dlBtn = (url: string | null, label: string) => {
+    if (!url) return <span style={{ fontSize: 11, color: 'var(--muted)' }}>—</span>
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="sm">{label}</Button>
+      </a>
+    )
+  }
+
   return (
     <div>
-      {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1
-          className="font-serif"
-          style={{ fontSize: 26, fontWeight: 700, color: 'var(--charcoal)', margin: 0 }}
-        >
+        <h1 className="font-serif" style={{ fontSize: 26, fontWeight: 700, color: 'var(--charcoal)', margin: 0 }}>
           Export Packages
         </h1>
         <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 300, marginTop: 4 }}>
@@ -38,20 +43,9 @@ export default function ExportsPage() {
       </div>
 
       {submissions.length === 0 ? (
-        <div
-          style={{
-            background: 'var(--white)',
-            border: '1px solid var(--border)',
-            borderRadius: 4,
-            padding: 60,
-            textAlign: 'center',
-          }}
-        >
+        <div style={{ background: 'var(--white)', border: '1px solid var(--border)', borderRadius: 4, padding: 60, textAlign: 'center' }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>📦</div>
-          <div
-            className="font-serif"
-            style={{ fontSize: 18, fontWeight: 600, color: 'var(--charcoal)', marginBottom: 6 }}
-          >
+          <div className="font-serif" style={{ fontSize: 18, fontWeight: 600, color: 'var(--charcoal)', marginBottom: 6 }}>
             No exports yet
           </div>
           <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 300 }}>
@@ -59,22 +53,15 @@ export default function ExportsPage() {
           </div>
         </div>
       ) : (
-        <div
-          style={{
-            background: 'var(--white)',
-            borderRadius: 4,
-            border: '1px solid var(--border)',
-            overflow: 'hidden',
-          }}
-        >
+        <div style={{ background: 'var(--white)', borderRadius: 4, border: '1px solid var(--border)', overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'var(--charcoal)' }}>
-                {['Client', 'Company', 'Generated', 'PDF', 'Excel'].map((h) => (
+                {['Client', 'Generated', 'Discovery', 'Summary', 'Excel', 'Docs', 'Package'].map((h) => (
                   <th
                     key={h}
                     style={{
-                      padding: '10px 16px',
+                      padding: '10px 12px',
                       fontSize: 9,
                       fontWeight: 600,
                       letterSpacing: '2px',
@@ -90,59 +77,23 @@ export default function ExportsPage() {
             </thead>
             <tbody>
               {submissions.map((s) => (
-                <tr
-                  key={s.id}
-                  style={{ borderBottom: '1px solid var(--border)' }}
-                >
-                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500, color: 'var(--charcoal)' }}>
-                    {s.contact_name || '—'}
+                <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '12px', fontSize: 13, fontWeight: 500, color: 'var(--charcoal)' }}>
+                    <div>{s.contact_name || '—'}</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 300 }}>{s.company_name || ''}</div>
                   </td>
-                  <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--muted)', fontWeight: 300 }}>
-                    {s.company_name || '—'}
-                  </td>
-                  <td style={{ padding: '12px 16px', fontSize: 11, color: 'var(--muted)', fontWeight: 300 }}>
+                  <td style={{ padding: '12px', fontSize: 11, color: 'var(--muted)', fontWeight: 300 }}>
                     {s.export_generated_at
                       ? new Date(s.export_generated_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
+                          month: 'short', day: 'numeric', year: 'numeric',
                         })
                       : '—'}
                   </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    {s.export_pdf_url ? (
-                      <a
-                        href={s.export_pdf_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button variant="ghost" size="sm">
-                          📄 PDF
-                        </Button>
-                      </a>
-                    ) : (
-                      <span style={{ fontSize: 11, color: 'var(--muted)' }}>—</span>
-                    )}
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    {s.export_excel_url ? (
-                      <a
-                        href={s.export_excel_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button variant="ghost" size="sm">
-                          📊 Excel
-                        </Button>
-                      </a>
-                    ) : (
-                      <span style={{ fontSize: 11, color: 'var(--muted)' }}>—</span>
-                    )}
-                  </td>
+                  <td style={{ padding: '12px' }}>{dlBtn(s.export_discovery_pdf_url, '📋 PDF')}</td>
+                  <td style={{ padding: '12px' }}>{dlBtn(s.export_pdf_url, '📄 PDF')}</td>
+                  <td style={{ padding: '12px' }}>{dlBtn(s.export_excel_url, '📊 XLS')}</td>
+                  <td style={{ padding: '12px' }}>{dlBtn(s.export_document_zip_url, '📁 ZIP')}</td>
+                  <td style={{ padding: '12px' }}>{dlBtn(s.export_full_package_url, '📦 All')}</td>
                 </tr>
               ))}
             </tbody>
