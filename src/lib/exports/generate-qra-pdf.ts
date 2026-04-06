@@ -27,13 +27,10 @@ export async function generateQRAPDF(
     )
   }
 
-  const companyName = String(submission.legal_business_name || '—')
+  const companyName = String(submission.company_name || '—')
   const entityType = submission.entity_type ? String(submission.entity_type) : null
-  const election280c = submission.election_280c
-  const taxYearStart = submission.tax_year_start ? String(submission.tax_year_start) : null
-  const taxYearEnd = submission.tax_year_end ? String(submission.tax_year_end) : null
-  const taxYearsCovered =
-    taxYearStart && taxYearEnd ? `${taxYearStart}–${taxYearEnd}` : taxYearEnd || '—'
+  const election280c = submission.section_280c_election
+  const taxYearsCovered = '2022–2025'
 
   const date = new Date().toLocaleDateString('en-US', {
     year: 'numeric',

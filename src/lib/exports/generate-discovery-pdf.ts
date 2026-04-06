@@ -89,7 +89,7 @@ export async function generateDiscoveryPDF(submission: Record<string, unknown>):
       ? str(submission.additional_owners) || '—'
       : 'None'
 
-  const companyName = str(submission.legal_business_name)
+  const companyName = str(submission.company_name)
   const date = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -107,8 +107,8 @@ export async function generateDiscoveryPDF(submission: Record<string, unknown>):
 
     // Company Information section
     h(Text, { style: styles.sectionTitle }, 'Company Information'),
-    fieldRow('Legal Business Name', str(submission.legal_business_name)),
-    fieldRow('DBA', str(submission.dba)),
+    fieldRow('Legal Business Name', str(submission.company_name)),
+    fieldRow('DBA', str(submission.dba_name)),
     fieldRow('Business Address', fullAddress),
     boolFieldRow('Tax Return Address Same', submission.tax_return_address_same),
     fieldRow('Business Owner', str(submission.contact_name)),
@@ -119,7 +119,7 @@ export async function generateDiscoveryPDF(submission: Record<string, unknown>):
     fieldRow('FEIN', str(submission.fein)),
     fieldRow('State Tax ID', str(submission.state_tax_id)),
     fieldRow('Total Employees', str(submission.total_employees)),
-    fieldRow('Full-Time Employees', str(submission.full_time_employees)),
+    fieldRow('Full-Time Employees', str(submission.total_ft_employees)),
     fieldRow('Employee States', str(submission.employee_states)),
     fieldRow('Date Incorporated', str(submission.date_incorporated)),
     fieldRow('Tax Year End', str(submission.tax_year_end)),

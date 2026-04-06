@@ -13,9 +13,10 @@ interface ExcelInput {
   summaries: Record<string, unknown>[]
   qreByYear: Record<number, number>
   totalQRE: number
+  grossReceipts?: Record<string, unknown>[]
 }
 
-export function generateExcel({ submission, employees, supplies, summaries, qreByYear, totalQRE }: ExcelInput): Buffer {
+export function generateExcel({ submission, employees, supplies, summaries, qreByYear, totalQRE, grossReceipts = [] }: ExcelInput): Buffer {
   const wb = XLSX.utils.book_new()
 
   const headerStyle = {
@@ -256,6 +257,25 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
   ws5['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(payrollRows.length, 1), c: payrollColCount - 1 } }) }
   ws5['!freeze'] = { xSplit: 0, ySplit: 1 }
   XLSX.utils.book_append_sheet(wb, ws5, 'Payroll Data Key')
+
+  // Sheet 6: Gross Receipts (2018-2025)
+  const grRows = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025].map((yr) => {
+    const receipt = grossReceipts.find((r) => (r.tax_year as number) === yr)
+    return {
+      'Tax Year': yr,
+      'Gross Receipts': receipt ? (receipt.amount as number) || 0 : 0,
+    }
+  })
+
+  const ws6 = XLSX.utils.json_to_sheet(grRows)
+  const grColCount = 2
+  for (let c = 0; c < grColCount; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c })
+    if (ws6[addr]) ws6[addr].s = headerStyle
+  }
+  ws6['!cols'] = [{ wch: 12 }, { wch: 20 }]
+  ws6['!freeze'] = { xSplit: 0, ySplit: 1 }
+  XLSX.utils.book_append_sheet(wb, ws6, 'Gross Receipts')
 
   return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }))
 }

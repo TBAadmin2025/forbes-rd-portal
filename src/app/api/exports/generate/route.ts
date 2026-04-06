@@ -79,6 +79,12 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('submission_id', submission_id)
 
+    const { data: grossReceipts } = await supabase
+      .from('gross_receipts')
+      .select('*')
+      .eq('submission_id', submission_id)
+      .order('tax_year', { ascending: true })
+
     const emps = employees || []
     const sups = supplies || []
     const docs = documents || []
@@ -110,6 +116,7 @@ export async function POST(request: NextRequest) {
         const excelBuffer = generateExcel({
           submission, employees: emps, supplies: sups,
           summaries, qreByYear, totalQRE,
+          grossReceipts: grossReceipts || [],
         })
         const fileName = `${clientSlug}-QRE-Data.xlsx`
         const path = `${basePath}/${fileName}`
