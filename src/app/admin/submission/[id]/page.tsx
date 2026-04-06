@@ -46,6 +46,7 @@ export default function SubmissionDetailPage() {
   const [qreRows, setQreRows] = useState<QRERow[]>([])
   const [credits, setCredits] = useState<CreditRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [activating, setActivating] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -181,7 +182,6 @@ export default function SubmissionDetailPage() {
     setSubmission((prev) => prev ? { ...prev, flagged: !prev.flagged } : prev)
   }
 
-  const [activating, setActivating] = useState(false)
   const handleActivatePortal = async () => {
     setActivating(true)
     const res = await fetch('/api/admin/invite', {
