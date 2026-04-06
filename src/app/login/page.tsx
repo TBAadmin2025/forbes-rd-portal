@@ -229,25 +229,9 @@ export default function LoginPage() {
               }}
             >
               First time here? Check your email for an invitation link.
-              If it expired, enter your email above and click{' '}
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--cherry)',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  padding: 0,
-                  fontSize: 12,
-                  textDecoration: 'underline',
-                  textUnderlineOffset: 2,
-                }}
-              >
-                Forgot password?
-              </button>{' '}
-              to get a fresh link.
+              If your link expired, just enter your email above and
+              use the <span style={{ color: 'var(--cherry)', fontWeight: 500 }}>Forgot password?</span> link
+              to get a fresh one.
             </div>
           </form>
         )}
