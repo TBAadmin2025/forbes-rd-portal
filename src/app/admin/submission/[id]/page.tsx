@@ -45,16 +45,16 @@ export default function SubmissionDetailPage() {
   const [documents, setDocuments] = useState<DocType[]>([])
   const [qreRows, setQreRows] = useState<QRERow[]>([])
   const [credits, setCredits] = useState<CreditRow[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
-      const { data: sub } = await supabase
-        .from('submissions')
-        .select('*')
-        .eq('id', id)
-        .single()
-
-      if (sub) setSubmission(sub as Submission)
+      // Use API route to bypass RLS
+      const subRes = await fetch(`/api/submissions/${id}`)
+      if (subRes.ok) {
+        const sub = await subRes.json()
+        if (sub?.id) setSubmission(sub as Submission)
+      }
 
       const { data: docs } = await supabase
         .from('documents')
@@ -105,11 +105,29 @@ export default function SubmissionDetailPage() {
         ])
       }
     }
-    load()
+    load().finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  if (!submission) return null
+  if (loading) {
+    return <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 300, padding: 40 }}>Loading...</div>
+  }
+
+  if (!submission) {
+    return (
+      <div style={{ padding: 40 }}>
+        <div style={{ fontSize: 13, color: 'var(--cherry)', fontWeight: 400, marginBottom: 12 }}>
+          Unable to load this submission. It may have been deleted or you may not have access.
+        </div>
+        <button
+          onClick={() => router.push('/admin/dashboard')}
+          style={{ background: 'none', border: 'none', color: 'var(--cherry)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+        >
+          ← Back to Dashboard
+        </button>
+      </div>
+    )
+  }
 
   const thStyle: React.CSSProperties = {
     background: '#f5f0e8',
