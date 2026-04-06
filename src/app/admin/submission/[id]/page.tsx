@@ -49,16 +49,28 @@ export default function SubmissionDetailPage() {
 
   useEffect(() => {
     async function load() {
-      // Use API route — returns submission + documents + qre_summary via service client
-      const subRes = await fetch(`/api/submissions/${id}`)
-      if (!subRes.ok) return
+      try {
+        // Use API route — returns submission + documents + qre_summary via service client
+        const subRes = await fetch(`/api/submissions/${id}`)
 
-      const data = await subRes.json()
-      if (!data?.id) return
+        // Check if we got redirected (auth issue)
+        if (subRes.redirected || !subRes.ok) {
+          console.error('Submission fetch failed:', subRes.status, subRes.url)
+          return
+        }
 
-      // Separate merged data
-      const { documents: apiDocs, qre_summary: apiSummaries, ...sub } = data
-      setSubmission(sub as Submission)
+        const contentType = subRes.headers.get('content-type')
+        if (!contentType?.includes('application/json')) {
+          console.error('Expected JSON, got:', contentType)
+          return
+        }
+
+        const data = await subRes.json()
+        if (!data?.id) return
+
+        // Separate merged data
+        const { documents: apiDocs, qre_summary: apiSummaries, ...sub } = data
+        setSubmission(sub as Submission)
 
       if (apiDocs) setDocuments(apiDocs as DocType[])
 
@@ -97,6 +109,9 @@ export default function SubmissionDetailPage() {
             total: est.asc_total ?? 0,
           },
         ])
+      }
+      } catch (err) {
+        console.error('Failed to load submission:', err)
       }
     }
     load().finally(() => setLoading(false))
