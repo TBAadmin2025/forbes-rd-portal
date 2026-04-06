@@ -9,8 +9,9 @@ interface WelcomeHeroProps {
 
 const STEPS = [
   { num: '01', label: 'Business info' },
-  { num: '02', label: 'Upload or enter data' },
-  { num: '03', label: 'Review & submit' },
+  { num: '02', label: 'Data & documents' },
+  { num: '03', label: 'R&D projects' },
+  { num: '04', label: 'Review & submit' },
 ]
 
 export default function WelcomeHero({ firstName, resumeRoute, startRoute = '/portal/company-info' }: WelcomeHeroProps) {

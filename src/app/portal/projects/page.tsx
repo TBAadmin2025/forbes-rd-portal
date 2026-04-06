@@ -79,9 +79,9 @@ export default function ProjectsPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push(portalUrl('/portal/data-entry', sid))}
+          onClick={() => router.push(portalUrl('/portal/upload', sid))}
         >
-          ← Back to Data Entry
+          ← Back to Documents
         </Button>
         <Button
           variant="dark"

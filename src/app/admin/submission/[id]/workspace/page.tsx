@@ -32,7 +32,7 @@ const US_STATES = [
   'Virginia','Washington','West Virginia','Wisconsin','Wyoming',
 ]
 
-type Section = 'info' | 'data' | 'projects' | 'discovery' | 'review'
+type Section = 'info' | 'data' | 'documents' | 'projects' | 'discovery' | 'review'
 
 export default function WorkspacePage() {
   const params = useParams()
@@ -413,6 +413,7 @@ export default function WorkspacePage() {
   const sections: { key: Section; label: string; icon: string }[] = [
     { key: 'info', label: 'Business Info', icon: '🏢' },
     { key: 'data', label: 'Data Entry', icon: '📊' },
+    { key: 'documents', label: 'Documents', icon: '📁' },
     { key: 'projects', label: 'R&D Projects', icon: '🔬' },
     { key: 'discovery', label: 'Discovery', icon: '🔍' },
     { key: 'review', label: 'Review & Submit', icon: '✅' },
@@ -674,109 +675,53 @@ export default function WorkspacePage() {
       {/* ===== DATA ENTRY ===== */}
       {activeSection === 'data' && (
         <div style={{ animation: 'fadeUp 0.2s ease' }}>
-          {/* Mode toggle */}
-          <div className="flex" style={{ gap: 8, marginBottom: 20 }}>
-            <button
-              onClick={() => setDataMode('upload')}
-              style={{
-                padding: '10px 24px',
-                borderRadius: 3,
-                border: dataMode === 'upload' ? '2px solid var(--cherry)' : '1.5px solid var(--border)',
-                background: dataMode === 'upload' ? 'rgba(108,22,28,0.05)' : 'var(--white)',
-                color: dataMode === 'upload' ? 'var(--cherry)' : 'var(--muted)',
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              Upload Documents
-            </button>
-            <button
-              onClick={() => setDataMode('manual')}
-              style={{
-                padding: '10px 24px',
-                borderRadius: 3,
-                border: dataMode === 'manual' ? '2px solid var(--cherry)' : '1.5px solid var(--border)',
-                background: dataMode === 'manual' ? 'rgba(108,22,28,0.05)' : 'var(--white)',
-                color: dataMode === 'manual' ? 'var(--cherry)' : 'var(--muted)',
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              Manual Entry
-            </button>
+          {YEARS.map((year) => (
+            <YearBlock
+              key={year}
+              year={year}
+              submissionId={id}
+              initialEmployees={employeesByYear[year]}
+              initialSupplies={suppliesByYear[year]}
+              defaultExpanded={year === 2025}
+            />
+          ))}
+
+          <div className="flex justify-end" style={{ marginTop: 20 }}>
+            <Button variant="dark" size="sm" onClick={() => setActiveSection('documents')}>
+              Continue to Documents →
+            </Button>
           </div>
+        </div>
+      )}
 
-          {/* Upload mode */}
-          {dataMode === 'upload' && (
-            <>
-              <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-                {CATEGORIES.map((cat) => (
-                  <UploadCategory
-                    key={cat}
-                    category={cat}
-                    files={files[cat]}
-                    onClick={() => setActiveCategory(cat)}
-                  />
-                ))}
-              </div>
-
-              {activeCategory && (
-                <UploadModal
-                  category={activeCategory}
-                  isOpen
-                  onClose={() => {
-                    const cat = activeCategory
-                    setActiveCategory(null)
-                    if (files[cat].length > 0) handleExtract(cat)
-                  }}
-                  onFilesUploaded={(newFiles) => {
-                    setFiles(prev => ({
-                      ...prev,
-                      [activeCategory]: [...prev[activeCategory], ...newFiles],
-                    }))
-                  }}
-                  submissionId={id}
-                />
-              )}
-
-              {showExtraction && (
-                <ExtractionProgress
-                  isVisible={showExtraction}
-                  onComplete={() => setShowExtraction(false)}
-                />
-              )}
-
-              {extractionDone && (
-                <div style={{ marginTop: 16 }}>
-                  <InfoBox>
-                    Data extracted from uploaded documents. Review below or switch to manual entry to edit.
-                  </InfoBox>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Manual mode / extracted data review */}
-          <div style={{ marginTop: dataMode === 'upload' ? 20 : 0 }}>
-            {YEARS.map((year) => (
-              <YearBlock
-                key={year}
-                year={year}
-                submissionId={id}
-                initialEmployees={employeesByYear[year]}
-                initialSupplies={suppliesByYear[year]}
-                defaultExpanded={year === 2025}
+      {/* ===== DOCUMENTS ===== */}
+      {activeSection === 'documents' && (
+        <div style={{ animation: 'fadeUp 0.2s ease' }}>
+          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+            {CATEGORIES.map((cat) => (
+              <UploadCategory
+                key={cat}
+                category={cat}
+                files={files[cat]}
+                onClick={() => setActiveCategory(cat)}
               />
             ))}
           </div>
+
+          {activeCategory && (
+            <UploadModal
+              category={activeCategory}
+              isOpen
+              onClose={() => setActiveCategory(null)}
+              onFilesUploaded={(newFiles) => {
+                setFiles(prev => ({
+                  ...prev,
+                  [activeCategory]: [...prev[activeCategory], ...newFiles],
+                }))
+              }}
+              submissionId={id}
+            />
+          )}
 
           <div className="flex justify-end" style={{ marginTop: 20 }}>
             <Button variant="dark" size="sm" onClick={() => setActiveSection('projects')}>

@@ -1,22 +1,17 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAdminSid, portalUrl } from '@/lib/utils/use-submission-id'
-import Card from '@/components/shared/Card'
 import Button from '@/components/shared/Button'
+import InfoBox from '@/components/shared/InfoBox'
 import UploadCategory from '@/components/portal/UploadCategory'
 import UploadModal from '@/components/portal/UploadModal'
-import ExtractionProgress from '@/components/portal/ExtractionProgress'
-import YearBlock from '@/components/portal/YearBlock'
 import type { UploadedFile } from '@/components/portal/UploadCategory'
-import type { Employee, Supply } from '@/lib/types/database.types'
 
 type Category = 'payroll' | 'pandl' | 'taxid' | 'gross_receipts'
-
 const CATEGORIES: Category[] = ['payroll', 'pandl', 'taxid', 'gross_receipts']
-const YEARS = [2025, 2024, 2023, 2022]
 
 export default function UploadPage() {
   const router = useRouter()
@@ -25,292 +20,128 @@ export default function UploadPage() {
 
   const [submissionId, setSubmissionId] = useState<string | null>(null)
   const [files, setFiles] = useState<Record<Category, UploadedFile[]>>({
-    payroll: [],
-    pandl: [],
-    taxid: [],
-    gross_receipts: [],
+    payroll: [], pandl: [], taxid: [], gross_receipts: [],
   })
   const [activeCategory, setActiveCategory] = useState<Category | null>(null)
-  const [showExtraction, setShowExtraction] = useState(false)
-  const [extractionDone, setExtractionDone] = useState(false)
-  const [extractionError, setExtractionError] = useState<string | null>(null)
-  const [employeesByYear, setEmployeesByYear] = useState<Record<number, Employee[]>>({})
-  const [suppliesByYear, setSuppliesByYear] = useState<Record<number, Supply[]>>({})
 
-  // Load submission
   useEffect(() => {
     async function load() {
-      let submission: { id: string } | null = null
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      let subId: string | null = null
 
       if (sid) {
-        const { data } = await supabase
-          .from('submissions')
-          .select('id')
-          .eq('id', sid)
-          .single()
-        submission = data
+        subId = sid
       } else {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-        if (!user) return
-
-        const { data } = await supabase
+        const { data: sub } = await supabase
           .from('submissions')
           .select('id')
           .eq('client_user_id', user.id)
           .single()
-        submission = data
+        if (sub) subId = sub.id
       }
 
-      if (submission) {
-        setSubmissionId(submission.id)
+      if (!subId) return
+      setSubmissionId(subId)
 
-        // Update submission method
-        await supabase
-          .from('submissions')
-          .update({ submission_method: 'upload' })
-          .eq('id', submission.id)
+      // Load existing documents
+      const { data: docs } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('submission_id', subId)
+
+      if (docs) {
+        const grouped: Record<Category, UploadedFile[]> = {
+          payroll: [], pandl: [], taxid: [], gross_receipts: [],
+        }
+        for (const d of docs) {
+          const cat = d.category as Category
+          if (grouped[cat]) {
+            grouped[cat].push({ name: d.file_name, year: d.tax_year })
+          }
+        }
+        setFiles(grouped)
       }
     }
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleFilesUploaded = (category: Category, newFiles: UploadedFile[]) => {
-    setFiles((prev) => ({
-      ...prev,
-      [category]: [...prev[category], ...newFiles],
-    }))
-    setActiveCategory(null)
-  }
-
-  const hasAnyFiles = Object.values(files).some((f) => f.length > 0)
-
-  const loadExtractedData = useCallback(async () => {
-    if (!submissionId) return
-
-    const { data: emps } = await supabase
-      .from('employees')
-      .select('*')
-      .eq('submission_id', submissionId)
-
-    const { data: sups } = await supabase
-      .from('supplies')
-      .select('*')
-      .eq('submission_id', submissionId)
-
-    if (emps) {
-      const byYear: Record<number, Employee[]> = {}
-      emps.forEach((e: Employee) => {
-        if (!byYear[e.tax_year]) byYear[e.tax_year] = []
-        byYear[e.tax_year].push(e)
-      })
-      setEmployeesByYear(byYear)
-    }
-
-    if (sups) {
-      const byYear: Record<number, Supply[]> = {}
-      sups.forEach((s: Supply) => {
-        if (!byYear[s.tax_year]) byYear[s.tax_year] = []
-        byYear[s.tax_year].push(s)
-      })
-      setSuppliesByYear(byYear)
-    }
-  }, [submissionId, supabase])
-
-  const handleExtractComplete = useCallback(async () => {
-    setShowExtraction(false)
-    setExtractionDone(true)
-
-    if (!submissionId) return
-
-    // Fetch uploaded document IDs for extraction
-    const { data: docs } = await supabase
-      .from('documents')
-      .select('id')
-      .eq('submission_id', submissionId)
-      .in('extraction_status', ['pending'])
-
-    const docIds = (docs || []).map((d: { id: string }) => d.id)
-
-    if (docIds.length > 0) {
-      try {
-        const res = await fetch('/api/extract', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            submission_id: submissionId,
-            document_ids: docIds,
-          }),
-        })
-
-        if (!res.ok) {
-          const errData = await res.json()
-          setExtractionError(errData.error || 'Extraction failed')
-        }
-      } catch {
-        setExtractionError('Extraction request failed')
-      }
-    }
-
-    // Load data regardless (may have been pre-existing or partially extracted)
-    await loadExtractedData()
-  }, [submissionId, supabase, loadExtractedData])
+  const totalFiles = Object.values(files).reduce((sum, arr) => sum + arr.length, 0)
 
   return (
     <div style={{ animation: 'fadeUp 0.3s ease' }}>
-      {/* Back link */}
-      <button
-        onClick={() => router.push(portalUrl('/portal/data-entry', sid))}
-        style={{
-          background: 'none',
-          border: 'none',
-          fontSize: 12,
-          color: 'var(--muted)',
-          cursor: 'pointer',
-          marginBottom: 20,
-          fontWeight: 300,
-          padding: 0,
-        }}
-      >
-        ← Choose a different option
-      </button>
-
-      {/* Upload categories card */}
-      <Card>
-        <div
+      <div style={{ marginBottom: 20 }}>
+        <h2
           className="font-serif"
-          style={{
-            fontSize: 20,
-            fontWeight: 700,
-            color: 'var(--charcoal)',
-            marginBottom: 4,
-          }}
+          style={{ fontSize: 26, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 6 }}
         >
-          Upload Your Documents
+          Upload Documents
+        </h2>
+        <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 300, lineHeight: 1.7 }}>
+          Upload your supporting documents by category. These are used to verify
+          your R&D tax credit claim.
         </div>
-        <div
-          style={{
-            fontSize: 12,
-            color: 'var(--muted)',
-            fontWeight: 300,
-            marginBottom: 20,
-            lineHeight: 1.6,
-          }}
-        >
-          Upload files for each category. We'll extract the data automatically.
-        </div>
+      </div>
 
-        <div
-          className="grid"
-          style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}
-        >
-          {CATEGORIES.map((cat) => (
-            <UploadCategory
-              key={cat}
-              category={cat}
-              files={files[cat]}
-              onClick={() => setActiveCategory(cat)}
-            />
-          ))}
-        </div>
+      <InfoBox>
+        <strong style={{ fontWeight: 600, color: 'var(--cherry)' }}>
+          What to upload:
+        </strong>{' '}
+        Payroll reports, P&L statements, tax ID documents, and gross receipts
+        for each applicable year. Accepted formats: PDF, Excel, CSV, and images.
+      </InfoBox>
 
-        {/* Extract button */}
-        {hasAnyFiles && !showExtraction && !extractionDone && (
-          <div style={{ textAlign: 'center', marginTop: 24 }}>
-            <Button variant="dark" onClick={() => setShowExtraction(true)}>
-              Extract Data from Uploads
-            </Button>
-          </div>
-        )}
-      </Card>
+      {/* Category cards */}
+      <div
+        className="grid"
+        style={{ gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 20 }}
+      >
+        {CATEGORIES.map((cat) => (
+          <UploadCategory
+            key={cat}
+            category={cat}
+            files={files[cat]}
+            onClick={() => setActiveCategory(cat)}
+          />
+        ))}
+      </div>
 
       {/* Upload modal */}
       {activeCategory && submissionId && (
         <UploadModal
           category={activeCategory}
-          isOpen={true}
+          isOpen
           onClose={() => setActiveCategory(null)}
-          onFilesUploaded={(newFiles) => handleFilesUploaded(activeCategory, newFiles)}
+          onFilesUploaded={(newFiles) => {
+            setFiles(prev => ({
+              ...prev,
+              [activeCategory]: [...prev[activeCategory], ...newFiles],
+            }))
+          }}
           submissionId={submissionId}
         />
       )}
 
-      {/* Extraction progress */}
-      <ExtractionProgress
-        isVisible={showExtraction}
-        onComplete={handleExtractComplete}
-      />
-
-      {/* Extraction error */}
-      {extractionError && (
+      {/* Status */}
+      {totalFiles > 0 && (
         <div
           style={{
-            background: 'rgba(108,22,28,0.05)',
-            border: '1px solid rgba(108,22,28,0.15)',
-            borderRadius: 3,
-            padding: '12px 16px',
-            marginBottom: 20,
+            marginTop: 16,
             fontSize: 12,
-            color: 'var(--cherry)',
+            color: 'var(--emerald)',
+            fontWeight: 500,
           }}
         >
-          Some documents could not be extracted automatically. You can still
-          review and enter data manually below. ({extractionError})
+          {totalFiles} document{totalFiles !== 1 ? 's' : ''} uploaded
         </div>
       )}
 
-      {/* QRE table — appears after extraction */}
-      {extractionDone && submissionId && (
-        <div style={{ animation: 'fadeUp 0.3s ease' }}>
-          <Card>
-            <div
-              className="font-serif"
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: 'var(--charcoal)',
-                marginBottom: 4,
-              }}
-            >
-              Review Extracted Data
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                color: 'var(--muted)',
-                fontWeight: 300,
-                marginBottom: 20,
-                lineHeight: 1.6,
-              }}
-            >
-              Review and edit the data we extracted from your documents.
-              Changes are saved automatically.
-            </div>
-          </Card>
-
-          {YEARS.map((year) => (
-            <YearBlock
-              key={year}
-              year={year}
-              submissionId={submissionId}
-              initialEmployees={employeesByYear[year] || []}
-              initialSupplies={suppliesByYear[year] || []}
-              defaultExpanded={year === 2025}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Nav row */}
+      {/* Nav */}
       <div
         className="flex items-center justify-between"
-        style={{
-          marginTop: 32,
-          paddingTop: 24,
-          borderTop: '1px solid var(--border)',
-        }}
+        style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--border)' }}
       >
         <Button
           variant="ghost"
@@ -319,17 +150,12 @@ export default function UploadPage() {
         >
           ← Back
         </Button>
-        <div className="flex items-center" style={{ gap: 12 }}>
-          <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-            Auto-saved
-          </span>
-          <Button
-            variant="dark"
-            onClick={() => router.push(portalUrl('/portal/projects', sid))}
-          >
-            Continue →
-          </Button>
-        </div>
+        <Button
+          variant="dark"
+          onClick={() => router.push(portalUrl('/portal/projects', sid))}
+        >
+          Continue →
+        </Button>
       </div>
     </div>
   )
