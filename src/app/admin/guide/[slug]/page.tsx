@@ -98,6 +98,8 @@ export default function GuideArticlePage() {
   // Get video embed URL
   function getEmbedUrl(url: string): string | null {
     if (!url) return null
+    // Already an embed URL (Descript, etc.)
+    if (url.includes('/embed/')) return url
     // YouTube
     const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/)
     if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`
@@ -107,6 +109,9 @@ export default function GuideArticlePage() {
     // Vimeo
     const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
     if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`
+    // Descript
+    const descMatch = url.match(/share\.descript\.com\/(?:view|embed)\/([^?/]+)/)
+    if (descMatch) return `https://share.descript.com/embed/${descMatch[1]}`
     return null
   }
 
