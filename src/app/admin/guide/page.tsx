@@ -26,6 +26,7 @@ export default function GuidePage() {
   const [creating, setCreating] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newCategory, setNewCategory] = useState('Getting Started')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -70,9 +71,18 @@ export default function GuidePage() {
     }
   }
 
+  // Filter by search
+  const filtered = search
+    ? articles.filter(a =>
+        a.title.toLowerCase().includes(search.toLowerCase()) ||
+        a.body.toLowerCase().includes(search.toLowerCase()) ||
+        a.category.toLowerCase().includes(search.toLowerCase())
+      )
+    : articles
+
   // Group by category
   const grouped: Record<string, GuideArticle[]> = {}
-  articles.forEach((a) => {
+  filtered.forEach((a) => {
     if (!grouped[a.category]) grouped[a.category] = []
     grouped[a.category].push(a)
   })
@@ -93,6 +103,18 @@ export default function GuidePage() {
             + New Article
           </Button>
         )}
+      </div>
+
+      {/* Search */}
+      <div style={{ marginBottom: 24 }}>
+        <input
+          className="finput"
+          type="text"
+          placeholder="Search articles..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ maxWidth: 400, fontSize: 13 }}
+        />
       </div>
 
       {/* Create new article */}
@@ -139,6 +161,13 @@ export default function GuidePage() {
               Create & Edit
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* Search no results */}
+      {search && filtered.length === 0 && articles.length > 0 && (
+        <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--muted)', fontWeight: 300 }}>
+          No articles match &quot;{search}&quot;
         </div>
       )}
 
