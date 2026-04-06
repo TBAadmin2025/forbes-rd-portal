@@ -214,6 +214,41 @@ export default function LoginPage() {
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
+
+            <div
+              style={{
+                marginTop: 24,
+                padding: '14px 16px',
+                background: 'var(--warm)',
+                borderRadius: 4,
+                fontSize: 12,
+                color: 'var(--muted)',
+                fontWeight: 300,
+                lineHeight: 1.6,
+                textAlign: 'center',
+              }}
+            >
+              First time here? Check your email for an invitation link.
+              If it expired, enter your email above and click{' '}
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--cherry)',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: 12,
+                  textDecoration: 'underline',
+                  textUnderlineOffset: 2,
+                }}
+              >
+                Forgot password?
+              </button>{' '}
+              to get a fresh link.
+            </div>
           </form>
         )}
       </div>

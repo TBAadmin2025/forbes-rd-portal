@@ -157,19 +157,47 @@ function SetPasswordContent() {
             Verifying your invitation...
           </div>
         ) : error && !password ? (
-          <div
-            style={{
-              background: 'rgba(185,28,28,0.06)',
-              borderLeft: '3px solid #b91c1c',
-              padding: '13px 17px',
-              fontSize: 12,
-              lineHeight: 1.7,
-              borderRadius: '0 3px 3px 0',
-              color: '#b91c1c',
-              fontWeight: 300,
-            }}
-          >
-            {error}
+          <div>
+            <div
+              style={{
+                background: 'rgba(185,28,28,0.06)',
+                borderLeft: '3px solid #b91c1c',
+                padding: '16px 20px',
+                fontSize: 13,
+                lineHeight: 1.7,
+                borderRadius: '0 3px 3px 0',
+                color: '#b91c1c',
+                fontWeight: 300,
+                marginBottom: 20,
+              }}
+            >
+              <strong style={{ fontWeight: 600, display: 'block', marginBottom: 4 }}>
+                This invitation link has expired
+              </strong>
+              No worries — you can still set up your account. Use the &quot;Forgot Password&quot; option on the login page to get a fresh link sent to your email.
+            </div>
+            <a
+              href="/login"
+              style={{
+                display: 'block',
+                textAlign: 'center',
+                background: 'var(--cherry)',
+                color: 'var(--ivory)',
+                padding: '14px 32px',
+                borderRadius: 3,
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                marginBottom: 12,
+              }}
+            >
+              Go to Login Page
+            </a>
+            <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--muted)', fontWeight: 300, lineHeight: 1.6 }}>
+              On the login page, enter your email and click<br />&quot;Forgot password?&quot; to get a new link.
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
