@@ -1,0 +1,558 @@
+# Forbes Management — R&D Tax Credit Portal
+## Build Specification for Claude Code
+### Source of Truth: `_design/wireframes.html`
+
+---
+
+## CRITICAL INSTRUCTIONS FOR CLAUDE CODE
+
+Before writing a single line of code, open and read `_design/wireframes.html` in full.
+That file contains the complete, approved UI for this application.
+Your job is to convert it into React components — not to design anything new.
+Do not deviate from the colors, typography, spacing, or layout in that file.
+Do not add features, change interactions, or simplify anything.
+Build exactly what is shown.
+
+---
+
+## 1. BRAND TOKENS
+
+Define in `tailwind.config.ts` AND as CSS variables in `globals.css`.
+
+```css
+:root {
+  --cherry:     #6C161C;
+  --cherry-dk:  #4A0F13;
+  --cherry-md:  #8B1D24;
+  --champagne:  #E2C49B;
+  --champ-dk:   #C4A27A;
+  --ivory:      #F0E7D7;
+  --ivory-dk:   #E4D9C6;
+  --charcoal:   #111111;
+  --charcoal2:  #1C1C1C;
+  --emerald:    #004F35;
+  --em-light:   #EEF6F1;
+  --muted:      #7A7060;
+  --border:     rgba(108,22,28,0.12);
+  --white:      #FFFFFF;
+  --warm:       #FAF7F2;
+}
+```
+
+### Typography
+- Display / Headings: Playfair Display — weights 400, 600, 700, italic
+- Body / UI: Montserrat — weights 200, 300, 400, 500, 600, 700
+- Load both via next/font/google in app/layout.tsx
+
+### Logo URLs
+- Light background: https://assets.cdn.filesafe.space/urR6xH3XyBfmLBzEzkKY/media/69c40be2ff46701564ce7664.svg
+- Dark/cherry background: https://assets.cdn.filesafe.space/urR6xH3XyBfmLBzEzkKY/media/69c40c28d0b6d3d9f1a59b5a.svg
+
+### FM Background Pattern
+Used on all cherry and charcoal section backgrounds:
+```css
+background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%23E2C49B' stroke-opacity='0.18' stroke-width='0.5'/%3E%3Ctext x='40' y='46' font-family='Playfair Display,serif' font-size='14' fill='%23E2C49B' text-anchor='middle' opacity='0.2' font-style='italic'%3EFM%3C/text%3E%3C/svg%3E");
+```
+
+---
+
+## 2. PROJECT STRUCTURE
+
+```
+src/
+  app/
+    layout.tsx
+    page.tsx                        # redirect → /login
+    globals.css
+    login/
+      page.tsx
+    auth/
+      confirm/
+        route.ts
+    portal/                         # role=client required
+      layout.tsx                    # SiteHeader + ProgressRail
+      page.tsx                      # redirect → /portal/welcome
+      welcome/page.tsx
+      company-info/page.tsx
+      data-entry/page.tsx           # binary path picker
+      upload/page.tsx               # upload path only
+      manual/page.tsx               # manual entry path only
+      review/page.tsx
+      confirmation/page.tsx
+    admin/                          # role=admin required
+      layout.tsx                    # SiteHeader + AdminSidebar
+      page.tsx                      # redirect → /admin/pipeline
+      pipeline/page.tsx
+      submission/[id]/page.tsx
+      exports/page.tsx
+      clients/page.tsx
+    api/
+      auth/confirm/route.ts
+      submissions/route.ts
+      submissions/[id]/route.ts
+      employees/route.ts
+      employees/[id]/route.ts
+      supplies/route.ts
+      supplies/[id]/route.ts
+      documents/upload/route.ts
+      exports/generate/route.ts
+
+  components/
+    shared/
+      SiteHeader.tsx
+      ProgressRail.tsx
+      InfoBox.tsx
+      Button.tsx
+      Card.tsx
+      FormField.tsx
+      Tag.tsx
+    portal/
+      WelcomeHero.tsx
+      PathPicker.tsx
+      UploadCategory.tsx
+      UploadModal.tsx
+      ExtractionProgress.tsx
+      YearBlock.tsx
+      EmployeeRow.tsx
+      SupplyRow.tsx
+      CreditSummary.tsx
+      ConfirmationHero.tsx
+    admin/
+      AdminSidebar.tsx
+      StatsRow.tsx
+      PipelineBoard.tsx
+      ClientCard.tsx
+      ExportPanel.tsx
+      AddClientModal.tsx
+
+  lib/
+    supabase/
+      client.ts
+      server.ts
+    types/
+      database.types.ts
+    utils/
+      calculations.ts
+      formatting.ts
+
+  middleware.ts
+```
+
+---
+
+## 3. SHARED COMPONENTS
+
+### SiteHeader
+Props: `{ context: 'portal' | 'admin', userLabel?: string, userInitials?: string }`
+- Background: --cherry, height 64px
+- FM pattern overlay at 35% opacity (see pattern above)
+- Logo: dark background SVG, height 38px
+- Below logo: context label — champagne, 9px, tracking 3.5px uppercase
+  - portal → "R&D Tax Credit Portal"
+  - admin → "Admin Dashboard"
+- Right side:
+  - portal → "Secure & Confidential" in ivory/38%
+  - admin → user name + avatar (cherry-md bg, champagne text, 32px circle)
+
+### ProgressRail
+Props: `{ currentStep: number }` (0–4)
+Steps: Welcome | Business Info | Your Data | Review & Submit | Done
+- Background: --charcoal2
+- done (< currentStep): emerald color + border, ✓ in circle
+- active (= currentStep): champagne color + border, number in champagne circle
+- upcoming: muted color, number in dark circle
+
+### Button
+Variants: cherry | champagne | dark | ghost | emerald | ghost-light
+Sizes: sm | md | lg
+Base: Montserrat 600, letter-spacing 2px, uppercase, border-radius 3px, transition 0.2s
+
+### Tag
+Variants: invited | progress | submitted | complete
+- invited: champagne/20% bg, champ-dk text
+- progress: emerald/10% bg, emerald text
+- submitted: cherry/10% bg, cherry text
+- complete: charcoal bg, champagne text
+
+### InfoBox
+Left border: 3px solid --champagne
+Background: #fdf8f0
+Border-radius: 0 3px 3px 0
+Font: Montserrat 300, 12px, line-height 1.7
+Strong text: cherry color
+
+---
+
+## 4. CLIENT PORTAL
+
+### /login
+Centered column (max-width 400px), ivory background
+Elements:
+1. Logo (light version), centered, height 52px
+2. Heading: Playfair 28px "Sign in to your portal"
+3. Body: Montserrat 300, 14px, muted — "Enter your email and we'll send you a secure link. No password required."
+4. Email input, full width
+5. Cherry button full-width lg: "Send Magic Link →"
+6. Success state: InfoBox "Check your email — we sent you a secure link."
+7. Error state: red InfoBox below button
+
+Auth call:
+```typescript
+supabase.auth.signInWithOtp({
+  email,
+  options: { emailRedirectTo: `${window.location.origin}/auth/confirm` }
+})
+```
+
+### /auth/confirm (route.ts)
+GET handler:
+1. Get 'code' from searchParams
+2. supabase.auth.exchangeCodeForSession(code)
+3. Get profile.role
+4. Redirect: admin/super_admin → /admin/pipeline | client → /portal/welcome | error → /login?error=invalid-link
+
+### Portal Layout
+Determine currentStep from pathname:
+- /portal/welcome → 0
+- /portal/company-info → 1
+- /portal/data-entry, /portal/upload, /portal/manual → 2
+- /portal/review → 3
+- /portal/confirmation → 4
+
+### /portal/welcome
+WelcomeHero component:
+- Cherry bg + FM pattern
+- Eyebrow: "Forbes Management · R&D Tax Credit"
+- H1: "Hello, [FirstName]." (italic champagne) + "Let's get your filing started." (ivory)
+- 3-step strip: 01 Business info / 02 Upload or enter data / 03 Review & submit
+- CTA: champagne lg button → /portal/company-info
+Below hero: "Questions? admin@forbesmgmt.com"
+
+### /portal/company-info
+Card 1 — Business Information:
+Fields: Legal Business Name*, DBA (optional), Contact Name*, Email*, FEIN* (hint: IRS EIN letter), State Tax ID*, Primary State* (default Georgia), Phone*
+
+Card 2 — Gross Receipts:
+InfoBox explaining gross receipts
+2×2 grid of number inputs: 2022, 2023, 2024, 2025
+
+On submit:
+- PATCH /api/submissions/[id] with company fields
+- POST/PATCH gross receipts
+- Update status: invited → in_progress
+- Navigate to /portal/data-entry
+
+### /portal/data-entry — BINARY CHOICE
+THIS IS THE CRITICAL DECISION POINT.
+Two cards. Clicking one NAVIGATES to a different route. No shared state.
+
+Card 1: "Upload My Documents"
+- onClick: router.push('/portal/upload')
+- Pill: emerald "✦ Fastest — we do the work"
+- Action: cherry full-width button "Upload Documents →"
+
+Card 2: "Enter My Information"
+- onClick: router.push('/portal/manual')
+- Pill: cherry/7% "Guided form"
+- Action: charcoal full-width button "Enter Manually →"
+
+Cards have cherry top-border that animates in on hover (scaleX transform, origin left).
+No checkboxes. No selection state. Click = navigate.
+
+### /portal/upload
+"← Choose a different option" → router.push('/portal/data-entry')
+
+2×2 upload category cards:
+- payroll: Payroll Reports 📊 | 2022·2023·2024·2025
+- pandl: P&L / Expense Reports 📈 | 2022·2023·2024·2025
+- taxid: FEIN & State Tax ID 🏛️ | Current documents
+- gross_receipts: Gross Receipts 💰 | 2022·2023·2024·2025 | optional pill
+
+Each card: dashed border → solid cherry on hover → solid emerald when has files
+Green count badge top-right when files uploaded
+Click → opens UploadModal for that category
+
+UploadModal:
+- Cherry header: category name + title + FM pattern
+- Year selector tabs (select year BEFORE uploading)
+  - Tab turns green when files exist for that year
+- Drop zone: dashed border, "Drag files here or click to browse"
+  - Accept: .pdf, .xlsx, .xls, .csv, .jpg, .jpeg, .png
+- Uploaded files list: icon | filename | year badge | delete button
+- "Done — Close" dark button full-width
+- On close with files → trigger extraction
+
+ExtractionProgress component (appears after modal close):
+- Charcoal card
+- Title: "Reading your documents…"
+- 5 animated steps, each 1.5–2s:
+  1. Reading uploaded files 📄
+  2. Identifying employees & contractors 👥
+  3. Extracting wages and hours 💵
+  4. Calculating qualified amounts 🧮
+  5. Preparing your review form ✅
+- Step states: idle (muted) → running (champagne + CSS spinner) → done (emerald + ✓)
+- Cherry→champagne gradient progress bar
+- After completion: card hides, InfoBox "✦ Data extracted successfully..." appears
+- QRE table appears pre-filled below
+
+### /portal/manual
+"← Choose a different option" → router.push('/portal/data-entry')
+InfoBox: "One year at a time..."
+YearBlock for each year (2025 expanded, others collapsed)
+
+### YearBlock Component
+Props: year, submissionId, initialEmployees?, initialSupplies?, defaultExpanded?
+- Charcoal header: year (Playfair 22px ivory) + QRE total (champagne right)
+- Click header → toggle expand/collapse
+- Employee table with EmployeeRow components
+- "Add Person" dashed button
+- Supplies divider
+- Supply table with SupplyRow components
+- "Add Expense" dashed button
+
+Employee table columns:
+Name | Type | State | Total Wages | Total Hrs Worked | % Time on R&D | R&D Hours (auto) | Qualified Amt (auto) | Project | ×
+
+CALCULATION (real-time, client-side):
+- R&D Hours = Total Hours Worked × (% R&D ÷ 100) — READ ONLY, green bg
+- Qualified Amount = Total Wages × (% R&D ÷ 100) — READ ONLY, green bg
+- Year total = sum(qualified_amounts) + sum(supply_amounts) — updates as user types
+
+Auto-save: 1500ms debounce after last keystroke → PATCH /api/employees/[id]
+"Progress auto-saved" in nav row
+
+### /portal/review
+CreditSummary card (charcoal, FM pattern):
+Top row (2 cols):
+- Left: Total QRE label + Playfair 44px champagne value + "2022–2025 combined"
+- Right: company name, FEIN, state
+
+3-col credit breakdown:
+- Conservative Federal: 6% × current year QRE
+- Full ASC Federal: 14% ASC method
+- Georgia State: 10% × federal
+
+QRE by Year table: Year | People | Total R&D Hours | Payroll QRE | Supplies QRE | Total QRE
+Data from: qre_summary view
+
+Submit: PATCH status → 'submitted', set submitted_at → navigate to /portal/confirmation
+
+### /portal/confirmation
+ConfirmationHero: charcoal + FM pattern, ✅, "You're all set, [FirstName]."
+3 tiles: Total QRE | Est. Federal Credit | Georgia Credit
+Document chips (green)
+InfoBox: "Need to make a change? Email admin@forbesmgmt.com"
+
+---
+
+## 5. ADMIN DASHBOARD
+
+### Admin Layout
+SiteHeader (admin context) + flex row with AdminSidebar + main content
+
+### AdminSidebar
+Width 220px, charcoal bg
+Links: Pipeline (badge: submitted count) | All Clients | Export Packages | Add Client (opens modal) | Settings
+Active: champagne text + left champagne border + champagne/6% bg
+
+### /admin/pipeline
+StatsRow: 4 cards with colored top borders
+- Total Clients (champagne) | Invited (cherry) | In Progress (emerald) | Complete (charcoal)
+
+Pipeline kanban: 4 columns
+- Invited | In Progress | Submitted | Complete
+Each column: label + count badge
+
+ClientCard: name, company, meta, action button
+- invited → ghost "Resend Link"
+- in_progress → ghost "View Progress"
+- submitted → cherry "Review Now"
+- complete → dark "View Export"
+Click card → /admin/submission/[id]
+
+AddClientModal (cherry header, FM pattern):
+Fields: Full Name | Business Name | Email (hint about magic link) | Note (optional)
+Submit: "Send Magic Link →"
+On submit:
+1. Create Supabase auth user (service role)
+2. Create submission record (status=invited)
+3. Generate + send magic link
+4. Close modal, refresh pipeline
+
+### /admin/submission/[id]
+Back link → /admin/pipeline
+Header: client name + meta + status tag | "Flag for Review" + "Generate Export →" buttons
+
+2-col grid:
+- Business Info: all company fields as label/value rows
+- Documents: each doc row with icon, name, year badge, View link
+  - Warning if categories are missing
+
+QRE Data card: year table from qre_summary view
+
+Credit Estimates card: table with Conservative vs Full ASC rows
+Columns: Method | Federal | Georgia (10%) | Total
+
+ExportPanel (cherry bg + FM pattern):
+3 export items: PDF Summary Report | Excel Flat File | Document Links
+"Preview Package" ghost-light button
+"Generate & Send to Partner →" champagne button
+
+Generate behavior:
+- POST /api/exports/generate
+- Build PDF + Excel
+- Store in Supabase Storage
+- Update submission export fields
+- Send email (Resend — placeholder ok for now)
+
+---
+
+## 6. API ROUTES
+
+### POST /api/submissions
+Admin only. Body: { contact_name, contact_email, company_name }
+Returns: { submission_id }
+
+### GET /api/submissions
+Admin: all submissions. Client: own submission only.
+
+### PATCH /api/submissions/[id]
+Client: company info fields + status (invited→in_progress only)
+Admin: all fields
+
+### POST /api/employees
+Body: { submission_id, tax_year, full_name, employee_type, state, total_wages, total_hours_worked, rd_percentage, project_name }
+NOTE: rd_hours and qualified_amount are GENERATED COLUMNS — never send them, only read them.
+
+### PATCH /api/employees/[id] | DELETE /api/employees/[id]
+
+### POST /api/supplies
+Body: { submission_id, tax_year, description, project_name, amount }
+
+### PATCH /api/supplies/[id] | DELETE /api/supplies/[id]
+
+### POST /api/documents/upload
+Multipart: file, submission_id, category, tax_year
+Storage path: submissions/{submission_id}/{category}/{tax_year}/{filename}
+Returns: { document_id, storage_url, file_name }
+
+### POST /api/exports/generate
+Body: { submission_id }
+1. Query qre_summary + credit_estimates views
+2. Generate PDF (@react-pdf/renderer)
+3. Generate Excel (xlsx — 3 sheets: Summary, Employee Data, Supplies)
+4. Upload to storage: exports/{submission_id}/
+5. Update submission: export_generated_at, pdf_url, excel_url
+6. Send partner email (Resend — log only if not configured)
+Returns: { pdf_url, excel_url }
+
+---
+
+## 7. EXCEL EXPORT (3 sheets)
+
+### Sheet 1: "Summary"
+One row per company per year. Pre-totaled bottom row.
+Columns: Company | FEIN | State | Contact | Email | Tax Year | Payroll QRE | Supplies QRE | Total QRE | Conservative Federal | Full ASC Federal | Georgia Credit | Total Est. Value | Submission Date
+Header: cherry bg, ivory text
+
+### Sheet 2: "Employee Data"
+One row per employee per year per company (flat).
+Columns: Company | FEIN | State | Tax Year | Employee Name | Type | Employee State | Total Wages | Total Hours | % R&D | R&D Hours | Qualified Amount | Project | AI Extracted
+
+### Sheet 3: "Supplies & Materials"
+One row per expense per year per company (flat).
+Columns: Company | FEIN | Tax Year | Description | Project | Amount | AI Extracted
+
+All sheets: freeze top row, auto-filter all columns, auto-sized column widths.
+
+---
+
+## 8. PDF REPORT (5 pages)
+
+Page 1: Cover — logo, "R&D Tax Credit Analysis", company name + FEIN, date, cherry rule
+Page 2: Credit Summary — callout box with total, Conservative vs ASC table, disclaimer
+Page 3: QRE Year-by-Year — year table, grand total row
+Page 4: Employee Detail — one section per year, full employee table
+Page 5: Documents — checklist of uploaded files by category
+
+Footer every page: "Forbes Management | admin@forbesmgmt.com | Confidential"
+Page numbers: "Page X of Y"
+
+---
+
+## 9. STORAGE STRUCTURE
+
+```
+rd-documents/
+  submissions/{submission_id}/
+    payroll/{tax_year}/{filename}
+    pandl/{tax_year}/{filename}
+    taxid/current/{filename}
+    gross_receipts/{tax_year}/{filename}
+  exports/{submission_id}/
+    report.pdf
+    data.xlsx
+```
+
+---
+
+## 10. AUTH FLOW
+
+Magic link (client): Admin adds client → Supabase creates user → magic link sent → client clicks → /auth/confirm → role check → /portal/welcome
+
+Admin login: /login → magic link → /auth/confirm → role=admin → /admin/pipeline
+
+Middleware protection:
+- /portal/* → valid session + role=client
+- /admin/* → valid session + role in (admin, super_admin)
+- /login, /auth/*, / → public
+
+---
+
+## 11. ENVIRONMENT VARIABLES
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+RESEND_API_KEY=
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+ANTHROPIC_API_KEY=
+PARTNER_EMAIL=
+```
+
+---
+
+## 12. BUILD ORDER FOR CLAUDE CODE
+
+1. globals.css (CSS variables) + tailwind.config.ts (brand tokens) + layout.tsx (fonts)
+2. Shared components: SiteHeader, ProgressRail, Button, Card, FormField, Tag, InfoBox
+3. middleware.ts (route protection)
+4. /login page + /auth/confirm route
+5. Portal layout + welcome page
+6. Portal: company-info page
+7. Portal: data-entry (path picker)
+8. Portal: upload page + UploadCategory + UploadModal + ExtractionProgress
+9. Portal: manual page + YearBlock + EmployeeRow + SupplyRow
+10. Portal: review + confirmation
+11. Admin layout + AdminSidebar
+12. Admin: pipeline page + PipelineBoard + ClientCard + StatsRow + AddClientModal
+13. Admin: submission detail + ExportPanel
+14. API routes (submissions, employees, supplies, documents)
+15. Export generation (PDF + Excel)
+
+---
+
+## 13. RULES — DO NOT VIOLATE
+
+1. Read _design/wireframes.html before touching any component.
+2. No new design decisions. Build what is shown.
+3. Use CSS variables. Never hardcode hex colors.
+4. Playfair Display for headings. Montserrat for everything else.
+5. Generated columns (rd_hours, qualified_amount) are Postgres-computed. Never write to them.
+6. Upload and Manual are separate routes. Never render both simultaneously.
+7. Auto-save QRE data with 1500ms debounce. No manual save button for data entry.
+8. Real-time calculation of R&D Hours and Qualified Amount is client-side only.
+9. FM pattern on ALL cherry and charcoal backgrounds.
+10. Use server.ts Supabase client in server components. Use client.ts in client components.

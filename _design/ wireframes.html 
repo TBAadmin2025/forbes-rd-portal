@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forbes Management — System Wireframes V2</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Montserrat:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cherry:    #6C161C;
+  --cherry-dk: #4A0F13;
+  --cherry-md: #8B1D24;
+  --champagne: #E2C49B;
+  --champ-dk:  #C4A27A;
+  --ivory:     #F0E7D7;
+  --ivory-dk:  #E4D9C6;
+  --charcoal:  #111111;
+  --charcoal2: #1C1C1C;
+  --emerald:   #004F35;
+  --em-light:  #EEF6F1;
+  --muted:     #7A7060;
+  --border:    rgba(108,22,28,0.12);
+  --white:     #FFFFFF;
+  --warm:      #FAF7F2;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Montserrat',sans-serif;background:#1a1a1a;color:var(--charcoal);-webkit-font-smoothing:antialiased;}
+
+/* ── SWITCHER ── */
+.switcher{
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:var(--charcoal);
+  display:flex;align-items:center;
+  padding:0 32px;height:52px;gap:6px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.sw-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.22);margin-right:12px;white-space:nowrap;}
+.sw-btn{
+  padding:7px 20px;border-radius:100px;
+  font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
+  border:1.5px solid rgba(255,255,255,0.1);
+  background:transparent;color:rgba(255,255,255,0.3);
+  cursor:pointer;transition:all 0.2s;white-space:nowrap;
+}
+.sw-btn:hover{border-color:var(--champagne);color:var(--champagne);}
+.sw-btn.active{background:var(--cherry);border-color:var(--cherry);color:var(--ivory);}
+.sw-right{margin-left:auto;font-size:10px;color:rgba(255,255,255,0.15);letter-spacing:1px;}
+
+/* ── VIEWS ── */
+.view{display:none;min-height:100vh;padding-top:52px;}
+.view.active{display:block;}
+
+/* ── FM PATTERN ── */
+.fm-pat{
+  background-image:url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%23E2C49B' stroke-opacity='0.18' stroke-width='0.5'/%3E%3Ctext x='40' y='46' font-family='Playfair Display,serif' font-size='14' fill='%23E2C49B' text-anchor='middle' opacity='0.2' font-style='italic'%3EFM%3C/text%3E%3C/svg%3E");
+}
+
+/* ── SHARED HEADER ── */
+.site-header{
+  background:var(--cherry);height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;position:relative;overflow:hidden;
+}
+.site-header .fm-pat{position:absolute;inset:0;opacity:0.35;pointer-events:none;}
+.site-header-inner{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;width:100%;}
+.logo-block{display:flex;flex-direction:column;gap:3px;}
+.logo-img{height:38px;width:auto;display:block;}
+.logo-sub{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--champagne);font-weight:500;padding-left:2px;}
+.header-right{display:flex;align-items:center;gap:16px;}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--cherry-md);border:1.5px solid rgba(226,196,155,0.4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--champagne);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border:none;border-radius:3px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;text-decoration:none;white-space:nowrap;}
+.btn-cherry{background:var(--cherry);color:var(--ivory);}
+.btn-cherry:hover{background:var(--cherry-md);}
+.btn-champagne{background:var(--champagne);color:var(--charcoal);}
+.btn-champagne:hover{background:var(--champ-dk);}
+.btn-ghost{background:transparent;color:var(--charcoal);border:1.5px solid var(--border);}
+.btn-ghost:hover{border-color:var(--cherry);color:var(--cherry);}
+.btn-dark{background:var(--charcoal);color:var(--ivory);}
+.btn-dark:hover{background:var(--cherry);}
+.btn-em{background:var(--emerald);color:var(--white);}
+.btn-em:hover{background:#006647;}
+.btn-sm{padding:7px 16px;font-size:10px;}
+.btn-lg{padding:14px 32px;font-size:12px;}
+
+/* ── CARDS ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:4px;padding:28px;margin-bottom:20px;}
+.card-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--charcoal);margin-bottom:4px;}
+.card-sub{font-size:12px;color:var(--muted);font-weight:300;margin-bottom:20px;line-height:1.6;}
+
+/* ── FORMS ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-row.three{grid-template-columns:1fr 1fr 1fr;}
+.ff{margin-bottom:16px;}
+.flabel{display:block;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.fhint{font-size:11px;color:var(--muted);margin-top:4px;font-weight:300;font-style:italic;}
+.finput{width:100%;padding:11px 14px;border:1.5px solid rgba(108,22,28,0.15);background:var(--warm);font-family:'Montserrat',sans-serif;font-size:13px;color:var(--charcoal);border-radius:3px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
+.finput:focus{border-color:var(--cherry);background:var(--white);}
+.finput::placeholder{color:#c4bdb4;}
+.finput[readonly]{background:#f5f0e8;color:var(--emerald);font-weight:600;border-color:rgba(0,79,53,0.2);}
+
+/* ── TAGS ── */
+.tag{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
+.tag-invited{background:rgba(226,196,155,0.2);color:var(--champ-dk);}
+.tag-progress{background:rgba(0,79,53,0.1);color:var(--emerald);}
+.tag-submitted{background:rgba(108,22,28,0.1);color:var(--cherry);}
+.tag-complete{background:var(--charcoal);color:var(--champagne);}
+
+/* ── INFO BOX ── */
+.info-box{background:#fdf8f0;border-left:3px solid var(--champagne);padding:13px 17px;font-size:12px;line-height:1.7;border-radius:0 3px 3px 0;margin-bottom:20px;color:var(--charcoal);font-weight:300;}
+.info-box strong{font-weight:600;color:var(--cherry);}
+
+.nav-row{display:flex;align-items:center;justify-content:space-between;margin-top:32px;padding-top:24px;border-top:1px solid var(--border);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+
+/* ══════════════════════════════════════════
+   CLIENT PORTAL
+══════════════════════════════════════════ */
+#view-client{background:var(--ivory);}
+
+.client-progress{
+  background:var(--charcoal2);display:flex;padding:0 48px;
+  border-bottom:1px solid rgba(255,255,255,0.05);overflow-x:auto;
+}
+.cp-tab{
+  padding:14px 22px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600;
+  color:rgba(255,255,255,0.22);border-bottom:2px solid transparent;
+  cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:8px;white-space:nowrap;
+}
+.cp-tab.active{color:var(--champagne);border-bottom-color:var(--champagne);}
+.cp-tab.done{color:var(--emerald);border-bottom-color:var(--emerald);}
+.cp-num{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;font-size:9px;}
+.cp-tab.active .cp-num{background:var(--champagne);color:var(--charcoal);}
+.cp-tab.done .cp-num{background:var(--emerald);color:var(--white);}
+
+.client-main{max-width:860px;margin:0 auto;padding:44px 28px 80px;}
+.client-screen{display:none;}
+.client-screen.active{display:block;animation:fadeUp 0.3s ease;}
+
+/* ── WELCOME ── */
+.welcome-hero{
+  background:var(--cherry);border-radius:6px;padding:52px 48px;
+  position:relative;overflow:hidden;margin-bottom:24px;
+}
+.welcome-hero .fm-pat{position:absolute;inset:0;opacity:0.3;pointer-events:none;}
+.welcome-hero-inner{position:relative;z-index:1;}
+.w-eyebrow{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--champagne);margin-bottom:16px;font-weight:500;display:flex;align-items:center;gap:10px;}
+.w-eyebrow::before{content:'';width:20px;height:1px;background:var(--champagne);}
+.welcome-hero h1{font-family:'Playfair Display',serif;font-size:clamp(32px,4vw,52px);font-weight:700;color:var(--ivory);line-height:1.1;margin-bottom:14px;}
+.welcome-hero h1 em{font-style:italic;color:var(--champagne);}
+.welcome-hero p{font-size:14px;color:rgba(240,231,215,0.62);font-weight:300;line-height:1.85;max-width:480px;margin-bottom:28px;}
+.welcome-steps{display:flex;gap:0;max-width:520px;margin-bottom:32px;border:1px solid rgba(240,231,215,0.12);border-radius:3px;overflow:hidden;}
+.ws{flex:1;padding:16px 12px;background:rgba(240,231,215,0.05);border-right:1px solid rgba(240,231,215,0.1);text-align:center;}
+.ws:last-child{border-right:none;}
+.ws-num{font-family:'Playfair Display',serif;font-size:26px;color:var(--champagne);font-weight:700;}
+.ws-lbl{font-size:10px;color:rgba(240,231,215,0.45);margin-top:4px;letter-spacing:1px;}
+
+/* ── PATH PICKER — TRUE BINARY ── */
+.path-section{margin-bottom:28px;}
+.path-section-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--charcoal);margin-bottom:6px;}
+.path-section-sub{font-size:13px;color:var(--muted);font-weight:300;margin-bottom:24px;line-height:1.6;}
+
+.path-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.path-card{
+  background:var(--white);border:2px solid var(--border);
+  border-radius:4px;padding:36px 28px;cursor:pointer;
+  transition:all 0.25s;position:relative;overflow:hidden;
+}
+.path-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--cherry);transform:scaleX(0);transform-origin:left;transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);}
+.path-card:hover::before{transform:scaleX(1);}
+.path-card:hover{border-color:var(--cherry);transform:translateY(-2px);box-shadow:0 8px 32px rgba(108,22,28,0.1);}
+.pc-icon{font-size:36px;margin-bottom:16px;display:block;}
+.pc-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--charcoal);margin-bottom:8px;}
+.pc-desc{font-size:12px;color:var(--muted);line-height:1.75;font-weight:300;margin-bottom:16px;}
+.pc-pill{display:inline-block;padding:4px 12px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+.pc-pill-rec{background:rgba(0,79,53,0.08);color:var(--emerald);}
+.pc-pill-alt{background:rgba(108,22,28,0.07);color:var(--cherry);}
+.pc-action{
+  display:flex;align-items:center;justify-content:center;
+  margin-top:20px;padding:12px;
+  background:var(--cherry);color:var(--ivory);
+  border-radius:3px;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  transition:background 0.2s;
+}
+.path-card:hover .pc-action{background:var(--cherry-md);}
+.pc-action-alt{background:var(--charcoal);}
+.path-card:hover .pc-action-alt{background:var(--cherry);}
+
+/* ── UPLOAD PATH ── */
+.upload-path-view{animation:fadeUp 0.3s ease;}
+.path-back{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--muted);cursor:pointer;transition:color 0.2s;margin-bottom:20px;}
+.path-back:hover{color:var(--cherry);}
+
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.upload-cat{
+  background:var(--white);border:2px dashed rgba(108,22,28,0.2);
+  border-radius:4px;padding:28px 20px;text-align:center;
+  cursor:pointer;transition:all 0.2s;position:relative;
+}
+.upload-cat:hover{border-color:var(--cherry);border-style:solid;background:#fdf5ed;transform:translateY(-2px);}
+.upload-cat.done{border-color:var(--emerald);border-style:solid;background:var(--em-light);}
+.uc-icon{font-size:28px;margin-bottom:10px;}
+.uc-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--charcoal);margin-bottom:5px;}
+.uc-desc{font-size:11px;color:var(--muted);line-height:1.6;font-weight:300;}
+.uc-years{font-size:10px;letter-spacing:1.5px;color:var(--champagne);font-weight:600;margin-top:8px;}
+.uc-opt{display:inline-block;margin-top:6px;font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:600;color:var(--muted);background:var(--ivory-dk);padding:2px 8px;border-radius:100px;}
+.uc-done{font-size:11px;color:var(--emerald);font-weight:600;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:5px;}
+.uc-badge{position:absolute;top:10px;right:10px;background:var(--emerald);color:var(--white);width:20px;height:20px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+.upload-cat.done .uc-badge{display:flex;}
+
+/* Extraction progress */
+.extract-card{
+  background:var(--charcoal);border-radius:4px;padding:36px;
+  text-align:center;margin-bottom:20px;
+  display:none;
+}
+.extract-card.show{display:block;animation:fadeUp 0.3s ease;}
+.extract-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--ivory);margin-bottom:6px;}
+.extract-sub{font-size:12px;color:rgba(240,231,215,0.45);margin-bottom:28px;font-weight:300;}
+.extract-steps{max-width:380px;margin:0 auto 24px;display:flex;flex-direction:column;gap:8px;text-align:left;}
+.ex-step{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:3px;font-size:12px;color:rgba(240,231,215,0.4);background:rgba(255,255,255,0.03);transition:all 0.3s;}
+.ex-step.run{color:var(--champagne);background:rgba(226,196,155,0.07);}
+.ex-step.done{color:#4caf7d;background:rgba(76,175,125,0.07);}
+.ex-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.spin{width:15px;height:15px;border:2px solid rgba(226,196,155,0.2);border-top-color:var(--champagne);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.extract-bar-wrap{max-width:380px;margin:0 auto;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+.extract-bar{height:100%;background:linear-gradient(90deg,var(--cherry),var(--champagne));border-radius:2px;width:0%;transition:width 0.5s ease;}
+
+.extract-done-note{display:none;animation:fadeUp 0.3s ease;}
+.extract-done-note.show{display:block;}
+
+/* ── QRE TABLE ── */
+.year-block{margin-bottom:20px;}
+.yb-head{background:var(--charcoal);padding:13px 18px;border-radius:3px 3px 0 0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.yb-head.collapsed{border-radius:3px;}
+.yb-label{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--ivory);}
+.yb-right{text-align:right;display:flex;align-items:center;gap:16px;}
+.yb-total-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(240,231,215,0.35);}
+.yb-total-val{font-size:18px;font-weight:600;color:var(--champagne);}
+.yb-toggle{font-size:12px;color:rgba(240,231,215,0.3);transition:transform 0.2s;}
+.yb-body{border:1px solid var(--border);border-top:none;border-radius:0 0 3px 3px;overflow:hidden;}
+
+/* QRE table */
+.qt{width:100%;border-collapse:collapse;font-size:12px;}
+.qt th{background:#f5f0e8;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;color:var(--muted);padding:9px 10px;text-align:left;white-space:nowrap;}
+.qt td{padding:8px 10px;border-bottom:1px solid #f0ebe0;background:var(--white);vertical-align:middle;}
+.qt tr:last-child td{border-bottom:none;}
+.qt tr:hover td{background:#fdf9f4;}
+.qt input,.qt select{padding:6px 8px;font-size:12px;border:1.5px solid rgba(108,22,28,0.12);border-radius:2px;width:100%;background:var(--warm);font-family:'Montserrat',sans-serif;outline:none;}
+.qt input:focus,.qt select:focus{border-color:var(--cherry);}
+.qt input[readonly]{background:#f0f7f3;color:var(--emerald);font-weight:600;border-color:rgba(0,79,53,0.15);cursor:default;}
+.calc-badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--emerald);font-weight:600;display:block;margin-top:2px;opacity:0.7;}
+
+.qv-cell{text-align:right;}
+.qv{font-size:12px;font-weight:600;color:var(--emerald);background:rgba(0,79,53,0.07);padding:6px 10px;border-radius:2px;white-space:nowrap;display:inline-block;min-width:85px;text-align:right;}
+.qv.empty{color:var(--muted);background:#f0ebe0;}
+
+.add-row-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;margin:10px 12px;border:1.5px dashed rgba(108,22,28,0.2);background:transparent;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.add-row-btn:hover{border-color:var(--cherry);color:var(--cherry);background:#fdf5ed;}
+.del-btn{background:none;border:none;color:#d0c8bc;cursor:pointer;font-size:16px;padding:2px 4px;transition:color 0.2s;line-height:1;}
+.del-btn:hover{color:#c0392b;}
+.sup-divider{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600;color:var(--muted);padding:12px 12px 8px;background:#faf7f1;border-top:1px solid var(--border);}
+
+/* year collapsed state */
+.yb-body.collapsed{display:none;}
+
+/* ── CREDIT SUMMARY ── */
+.credit-summary{
+  background:var(--charcoal);border-radius:4px;padding:36px;
+  margin-bottom:20px;position:relative;overflow:hidden;
+}
+.credit-summary .fm-pat{position:absolute;inset:0;opacity:0.12;pointer-events:none;}
+.credit-inner{position:relative;z-index:1;}
+.credit-top{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid rgba(240,231,215,0.08);}
+.credit-metric-lbl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(240,231,215,0.35);margin-bottom:8px;}
+.credit-metric-val{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;color:var(--champagne);line-height:1;}
+.credit-metric-sub{font-size:11px;color:rgba(240,231,215,0.3);margin-top:6px;font-weight:300;}
+.credit-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.cb-item{text-align:center;padding:16px;background:rgba(255,255,255,0.04);border-radius:3px;}
+.cb-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(240,231,215,0.35);margin-bottom:6px;}
+.cb-val{font-size:22px;font-weight:600;color:var(--champagne);}
+.cb-method{font-size:10px;color:rgba(240,231,215,0.25);margin-top:4px;font-weight:300;}
+.credit-note{font-size:11px;color:rgba(240,231,215,0.25);margin-top:20px;text-align:center;font-style:italic;font-weight:300;}
+
+/* Year QRE summary table */
+.yr-summary-table{width:100%;border-collapse:collapse;font-size:13px;}
+.yr-summary-table th{background:#f0ebe0;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--muted);padding:9px 14px;text-align:left;}
+.yr-summary-table td{padding:11px 14px;border-bottom:1px solid var(--border);}
+.yr-summary-table tr:last-child td{font-weight:600;background:#fdf9f0;border-bottom:none;}
+.mono{font-weight:600;color:var(--emerald);}
+
+/* Confirmation */
+.confirm-hero{background:var(--charcoal);border-radius:4px;padding:40px;text-align:center;margin-bottom:20px;position:relative;overflow:hidden;}
+.confirm-hero .fm-pat{position:absolute;inset:0;opacity:0.12;}
+.confirm-hero-inner{position:relative;z-index:1;}
+.confirm-icon{font-size:52px;margin-bottom:14px;}
+.confirm-title{font-family:'Playfair Display',serif;font-size:34px;font-weight:700;color:var(--champagne);margin-bottom:8px;}
+.confirm-sub{font-size:13px;color:rgba(240,231,215,0.5);font-weight:300;line-height:1.8;}
+.confirm-tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+.ct{background:var(--white);border:1px solid var(--border);border-radius:3px;padding:18px;text-align:center;}
+.ct-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.ct-val{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--cherry);}
+.ct-sub{font-size:11px;color:var(--muted);margin-top:3px;font-weight:300;}
+.doc-chip{display:flex;align-items:center;gap:8px;padding:9px 13px;background:var(--em-light);border-radius:3px;margin-bottom:7px;font-size:12px;color:var(--emerald);font-weight:500;}
+
+
+/* ══════════════════════════════════════════
+   ADMIN DASHBOARD
+══════════════════════════════════════════ */
+#view-admin{background:var(--warm);}
+
+.admin-layout{display:flex;min-height:calc(100vh - 116px);}
+
+.admin-sidebar{width:220px;flex-shrink:0;background:var(--charcoal);padding:20px 0;display:flex;flex-direction:column;}
+.sb-section{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.18);font-weight:600;padding:0 20px;margin:14px 0 5px;}
+.sb-link{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:12px;font-weight:500;color:rgba(255,255,255,0.4);cursor:pointer;transition:all 0.2s;border-left:2px solid transparent;}
+.sb-link:hover{color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.04);}
+.sb-link.active{color:var(--champagne);border-left-color:var(--champagne);background:rgba(226,196,155,0.06);}
+.sb-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.sb-badge{margin-left:auto;background:var(--cherry);color:var(--ivory);font-size:10px;font-weight:700;padding:1px 7px;border-radius:100px;}
+
+.admin-main{flex:1;padding:32px 36px;overflow-y:auto;}
+.admin-screen{display:none;}
+.admin-screen.active{display:block;animation:fadeUp 0.25s ease;}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:4px;padding:18px 20px;border-top:3px solid var(--border);}
+.stat-card.s-champagne{border-top-color:var(--champagne);}
+.stat-card.s-cherry{border-top-color:var(--cherry);}
+.stat-card.s-emerald{border-top-color:var(--emerald);}
+.stat-card.s-charcoal{border-top-color:var(--charcoal);}
+.stat-val{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:var(--charcoal);line-height:1;}
+.stat-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:5px;font-weight:600;}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px;font-weight:300;}
+
+/* Pipeline */
+.pipeline-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.pipeline-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--charcoal);}
+.pipeline-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.pipe-col{background:rgba(0,0,0,0.025);border-radius:4px;padding:12px;}
+.pipe-col-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:9px;border-bottom:2px solid rgba(0,0,0,0.06);}
+.pipe-col-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;color:var(--muted);}
+.pipe-col-ct{font-size:11px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.06);color:var(--muted);}
+.col-invited .pipe-col-lbl{color:var(--champ-dk);}
+.col-invited .pipe-col-ct{background:rgba(226,196,155,0.2);color:var(--champ-dk);}
+.col-progress .pipe-col-lbl{color:var(--emerald);}
+.col-progress .pipe-col-ct{background:rgba(0,79,53,0.12);color:var(--emerald);}
+.col-submitted .pipe-col-lbl{color:var(--cherry);}
+.col-submitted .pipe-col-ct{background:rgba(108,22,28,0.1);color:var(--cherry);}
+.col-complete .pipe-col-lbl{color:var(--charcoal);}
+.col-complete .pipe-col-ct{background:var(--charcoal);color:var(--champagne);}
+
+.client-card{background:var(--white);border:1px solid var(--border);border-radius:3px;padding:13px;margin-bottom:9px;cursor:pointer;transition:all 0.2s;}
+.client-card:hover{border-color:var(--cherry);box-shadow:0 4px 16px rgba(108,22,28,0.08);transform:translateY(-1px);}
+.cc-name{font-size:13px;font-weight:600;color:var(--charcoal);margin-bottom:2px;}
+.cc-co{font-size:11px;color:var(--muted);font-weight:300;margin-bottom:8px;}
+.cc-meta{font-size:10px;color:var(--muted);margin-bottom:9px;}
+.cc-action{width:100%;}
+
+/* Detail view */
+.detail-back{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--muted);cursor:pointer;transition:color 0.2s;margin-bottom:14px;}
+.detail-back:hover{color:var(--cherry);}
+.detail-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.detail-name{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--charcoal);margin-bottom:5px;}
+.detail-meta{font-size:12px;color:var(--muted);font-weight:300;margin-bottom:8px;}
+.detail-actions{display:flex;gap:8px;flex-shrink:0;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.detail-sec{background:var(--white);border:1px solid var(--border);border-radius:4px;padding:20px;}
+.ds-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600;color:var(--muted);margin-bottom:12px;}
+.ds-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f5f0e8;font-size:12px;}
+.ds-row:last-child{border-bottom:none;}
+.ds-lbl{color:var(--muted);font-weight:300;}
+.ds-val{font-weight:500;color:var(--charcoal);}
+.doc-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--warm);border:1px solid var(--border);border-radius:3px;margin-bottom:7px;font-size:12px;}
+.dr-name{flex:1;font-weight:500;}
+.dr-year{font-size:9px;letter-spacing:1px;background:var(--cherry);color:var(--ivory);padding:2px 7px;border-radius:100px;font-weight:600;}
+.dr-link{font-size:11px;color:var(--cherry);font-weight:600;cursor:pointer;}
+
+/* Admin QRE table */
+.aqt{width:100%;border-collapse:collapse;font-size:12px;}
+.aqt th{background:#f5f0e8;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;color:var(--muted);padding:8px 12px;text-align:left;}
+.aqt td{padding:10px 12px;border-bottom:1px solid #f0ebe0;}
+.aqt tr:last-child td{border-bottom:none;font-weight:600;background:#fdf9f0;}
+
+/* Export panel */
+.export-panel{
+  background:var(--cherry);border-radius:4px;padding:28px;
+  position:relative;overflow:hidden;margin-bottom:20px;
+}
+.export-panel .fm-pat{position:absolute;inset:0;opacity:0.2;pointer-events:none;}
+.export-panel-inner{position:relative;z-index:1;}
+.export-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ivory);margin-bottom:4px;}
+.export-sub{font-size:12px;color:rgba(240,231,215,0.55);font-weight:300;margin-bottom:20px;}
+.export-items{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.export-item{background:rgba(240,231,215,0.07);border:1px solid rgba(240,231,215,0.12);border-radius:3px;padding:16px;text-align:center;}
+.export-item-icon{font-size:24px;margin-bottom:8px;}
+.export-item-label{font-size:11px;font-weight:600;color:var(--ivory);margin-bottom:3px;letter-spacing:0.5px;}
+.export-item-desc{font-size:10px;color:rgba(240,231,215,0.45);font-weight:300;line-height:1.5;}
+.export-actions{display:flex;gap:10px;}
+
+/* Add client modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(17,17,17,0.72);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--ivory);border-radius:6px;width:100%;max-width:460px;box-shadow:0 40px 80px rgba(0,0,0,0.25);transform:translateY(20px);transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-hdr{background:var(--cherry);padding:22px 28px;border-radius:6px 6px 0 0;position:relative;overflow:hidden;}
+.modal-hdr .fm-pat{position:absolute;inset:0;opacity:0.25;}
+.modal-hdr-inner{position:relative;z-index:1;}
+.modal-hdr-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ivory);}
+.modal-hdr-sub{font-size:11px;color:rgba(240,231,215,0.55);margin-top:3px;font-weight:300;}
+.modal-x{position:absolute;top:14px;right:14px;background:rgba(240,231,215,0.15);border:none;width:26px;height:26px;border-radius:50%;color:var(--ivory);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;}
+.modal-x:hover{background:rgba(240,231,215,0.3);}
+.modal-body{padding:24px 28px;}
+.modal-footer{padding:0 28px 22px;display:flex;gap:10px;justify-content:flex-end;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .pipeline-cols,.stats-row,.detail-grid,.confirm-tiles,.credit-top,.credit-breakdown,.export-items,.path-grid,.upload-grid{grid-template-columns:1fr 1fr;}
+  .admin-sidebar{display:none;}
+  .qt{display:block;overflow-x:auto;}
+  .credit-breakdown{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .pipeline-cols,.stats-row,.confirm-tiles,.credit-breakdown,.path-grid,.upload-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- SWITCHER -->
+<div class="switcher">
+  <img src="https://assets.cdn.filesafe.space/urR6xH3XyBfmLBzEzkKY/media/69c40c28d0b6d3d9f1a59b5a.svg" style="height:32px;width:auto;margin-right:20px;opacity:0.7;" alt="Forbes Management">
+  <span class="sw-label">View as →</span>
+  <button class="sw-btn active" onclick="switchView('client',this)">👤 Client Portal</button>
+  <button class="sw-btn" onclick="switchView('admin',this)">🏢 Admin Dashboard</button>
+  <span class="sw-right">System Wireframes V2</span>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     CLIENT PORTAL
+══════════════════════════════════════════════ -->
+<div class="view active" id="view-client">
+  <div class="site-header">
+    <div class="fm-pat"></div>
+    <div class="site-header-inner">
+      <div class="logo-block">
+        <img src="https://assets.cdn.filesafe.space/urR6xH3XyBfmLBzEzkKY/media/69c40c28d0b6d3d9f1a59b5a.svg" class="logo-img" alt="Forbes Management">
+        <div class="logo-sub">R&D Tax Credit Portal</div>
+      </div>
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(240,231,215,0.38);">Secure &amp; Confidential</div>
+    </div>
+  </div>
+
+  <div class="client-progress">
+    <div class="cp-tab active" id="ctab0" onclick="clientGo(0)"><span class="cp-num">1</span>Welcome</div>
+    <div class="cp-tab" id="ctab1" onclick="clientGo(1)"><span class="cp-num">2</span>Business Info</div>
+    <div class="cp-tab" id="ctab2" onclick="clientGo(2)"><span class="cp-num">3</span>Your Data</div>
+    <div class="cp-tab" id="ctab3" onclick="clientGo(3)"><span class="cp-num">4</span>Review &amp; Submit</div>
+    <div class="cp-tab" id="ctab4" onclick="clientGo(4)"><span class="cp-num">5</span>Done</div>
+  </div>
+
+  <div class="client-main">
+
+    <!-- SCREEN 0: WELCOME -->
+    <div class="client-screen active" id="cs0">
+      <div class="welcome-hero">
+        <div class="fm-pat"></div>
+        <div class="welcome-hero-inner">
+          <div class="w-eyebrow">Forbes Management · R&D Tax Credit</div>
+          <h1>Hello, <em>Sarah.</em><br>Let's get your filing started.</h1>
+          <p>Forbes Management has invited you to complete your R&D tax credit submission. It takes about 15 minutes and you can save your progress and come back anytime.</p>
+          <div class="welcome-steps">
+            <div class="ws"><div class="ws-num">01</div><div class="ws-lbl">Business info</div></div>
+            <div class="ws"><div class="ws-num">02</div><div class="ws-lbl">Upload or enter data</div></div>
+            <div class="ws"><div class="ws-num">03</div><div class="ws-lbl">Review &amp; submit</div></div>
+          </div>
+          <button class="btn btn-champagne btn-lg" onclick="clientGo(1)">Get Started →</button>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--muted);padding:12px 0;font-weight:300;">Questions? <strong style="color:var(--cherry);font-weight:600;">admin@forbesmgmt.com</strong></div>
+    </div>
+
+    <!-- SCREEN 1: BUSINESS INFO -->
+    <div class="client-screen" id="cs1">
+      <div class="card">
+        <div class="card-title">Your Business Information</div>
+        <div class="card-sub">Basic details about your company. Takes about 2 minutes.</div>
+        <div class="form-row">
+          <div class="ff"><label class="flabel">Legal Business Name</label><input class="finput" value="Acme Technologies LLC"></div>
+          <div class="ff"><label class="flabel">DBA / Trade Name</label><input class="finput" placeholder="Optional"></div>
+        </div>
+        <div class="form-row">
+          <div class="ff"><label class="flabel">Contact Name</label><input class="finput" value="Sarah Johnson"></div>
+          <div class="ff"><label class="flabel">Email Address</label><input class="finput" value="sarah@acmetech.com"></div>
+        </div>
+        <div class="form-row">
+          <div class="ff">
+            <label class="flabel">Federal EIN (FEIN)</label>
+            <input class="finput" value="82-1234567">
+            <div class="fhint">Found on your IRS EIN letter or prior tax return</div>
+          </div>
+          <div class="ff"><label class="flabel">State Tax ID</label><input class="finput" placeholder="State tax ID number"></div>
+        </div>
+        <div class="form-row">
+          <div class="ff"><label class="flabel">Primary State</label><select class="finput"><option>Georgia</option></select></div>
+          <div class="ff"><label class="flabel">Phone</label><input class="finput" value="(404) 555-0192"></div>
+        </div>
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-ghost btn-sm" onclick="clientGo(0)">← Back</button>
+        <button class="btn btn-dark" onclick="clientGo(2)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: DATA — TRUE BINARY PATH PICKER -->
+    <div class="client-screen" id="cs2">
+      <div class="path-section">
+        <div class="path-section-title">How would you like to submit your R&D information?</div>
+        <div class="path-section-sub">Choose one option. Both collect the same information — pick whichever feels easier.</div>
+        <div class="path-grid">
+          <!-- UPLOAD PATH — clicking this REPLACES this screen entirely -->
+          <div class="path-card" onclick="goUploadPath()">
+            <span class="pc-icon">📂</span>
+            <div class="pc-title">Upload My Documents</div>
+            <div class="pc-desc">Have your payroll reports, P&Ls, or expense files? Upload them and we extract the data automatically. You just review and confirm.</div>
+            <div class="pc-pill pc-pill-rec">✦ Fastest — we do the work</div>
+            <div class="pc-action">Upload Documents →</div>
+          </div>
+          <!-- MANUAL PATH — clicking this REPLACES this screen entirely -->
+          <div class="path-card" onclick="goManualPath()">
+            <span class="pc-icon">✏️</span>
+            <div class="pc-title">Enter My Information</div>
+            <div class="pc-desc">Prefer to type it in yourself? We walk you through each year — employees, contractors, and expenses — one at a time.</div>
+            <div class="pc-pill pc-pill-alt">Guided form</div>
+            <div class="pc-action pc-action-alt">Enter Manually →</div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-ghost btn-sm" onclick="clientGo(1)">← Back</button>
+        <div></div>
+      </div>
+    </div>
+
+    <!-- SCREEN 2U: UPLOAD PATH (replaces screen 2 entirely) -->
+    <div class="client-screen" id="cs2u">
+      <div class="path-back" onclick="clientGo(2)">← Choose a different option</div>
+
+      <div class="card">
+        <div class="card-title">Upload Your Documents</div>
+        <div class="card-sub">Click any category to upload files for that document type. Select the year before uploading so we can organize everything correctly. Multiple files and multiple years are fine.</div>
+
+        <div class="upload-grid">
+          <div class="upload-cat" id="ucat-payroll" onclick="simulateUpload('payroll')">
+            <div class="uc-badge">3</div>
+            <div class="uc-icon">📊</div>
+            <div class="uc-title">Payroll Reports</div>
+            <div class="uc-desc">W2 and 1099 data for all R&D employees and contractors</div>
+            <div class="uc-years">2022 · 2023 · 2024 · 2025</div>
+          </div>
+          <div class="upload-cat" id="ucat-pandl" onclick="simulateUpload('pandl')">
+            <div class="uc-badge">2</div>
+            <div class="uc-icon">📈</div>
+            <div class="uc-title">P&L / Expense Reports</div>
+            <div class="uc-desc">Profit & Loss statements or detailed expense reports</div>
+            <div class="uc-years">2022 · 2023 · 2024 · 2025</div>
+          </div>
+          <div class="upload-cat" id="ucat-taxid" onclick="simulateUpload('taxid')">
+            <div class="uc-badge">1</div>
+            <div class="uc-icon">🏛️</div>
+            <div class="uc-title">FEIN &amp; State Tax ID Docs</div>
+            <div class="uc-desc">IRS EIN confirmation letter and state registration</div>
+            <div class="uc-years">Current documents</div>
+          </div>
+          <div class="upload-cat" id="ucat-gross" onclick="simulateUpload('gross')">
+            <div class="uc-badge">0</div>
+            <div class="uc-icon">💰</div>
+            <div class="uc-title">Gross Receipts</div>
+            <div class="uc-desc">Only needed if not already in your P&L uploads</div>
+            <div class="uc-years">2022 · 2023 · 2024 · 2025</div>
+            <div class="uc-opt">Only if not in P&L</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extraction progress — appears after upload -->
+      <div class="extract-card" id="extractCard">
+        <div class="extract-title">Reading your documents…</div>
+        <div class="extract-sub">Extracting your data automatically. About 20 seconds.</div>
+        <div class="extract-steps" id="extractSteps"></div>
+        <div class="extract-bar-wrap"><div class="extract-bar" id="extractBar"></div></div>
+      </div>
+
+      <div class="extract-done-note" id="extractDone">
+        <div class="info-box"><strong>✦ Data extracted successfully.</strong> We've pre-filled the form below from your documents. Review each entry, correct anything that looks off, and add anything we missed.</div>
+      </div>
+
+      <!-- QRE table appears after extraction -->
+      <div id="qreAfterExtract" style="display:none;">
+        <div id="qreTableUpload"></div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn btn-ghost btn-sm" onclick="clientGo(2)">← Back</button>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:11px;color:var(--muted);">Progress auto-saved</span>
+          <button class="btn btn-dark" onclick="clientGo(3)">Review &amp; Submit →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 2M: MANUAL PATH (replaces screen 2 entirely) -->
+    <div class="client-screen" id="cs2m">
+      <div class="path-back" onclick="clientGo(2)">← Choose a different option</div>
+      <div class="info-box"><strong>One year at a time.</strong> For each year below, enter everyone who worked on R&D — employees and contractors. Then add any qualifying supply or material costs. All amounts calculate automatically.</div>
+      <div id="qreTableManual"></div>
+      <div class="nav-row">
+        <button class="btn btn-ghost btn-sm" onclick="clientGo(2)">← Back</button>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:11px;color:var(--muted);">Progress auto-saved</span>
+          <button class="btn btn-dark" onclick="clientGo(3)">Review &amp; Submit →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: REVIEW & SUBMIT -->
+    <div class="client-screen" id="cs3">
+      <div class="credit-summary" id="creditSummary">
+        <div class="fm-pat"></div>
+        <div class="credit-inner">
+          <div class="credit-top">
+            <div>
+              <div class="credit-metric-lbl">Total Qualified Research Expenses</div>
+              <div class="credit-metric-val" id="review-total-qre">$39,354</div>
+              <div class="credit-metric-sub">2022 – 2025 combined</div>
+            </div>
+            <div style="border-left:1px solid rgba(240,231,215,0.08);padding-left:28px;">
+              <div class="credit-metric-lbl">Your Submission</div>
+              <div style="font-size:13px;color:rgba(240,231,215,0.55);padding:5px 0;border-bottom:1px solid rgba(240,231,215,0.06);font-weight:300;">Company: <strong style="color:var(--ivory);">Acme Technologies LLC</strong></div>
+              <div style="font-size:13px;color:rgba(240,231,215,0.55);padding:5px 0;border-bottom:1px solid rgba(240,231,215,0.06);font-weight:300;">FEIN: <strong style="color:var(--ivory);">82-1234567</strong></div>
+              <div style="font-size:13px;color:rgba(240,231,215,0.55);padding:5px 0;font-weight:300;">State: <strong style="color:var(--ivory);">Georgia</strong></div>
+            </div>
+          </div>
+          <div class="credit-breakdown">
+            <div class="cb-item">
+              <div class="cb-lbl">Conservative Est. (Federal)</div>
+              <div class="cb-val" id="review-conservative">$2,361</div>
+              <div class="cb-method">6% of 2025 QRE</div>
+            </div>
+            <div class="cb-item">
+              <div class="cb-lbl">Full ASC Est. (Federal)</div>
+              <div class="cb-val" id="review-asc">$5,510</div>
+              <div class="cb-method">14% ASC method</div>
+            </div>
+            <div class="cb-item">
+              <div class="cb-lbl">Georgia State Credit</div>
+              <div class="cb-val" id="review-state">$551</div>
+              <div class="cb-method">10% of federal</div>
+            </div>
+          </div>
+          <div class="credit-note">* Estimates only. Final amounts subject to IRS review and professional tax preparation.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">QRE by Year</div>
+        <div class="card-sub">Review before submitting. Go back to make any changes.</div>
+        <table class="yr-summary-table">
+          <thead><tr><th>Year</th><th>People</th><th>Total R&D Hours</th><th>Payroll QRE</th><th>Supplies QRE</th><th>Total QRE</th></tr></thead>
+          <tbody id="reviewTable">
+            <tr><td><strong>2025</strong></td><td>3</td><td class="mono">1,688 hrs</td><td class="mono">$30,182</td><td class="mono">$9,172</td><td class="mono">$39,354</td></tr>
+            <tr><td><strong>2024</strong></td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td></tr>
+            <tr><td><strong>2023</strong></td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td></tr>
+            <tr><td><strong>2022</strong></td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td></tr>
+            <tr><td colspan="5" style="text-align:right;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Grand Total</td><td class="mono">$39,354</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn btn-ghost btn-sm" onclick="clientGo(2)">← Back</button>
+        <button class="btn btn-cherry btn-lg" onclick="clientGo(4)">Submit to Forbes Management ✓</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 4: CONFIRMATION -->
+    <div class="client-screen" id="cs4">
+      <div class="confirm-hero">
+        <div class="fm-pat"></div>
+        <div class="confirm-hero-inner">
+          <div class="confirm-icon">✅</div>
+          <div class="confirm-title">You're all set, Sarah.</div>
+          <div class="confirm-sub">Your R&D information has been submitted to Forbes Management.<br>We'll be in touch within 2–3 business days.</div>
+        </div>
+      </div>
+      <div class="confirm-tiles">
+        <div class="ct"><div class="ct-lbl">Total QRE</div><div class="ct-val">$39,354</div><div class="ct-sub">2022–2025</div></div>
+        <div class="ct"><div class="ct-lbl">Est. Federal Credit</div><div class="ct-val">$5,510</div><div class="ct-sub">Full ASC method</div></div>
+        <div class="ct"><div class="ct-lbl">Georgia Credit</div><div class="ct-val">$551</div><div class="ct-sub">10% of federal</div></div>
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--charcoal);margin-bottom:12px;">Documents submitted</div>
+      <div class="doc-chip">📊 Payroll_2025.xlsx</div>
+      <div class="doc-chip">📈 PL_Report_2025.pdf</div>
+      <div class="doc-chip">🏛️ EIN_Confirmation.pdf</div>
+      <div style="margin-top:20px;padding:13px 17px;background:#fdf8f0;border-left:3px solid var(--champagne);border-radius:0 3px 3px 0;font-size:12px;color:var(--muted);font-weight:300;">
+        Need to make a change? Email <strong style="color:var(--cherry);">admin@forbesmgmt.com</strong> and we'll reopen your submission.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     ADMIN DASHBOARD
+══════════════════════════════════════════════ -->
+<div class="view" id="view-admin">
+  <div class="site-header">
+    <div class="fm-pat"></div>
+    <div class="site-header-inner">
+      <div class="logo-block">
+        <img src="https://assets.cdn.filesafe.space/urR6xH3XyBfmLBzEzkKY/media/69c40c28d0b6d3d9f1a59b5a.svg" class="logo-img" alt="Forbes Management">
+        <div class="logo-sub">Admin Dashboard</div>
+      </div>
+      <div class="header-right">
+        <span style="font-size:12px;color:rgba(240,231,215,0.6);font-weight:300;">Jessica Forbes</span>
+        <div class="avatar">JF</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div class="sb-section">Main</div>
+      <div class="sb-link active" onclick="adminGo('pipeline',this)"><span class="sb-icon">📋</span>Pipeline<span class="sb-badge">4</span></div>
+      <div class="sb-link" onclick="adminGo('clients',this)"><span class="sb-icon">👥</span>All Clients</div>
+      <div class="sb-link" onclick="adminGo('exports',this)"><span class="sb-icon">📦</span>Export Packages</div>
+      <div class="sb-section">Actions</div>
+      <div class="sb-link" onclick="showModal()"><span class="sb-icon">➕</span>Add Client</div>
+      <div class="sb-section">Account</div>
+      <div class="sb-link"><span class="sb-icon">⚙️</span>Settings</div>
+    </div>
+
+    <div class="admin-main">
+
+      <!-- PIPELINE -->
+      <div class="admin-screen active" id="as-pipeline">
+        <div class="stats-row">
+          <div class="stat-card s-champagne"><div class="stat-val">23</div><div class="stat-lbl">Total Clients</div><div class="stat-sub">This season</div></div>
+          <div class="stat-card s-cherry"><div class="stat-val">6</div><div class="stat-lbl">Invited</div><div class="stat-sub">Awaiting first login</div></div>
+          <div class="stat-card s-emerald"><div class="stat-val">9</div><div class="stat-lbl">In Progress</div><div class="stat-sub">Started, not submitted</div></div>
+          <div class="stat-card s-charcoal"><div class="stat-val">8</div><div class="stat-lbl">Complete</div><div class="stat-sub">Ready to export</div></div>
+        </div>
+
+        <div class="pipeline-hdr">
+          <div class="pipeline-title">Client Pipeline</div>
+          <button class="btn btn-cherry btn-sm" onclick="showModal()">+ Add Client</button>
+        </div>
+
+        <div class="pipeline-cols">
+          <div class="pipe-col col-invited">
+            <div class="pipe-col-hdr"><div class="pipe-col-lbl">Invited</div><div class="pipe-col-ct">6</div></div>
+            <div class="client-card" onclick="adminGo('detail',this)">
+              <div class="cc-name">Marcus Webb</div><div class="cc-co">Webb Construction LLC</div>
+              <div class="cc-meta">Invited 2 days ago</div>
+              <button class="btn btn-ghost btn-sm cc-action">Resend Link</button>
+            </div>
+            <div class="client-card" onclick="adminGo('detail',this)">
+              <div class="cc-name">Diana Okafor</div><div class="cc-co">Okafor Medical Group</div>
+              <div class="cc-meta">Invited today</div>
+              <button class="btn btn-ghost btn-sm cc-action">Resend Link</button>
+            </div>
+          </div>
+
+          <div class="pipe-col col-progress">
+            <div class="pipe-col-hdr"><div class="pipe-col-lbl">In Progress</div><div class="pipe-col-ct">9</div></div>
+            <div class="client-card" onclick="adminGo('detail',this)">
+              <div class="cc-name">Sarah Johnson</div><div class="cc-co">Acme Technologies LLC</div>
+              <div class="cc-meta">Last active 3 hrs ago · 2025 done</div>
+              <button class="btn btn-ghost btn-sm cc-action">View Progress</button>
+            </div>
+            <div class="client-card" onclick="adminGo('detail',this)">
+              <div class="cc-name">Tom Rivera</div><div class="cc-co">Rivera Biotech</div>
+              <div class="cc-meta">Last active yesterday</div>
+              <button class="btn btn-ghost btn-sm cc-action">View Progress</button>
+            </div>
+          </div>
+
+          <div class="pipe-col col-submitted">
+            <div class="pipe-col-hdr"><div class="pipe-col-lbl">Submitted</div><div class="pipe-col-ct">4</div></div>
+            <div class="client-card" onclick="adminGo('detail',this)">
+              <div class="cc-name">Priya Nair</div><div class="cc-co">NairTech Solutions</div>
+              <div class="cc-meta">Submitted 1 day ago</div>
+              <button class="btn btn-cherry btn-sm cc-action">Review Now</button>
+            </div>
+            <div class="client-card" onclick="adminGo('detail',this)">
+              <div class="cc-name">James Park</div><div class="cc-co">Park Engineering</div>
+              <div class="cc-meta">Submitted 3 days ago</div>
+              <button class="btn btn-cherry btn-sm cc-action">Review Now</button>
+            </div>
+          </div>
+
+          <div class="pipe-col col-complete">
+            <div class="pipe-col-hdr"><div class="pipe-col-lbl">Complete</div><div class="pipe-col-ct">8</div></div>
+            <div class="client-card" onclick="adminGo('detail',this)">
+              <div class="cc-name">Linda Torres</div><div class="cc-co">Torres Pharma</div>
+              <div class="cc-meta">Exported Mar 12</div>
+              <button class="btn btn-dark btn-sm cc-action">View Export</button>
+            </div>
+            <div class="client-card" onclick="adminGo('detail',this)">
+              <div class="cc-name">Kevin Osei</div><div class="cc-co">Osei Digital</div>
+              <div class="cc-meta">Exported Mar 8</div>
+              <button class="btn btn-dark btn-sm cc-action">View Export</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETAIL -->
+      <div class="admin-screen" id="as-detail">
+        <div class="detail-back" onclick="adminGo('pipeline',null)">← Back to Pipeline</div>
+        <div class="detail-hdr">
+          <div>
+            <div class="detail-name">Sarah Johnson</div>
+            <div class="detail-meta">Acme Technologies LLC · FEIN 82-1234567 · Georgia · Submitted March 15, 2026</div>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+              <span class="tag tag-progress">● In Progress</span>
+              <span style="font-size:11px;color:var(--muted);font-weight:300;">2025 complete · 2024/2023/2022 missing</span>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="btn btn-ghost btn-sm">Flag for Review</button>
+            <button class="btn btn-cherry btn-sm">Generate Export →</button>
+          </div>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-sec">
+            <div class="ds-title">Business Info</div>
+            <div class="ds-row"><span class="ds-lbl">Company</span><span class="ds-val">Acme Technologies LLC</span></div>
+            <div class="ds-row"><span class="ds-lbl">Contact</span><span class="ds-val">Sarah Johnson</span></div>
+            <div class="ds-row"><span class="ds-lbl">Email</span><span class="ds-val">sarah@acmetech.com</span></div>
+            <div class="ds-row"><span class="ds-lbl">Phone</span><span class="ds-val">(404) 555-0192</span></div>
+            <div class="ds-row"><span class="ds-lbl">FEIN</span><span class="ds-val">82-1234567</span></div>
+            <div class="ds-row"><span class="ds-lbl">State Tax ID</span><span class="ds-val">GA-98765432</span></div>
+            <div class="ds-row"><span class="ds-lbl">State</span><span class="ds-val">Georgia</span></div>
+          </div>
+          <div class="detail-sec">
+            <div class="ds-title">Documents Uploaded</div>
+            <div class="doc-row"><span>📊</span><span class="dr-name">Payroll_2025.xlsx</span><span class="dr-year">2025</span><span class="dr-link">View</span></div>
+            <div class="doc-row"><span>📈</span><span class="dr-name">PL_Report_2025.pdf</span><span class="dr-year">2025</span><span class="dr-link">View</span></div>
+            <div class="doc-row"><span>🏛️</span><span class="dr-name">EIN_Confirmation.pdf</span><span class="dr-year">—</span><span class="dr-link">View</span></div>
+            <div style="margin-top:10px;padding:9px 13px;background:rgba(108,22,28,0.05);border-radius:3px;font-size:11px;color:var(--cherry);">⚠️ No documents uploaded for 2024, 2023, or 2022</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">QRE Data</div>
+          <div class="card-sub">Submitted by client. Review before generating export.</div>
+          <table class="aqt">
+            <thead><tr><th>Year</th><th>People</th><th>Total R&D Hours</th><th>Payroll QRE</th><th>Supplies QRE</th><th>Total QRE</th></tr></thead>
+            <tbody>
+              <tr><td><strong>2025</strong></td><td>3</td><td class="mono">1,688 hrs</td><td class="mono">$30,182</td><td class="mono">$9,172</td><td class="mono">$39,354</td></tr>
+              <tr><td><strong>2024</strong></td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td></tr>
+              <tr><td><strong>2023</strong></td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td></tr>
+              <tr><td><strong>2022</strong></td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td><td class="mono" style="color:var(--muted)">$0</td></tr>
+              <tr><td colspan="5" style="text-align:right;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Grand Total</td><td class="mono">$39,354</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Credit calculations shown to admin -->
+        <div class="card">
+          <div class="card-title">Credit Estimates — Georgia</div>
+          <div class="card-sub">Calculated from submitted QRE data. Included in export package.</div>
+          <table class="aqt">
+            <thead><tr><th>Method</th><th>Federal Credit</th><th>Georgia State (10%)</th><th>Total Estimated Value</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Conservative (6%)</strong><br><span style="font-size:10px;color:var(--muted);font-weight:300;">Use if prior year data unavailable</span></td><td class="mono">$2,361</td><td class="mono">$236</td><td class="mono">$2,597</td></tr>
+              <tr><td><strong>Full ASC (14%)</strong><br><span style="font-size:10px;color:var(--muted);font-weight:300;">Use when all 4 years have data</span></td><td class="mono">$5,510</td><td class="mono">$551</td><td class="mono">$6,061</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Export package -->
+        <div class="export-panel">
+          <div class="fm-pat"></div>
+          <div class="export-panel-inner">
+            <div class="export-title">Generate Export Package</div>
+            <div class="export-sub">Everything Solutions Made Simple needs — built automatically from submitted data.</div>
+            <div class="export-items">
+              <div class="export-item">
+                <div class="export-item-icon">📄</div>
+                <div class="export-item-label">PDF Summary Report</div>
+                <div class="export-item-desc">Forbes Management letterhead · QRE breakdown · Credit estimates</div>
+              </div>
+              <div class="export-item">
+                <div class="export-item-icon">📊</div>
+                <div class="export-item-label">Excel Flat File</div>
+                <div class="export-item-desc">Summary tab · Employee data tab · Supplies tab · Pre-totaled, filterable</div>
+              </div>
+              <div class="export-item">
+                <div class="export-item-icon">🔗</div>
+                <div class="export-item-label">Document Links</div>
+                <div class="export-item-desc">Secure access links to all uploaded client documents, organized by year</div>
+              </div>
+            </div>
+            <div class="export-actions">
+              <button class="btn btn-ghost btn-sm" style="border-color:rgba(240,231,215,0.3);color:var(--ivory);">Preview Package</button>
+              <button class="btn btn-champagne">Generate &amp; Send to Partner →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPORTS screen placeholder -->
+      <div class="admin-screen" id="as-exports">
+        <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--charcoal);margin-bottom:6px;">Export Packages</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:24px;font-weight:300;">All packages sent to Solutions Made Simple.</div>
+        <div class="info-box"><strong>Coming in next iteration:</strong> Batch export — select multiple completed clients and generate one Excel flat file with all submissions combined, plus individual PDFs per client in a single send.</div>
+      </div>
+
+      <!-- CLIENTS screen placeholder -->
+      <div class="admin-screen" id="as-clients">
+        <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--charcoal);margin-bottom:6px;">All Clients</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:24px;font-weight:300;">Search and filter all 23 clients.</div>
+        <div class="info-box"><strong>Coming in next iteration:</strong> Full client list with search, filter by status, and bulk actions — resend links, export batch, flag for follow-up.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ADD CLIENT MODAL -->
+<div class="modal-overlay" id="modal" onclick="maybeClose(event)">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="fm-pat"></div>
+      <button class="modal-x" onclick="hideModal()">×</button>
+      <div class="modal-hdr-inner">
+        <div class="modal-hdr-title">Add New Client</div>
+        <div class="modal-hdr-sub">We'll send them a magic link — no password required.</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="ff"><label class="flabel">Client's Full Name</label><input class="finput" placeholder="e.g. Sarah Johnson"></div>
+      <div class="ff"><label class="flabel">Business Name</label><input class="finput" placeholder="e.g. Acme Technologies LLC"></div>
+      <div class="ff">
+        <label class="flabel">Email Address</label>
+        <input class="finput" placeholder="sarah@acmetech.com">
+        <div class="fhint">The client clicks their magic link to access the portal. No account or password needed.</div>
+      </div>
+      <div class="ff"><label class="flabel">Note to Client <span style="font-weight:300;text-transform:none;letter-spacing:0;">(optional)</span></label><textarea class="finput" rows="2" placeholder="e.g. Please complete by March 30th" style="resize:none;"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="hideModal()">Cancel</button>
+      <button class="btn btn-cherry" onclick="hideModal()">Send Magic Link →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const YEARS = [2025,2024,2023,2022];
+const STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'];
+
+// ── VIEW SWITCHER ──
+function switchView(v, btn){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.sw-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── CLIENT NAVIGATION ──
+function clientGo(n){
+  document.querySelectorAll('.client-screen').forEach(s=>s.classList.remove('active'));
+  const screens = ['cs0','cs1','cs2','cs3','cs4'];
+  document.getElementById(screens[n]).classList.add('active');
+  document.querySelectorAll('.cp-tab').forEach((t,i)=>{
+    t.classList.remove('active','done');
+    const num = t.querySelector('.cp-num');
+    if(i===n){t.classList.add('active');num.textContent=i+1;}
+    else if(i<n){t.classList.add('done');num.textContent='✓';}
+    else num.textContent=i+1;
+  });
+  window.scrollTo({top:52,behavior:'smooth'});
+}
+
+// ── TRUE BINARY PATH — each path replaces screen 2 entirely ──
+function goUploadPath(){
+  // Hide ALL screens, show upload screen only
+  document.querySelectorAll('.client-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('cs2u').classList.add('active');
+  // Update progress bar to show step 3
+  document.querySelectorAll('.cp-tab').forEach((t,i)=>{
+    t.classList.remove('active','done');
+    const num = t.querySelector('.cp-num');
+    if(i===2){t.classList.add('active');num.textContent=3;}
+    else if(i<2){t.classList.add('done');num.textContent='✓';}
+    else num.textContent=i+1;
+  });
+  window.scrollTo({top:52,behavior:'smooth'});
+}
+
+function goManualPath(){
+  document.querySelectorAll('.client-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('cs2m').classList.add('active');
+  document.querySelectorAll('.cp-tab').forEach((t,i)=>{
+    t.classList.remove('active','done');
+    const num = t.querySelector('.cp-num');
+    if(i===2){t.classList.add('active');num.textContent=3;}
+    else if(i<2){t.classList.add('done');num.textContent='✓';}
+    else num.textContent=i+1;
+  });
+  buildQRE('qreTableManual');
+  window.scrollTo({top:52,behavior:'smooth'});
+}
+
+// ── UPLOAD SIMULATION ──
+let uploadedCats = {};
+function simulateUpload(cat){
+  uploadedCats[cat] = true;
+  const card = document.getElementById('ucat-'+cat);
+  card.classList.add('done');
+  // Check if at least one cat uploaded → trigger extraction
+  const total = Object.keys(uploadedCats).length;
+  if(total === 1){
+    setTimeout(runExtraction, 500);
+  }
+}
+
+async function runExtraction(){
+  const card = document.getElementById('extractCard');
+  card.classList.add('show');
+  card.scrollIntoView({behavior:'smooth',block:'center'});
+
+  const stepDefs = [
+    {label:'Reading uploaded files', icon:'📄'},
+    {label:'Identifying employees & contractors', icon:'👥'},
+    {label:'Extracting wages and hours', icon:'💵'},
+    {label:'Calculating qualified amounts', icon:'🧮'},
+    {label:'Preparing your review form', icon:'✅'},
+  ];
+  const stepsEl = document.getElementById('extractSteps');
+  stepsEl.innerHTML = stepDefs.map((_,i)=>`
+    <div class="ex-step" id="xs${i}">
+      <span class="ex-icon" id="xi${i}">${stepDefs[i].icon}</span>
+      ${stepDefs[i].label}
+    </div>`).join('');
+
+  const bar = document.getElementById('extractBar');
+  for(let i=0;i<stepDefs.length;i++){
+    const row = document.getElementById('xs'+i);
+    const ico = document.getElementById('xi'+i);
+    row.classList.add('run');
+    ico.outerHTML = `<div class="spin" id="xi${i}"></div>`;
+    bar.style.width = ((i+0.5)/stepDefs.length*100)+'%';
+    await sleep(i===0?1000:1600);
+    document.getElementById('xs'+i).classList.remove('run');
+    document.getElementById('xs'+i).classList.add('done');
+    document.getElementById('xi'+i).outerHTML = `<span class="ex-icon" id="xi${i}">✓</span>`;
+    bar.style.width = ((i+1)/stepDefs.length*100)+'%';
+  }
+  await sleep(400);
+  card.style.display='none';
+  const doneNote = document.getElementById('extractDone');
+  doneNote.classList.add('show');
+  // Show QRE table with pre-filled data
+  const qreWrap = document.getElementById('qreAfterExtract');
+  qreWrap.style.display='block';
+  buildQRE('qreTableUpload');
+  // Pre-fill 2025 with extracted data
+  setTimeout(()=>{
+    addEmpRow('qreTableUpload',2025,{name:'Brandon Carr',type:'Employee',state:'Georgia',wages:16025,totalHrs:1520,pct:40,project:'Digitization R&D'});
+    addEmpRow('qreTableUpload',2025,{name:'Maddie Bell',type:'Employee',state:'Georgia',wages:6360,totalHrs:1500,pct:20,project:'Digitization R&D'});
+    addEmpRow('qreTableUpload',2025,{name:'Mary Ashley Goodman',type:'Employee',state:'Georgia',wages:45000,totalHrs:2080,pct:50,project:'Digitization R&D'});
+    addSupRow('qreTableUpload',2025,{desc:'Digitize files — paper to digital',project:'Digitization R&D',amount:9172});
+  },200);
+}
+
+// ── BUILD QRE TABLE ──
+function buildQRE(cid){
+  const c = document.getElementById(cid);
+  if(!c) return;
+  c.innerHTML = YEARS.map(y=>`
+    <div class="year-block">
+      <div class="yb-head" onclick="toggleYear('${cid}',${y},this)">
+        <div class="yb-label">${y}</div>
+        <div class="yb-right">
+          <div>
+            <div class="yb-total-lbl">Qualified Research Expenses</div>
+            <div class="yb-total-val" id="${cid}_tot_${y}">$0</div>
+          </div>
+          <div class="yb-toggle" id="${cid}_tgl_${y}">${y===2025?'▲':'▼'}</div>
+        </div>
+      </div>
+      <div class="yb-body${y!==2025?' collapsed':''}" id="${cid}_body_${y}">
+        <table class="qt">
+          <thead><tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>State</th>
+            <th>Total Wages</th>
+            <th>Total Hrs Worked</th>
+            <th>% Time on R&D</th>
+            <th>R&D Hours <span class="calc-badge">auto</span></th>
+            <th style="text-align:right">Qualified Amt <span class="calc-badge">auto</span></th>
+            <th>Project</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="${cid}_emp_${y}"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addEmpRow('${cid}',${y})">+ Add Person</button>
+        <div class="sup-divider">Supplies &amp; Materials <span style="font-weight:300;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted);">— optional</span></div>
+        <table class="qt">
+          <thead><tr><th>Description</th><th>R&D Project</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+          <tbody id="${cid}_sup_${y}"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addSupRow('${cid}',${y})">+ Add Expense</button>
+      </div>
+    </div>`).join('');
+}
+
+function toggleYear(cid, y, hdr){
+  const body = document.getElementById(`${cid}_body_${y}`);
+  const tgl = document.getElementById(`${cid}_tgl_${y}`);
+  const collapsed = body.classList.toggle('collapsed');
+  tgl.textContent = collapsed ? '▼' : '▲';
+  hdr.classList.toggle('collapsed', collapsed);
+}
+
+// ── ADD ROWS ──
+function addEmpRow(cid, year, pre={}){
+  const tbody = document.getElementById(`${cid}_emp_${year}`);
+  if(!tbody) return;
+  const id = `e_${cid}_${year}_${uid()}`;
+  const stOpts = STATES.map(s=>`<option${pre.state===s?' selected':''}>${s}</option>`).join('');
+  const tr = document.createElement('tr');
+  tr.id = id;
+  tr.innerHTML = `
+    <td><input type="text" value="${pre.name||''}" placeholder="Full name" oninput="recalc('${cid}',${year})"></td>
+    <td><select onchange="recalc('${cid}',${year})">
+      <option${pre.type==='Employee'?' selected':''}>Employee</option>
+      <option${pre.type==='Contractor'?' selected':''}>Contractor</option>
+    </select></td>
+    <td><select onchange="recalc('${cid}',${year})"><option value="">State</option>${stOpts}</select></td>
+    <td><input type="number" value="${pre.wages||''}" placeholder="0" min="0" oninput="recalc('${cid}',${year})" style="text-align:right"></td>
+    <td><input type="number" value="${pre.totalHrs||''}" placeholder="e.g. 2080" min="0" oninput="recalc('${cid}',${year})" style="text-align:right" id="th_${id}"></td>
+    <td>
+      <div style="position:relative">
+        <input type="number" value="${pre.pct||''}" placeholder="0" min="0" max="100" oninput="recalc('${cid}',${year})" style="text-align:right;padding-right:26px;" id="pct_${id}">
+        <span style="position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);pointer-events:none;">%</span>
+      </div>
+    </td>
+    <td><input type="number" readonly id="rdh_${id}" placeholder="—" style="text-align:right;min-width:80px;"></td>
+    <td class="qv-cell"><span class="qv empty" id="qv_${id}">—</span></td>
+    <td><input type="text" value="${pre.project||''}" placeholder="R&D activity name"></td>
+    <td><button class="del-btn" onclick="delRow('${id}','${cid}',${year})">×</button></td>
+  `;
+  tbody.appendChild(tr);
+  recalc(cid, year);
+}
+
+function addSupRow(cid, year, pre={}){
+  const tbody = document.getElementById(`${cid}_sup_${year}`);
+  if(!tbody) return;
+  const id = `s_${cid}_${year}_${uid()}`;
+  const tr = document.createElement('tr');
+  tr.id = id;
+  tr.innerHTML = `
+    <td><input type="text" value="${pre.desc||''}" placeholder="Expense description"></td>
+    <td><input type="text" value="${pre.project||''}" placeholder="R&D project"></td>
+    <td><input type="number" value="${pre.amount||''}" placeholder="0" min="0" oninput="recalc('${cid}',${year})" style="text-align:right"></td>
+    <td><button class="del-btn" onclick="delRow('${id}','${cid}',${year})">×</button></td>
+  `;
+  tbody.appendChild(tr);
+  recalc(cid, year);
+}
+
+function delRow(id, cid, year){
+  document.getElementById(id)?.remove();
+  recalc(cid, year);
+}
+
+// ── RECALCULATE ──
+// Per employee: R&D Hours = Total Hrs × (% ÷ 100)  [OUTPUT]
+//               Qualified Amount = Wages × (% ÷ 100) [OUTPUT]
+function recalc(cid, year){
+  let empTotal = 0, supTotal = 0;
+  document.querySelectorAll(`#${cid}_emp_${year} tr`).forEach(tr=>{
+    const numInputs = tr.querySelectorAll('input[type=number]');
+    const wages      = parseFloat(numInputs[0]?.value)||0; // Total Wages
+    const totalHrs   = parseFloat(numInputs[1]?.value)||0; // Total Hours Worked
+    const pct        = parseFloat(numInputs[2]?.value)||0; // % R&D Time
+    // Outputs
+    const rdHours    = totalHrs * (pct/100);
+    const qualified  = wages * (pct/100);
+    // Write R&D hours (readonly field)
+    const rdhField = numInputs[3];
+    if(rdhField){
+      rdhField.value = (totalHrs && pct) ? Math.round(rdHours) : '';
+      rdhField.placeholder = (totalHrs && pct) ? '' : '—';
+    }
+    // Write qualified amount
+    const qvEl = tr.querySelector('[id^="qv_"]');
+    if(qvEl){
+      if(wages && pct){qvEl.textContent=fmt(qualified);qvEl.classList.remove('empty');}
+      else{qvEl.textContent='—';qvEl.classList.add('empty');}
+    }
+    empTotal += qualified;
+  });
+  document.querySelectorAll(`#${cid}_sup_${year} tr`).forEach(tr=>{
+    const ins = tr.querySelectorAll('input[type=number]');
+    supTotal += parseFloat(ins[0]?.value)||0;
+  });
+  const totEl = document.getElementById(`${cid}_tot_${year}`);
+  if(totEl) totEl.textContent = fmt(empTotal+supTotal);
+}
+
+// ── ADMIN NAVIGATION ──
+function adminGo(screen, el){
+  document.querySelectorAll('.admin-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('as-'+screen).classList.add('active');
+  document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+
+// ── MODAL ──
+function showModal(){document.getElementById('modal').classList.add('open');}
+function hideModal(){document.getElementById('modal').classList.remove('open');}
+function maybeClose(e){if(e.target.id==='modal')hideModal();}
+
+// ── UTILS ──
+function fmt(n){if(!n)return'$0';return'$'+Math.round(n).toLocaleString();}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+</script>
+</body>
+</html>
