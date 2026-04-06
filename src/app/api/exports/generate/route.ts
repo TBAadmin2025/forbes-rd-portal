@@ -92,6 +92,13 @@ export async function POST(request: NextRequest) {
     const results: Record<string, string> = {}
     const generatedFiles: { name: string; buffer: Buffer; contentType: string }[] = []
 
+    // Build client name slug for filenames (e.g. "John Smith" → "John-Smith")
+    const clientSlug = (submission.contact_name || submission.company_name || 'Client')
+      .toString()
+      .trim()
+      .replace(/[^a-zA-Z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+
     const basePath = `exports/${submission_id}`
 
     // Excel
@@ -101,14 +108,15 @@ export async function POST(request: NextRequest) {
           submission, employees: emps, supplies: sups,
           summaries, qreByYear, totalQRE,
         })
-        const path = `${basePath}/data.xlsx`
+        const fileName = `${clientSlug}-QRE-Data.xlsx`
+        const path = `${basePath}/${fileName}`
         await supabase.storage.from('rd-documents').upload(path, excelBuffer, {
           contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           upsert: true,
         })
         const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
         results.excel_url = signed?.signedUrl || ''
-        generatedFiles.push({ name: 'data.xlsx', buffer: excelBuffer, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        generatedFiles.push({ name: fileName, buffer: excelBuffer, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       } catch (e) {
         console.error('Excel generation failed:', e)
       }
@@ -121,14 +129,15 @@ export async function POST(request: NextRequest) {
           submission, employees: emps, supplies: sups,
           documents: docs, summaries, credits, qreByYear, totalQRE,
         })
-        const path = `${basePath}/summary-report.pdf`
+        const fileName = `${clientSlug}-RD-Summary-Report.pdf`
+        const path = `${basePath}/${fileName}`
         await supabase.storage.from('rd-documents').upload(path, pdfBuffer, {
           contentType: 'application/pdf',
           upsert: true,
         })
         const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
         results.pdf_url = signed?.signedUrl || ''
-        generatedFiles.push({ name: 'summary-report.pdf', buffer: pdfBuffer, contentType: 'application/pdf' })
+        generatedFiles.push({ name: fileName, buffer: pdfBuffer, contentType: 'application/pdf' })
       } catch (e) {
         console.error('Summary PDF generation failed:', e)
       }
@@ -138,14 +147,15 @@ export async function POST(request: NextRequest) {
     if (selected.discovery_pdf) {
       try {
         const discoveryBuffer = await generateDiscoveryPDF(submission)
-        const path = `${basePath}/discovery-questionnaire.pdf`
+        const fileName = `${clientSlug}-Discovery-Questionnaire.pdf`
+        const path = `${basePath}/${fileName}`
         await supabase.storage.from('rd-documents').upload(path, discoveryBuffer, {
           contentType: 'application/pdf',
           upsert: true,
         })
         const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
         results.discovery_pdf_url = signed?.signedUrl || ''
-        generatedFiles.push({ name: 'discovery-questionnaire.pdf', buffer: discoveryBuffer, contentType: 'application/pdf' })
+        generatedFiles.push({ name: fileName, buffer: discoveryBuffer, contentType: 'application/pdf' })
       } catch (e) {
         console.error('Discovery PDF generation failed:', e)
       }
@@ -155,14 +165,15 @@ export async function POST(request: NextRequest) {
     if (selected.document_zip && docs.length > 0) {
       try {
         const zipBuffer = await generateDocumentZIP(supabase, docs)
-        const path = `${basePath}/documents.zip`
+        const fileName = `${clientSlug}-Supporting-Documents.zip`
+        const path = `${basePath}/${fileName}`
         await supabase.storage.from('rd-documents').upload(path, zipBuffer, {
           contentType: 'application/zip',
           upsert: true,
         })
         const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
         results.document_zip_url = signed?.signedUrl || ''
-        generatedFiles.push({ name: 'documents.zip', buffer: zipBuffer, contentType: 'application/zip' })
+        generatedFiles.push({ name: fileName, buffer: zipBuffer, contentType: 'application/zip' })
       } catch (e) {
         console.error('Document ZIP generation failed:', e)
       }
@@ -176,7 +187,7 @@ export async function POST(request: NextRequest) {
           fullZip.file(file.name, file.buffer)
         }
         const fullZipBuffer = Buffer.from(await fullZip.generateAsync({ type: 'nodebuffer' }))
-        const path = `${basePath}/full-package.zip`
+        const path = `${basePath}/${clientSlug}-Full-Export-Package.zip`
         await supabase.storage.from('rd-documents').upload(path, fullZipBuffer, {
           contentType: 'application/zip',
           upsert: true,
