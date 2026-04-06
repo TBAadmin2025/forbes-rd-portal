@@ -23,6 +23,7 @@ export default function GuidePage() {
   const supabase = createClient()
   const [articles, setArticles] = useState<GuideArticle[]>([])
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newCategory, setNewCategory] = useState('Getting Started')
@@ -45,6 +46,7 @@ export default function GuidePage() {
         const data = await res.json()
         setArticles(data)
       }
+      setLoading(false)
     }
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,6 +88,10 @@ export default function GuidePage() {
     if (!grouped[a.category]) grouped[a.category] = []
     grouped[a.category].push(a)
   })
+
+  if (loading) {
+    return <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 300, padding: 40 }}>Loading articles...</div>
+  }
 
   return (
     <div>
