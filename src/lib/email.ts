@@ -8,7 +8,7 @@ function getResend(): Resend | null {
   return new Resend(key)
 }
 
-const FROM_ADDRESS = 'Forbes Management <noreply@forbesmgt.com>'
+const FROM_ADDRESS = 'Forbes Management <noreply@send.forbesmgt.com>'
 
 /**
  * Send a branded client invitation email.

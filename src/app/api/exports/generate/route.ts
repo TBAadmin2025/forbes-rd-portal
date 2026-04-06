@@ -648,33 +648,6 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', submission_id)
 
-    // Step 6 — Send partner email
-    const resendKey = process.env.RESEND_API_KEY
-    const partnerEmail = process.env.PARTNER_EMAIL
-
-    if (!resendKey || resendKey === '' || resendKey === 'your_resend_api_key') {
-      console.log('Resend not configured — skipping email')
-    } else if (partnerEmail) {
-      try {
-        const { Resend } = await import('resend')
-        const resend = new Resend(resendKey)
-
-        const docLinks = docs
-          .filter((d: { storage_url: string | null }) => d.storage_url)
-          .map((d: { file_name: string; storage_url: string | null }) => `• ${d.file_name}: ${d.storage_url}`)
-          .join('\n')
-
-        await resend.emails.send({
-          from: 'Forbes Management <noreply@forbesmgt.com>',
-          to: partnerEmail,
-          subject: `R&D Tax Credit Submission — ${submission.company_name || 'Client'}`,
-          text: `R&D Tax Credit Submission\n\nCompany: ${submission.company_name || 'N/A'}\nFEIN: ${submission.fein || 'N/A'}\nState: ${submission.business_state || 'N/A'}\n\nTotal QRE: ${formatCurrency(totalQRE)}\nConservative Federal Credit: ${formatCurrency(grandConserv)}\nFull ASC Federal Credit: ${formatCurrency(grandAsc)}\nGeorgia Credit (10%): ${formatCurrency(grandGa)}\n\nDownload Reports:\n• PDF Summary: ${pdfUrl}\n• Excel Data: ${excelUrl}\n\nUploaded Documents:\n${docLinks || 'No documents'}\n\n—\nForbes Management`,
-        })
-      } catch (emailErr) {
-        console.error('Email send failed:', emailErr)
-      }
-    }
-
     return Response.json({
       success: true,
       pdf_url: pdfUrl,

@@ -430,6 +430,7 @@ export default function SubmissionDetailPage() {
       {/* Export Panel */}
       <ExportPanel
         submissionId={id}
+        companyName={submission?.company_name || undefined}
         onExportGenerated={() => {
           // Refresh submission data
           supabase
