@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       data: {
         full_name: contact_name,
         company_name: company_name || null,
+        role: 'client',
       },
       redirectTo: `${siteUrl}/auth/callback`,
     }
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
     .from('profiles')
     .upsert({
       id: newUserId,
+      email: contact_email,
       role: 'client',
       full_name: contact_name,
     })

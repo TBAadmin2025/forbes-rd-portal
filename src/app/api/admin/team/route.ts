@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   const { data: inviteData, error: inviteError } = await serviceClient.auth.admin.inviteUserByEmail(
     email,
     {
-      data: { full_name },
+      data: { full_name, role },
       redirectTo: `${siteUrl}/auth/callback`,
     }
   )
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     .from('profiles')
     .upsert({
       id: newUserId,
+      email,
       role,
       full_name,
     })
