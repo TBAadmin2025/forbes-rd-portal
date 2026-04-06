@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
   // Upload to Supabase Storage
   const { error: uploadError } = await supabase.storage
-    .from('documents')
+    .from('rd-documents')
     .upload(storagePath, file, {
       upsert: true,
     })
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   // Get public URL
   const { data: urlData } = supabase.storage
-    .from('documents')
+    .from('rd-documents')
     .getPublicUrl(storagePath)
 
   // Insert document record

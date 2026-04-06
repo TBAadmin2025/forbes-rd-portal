@@ -18,7 +18,7 @@ export async function generateDocumentZIP(
     await Promise.all(batch.map(async (doc) => {
       try {
         const { data, error } = await supabase.storage
-          .from('documents')
+          .from('rd-documents')
           .download(doc.storage_path as string)
 
         if (error) {

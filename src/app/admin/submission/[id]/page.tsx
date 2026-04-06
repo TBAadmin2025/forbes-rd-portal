@@ -231,7 +231,7 @@ export default function SubmissionDetailPage() {
             variant="cherry"
             size="sm"
             onClick={() => {
-              /* generate export */
+              document.getElementById('export-panel')?.scrollIntoView({ behavior: 'smooth' })
             }}
           >
             Generate Export →
@@ -435,6 +435,7 @@ export default function SubmissionDetailPage() {
       )}
 
       {/* Export Panel */}
+      <div id="export-panel" />
       <ExportPanel
         submissionId={id}
         companyName={submission?.company_name || undefined}

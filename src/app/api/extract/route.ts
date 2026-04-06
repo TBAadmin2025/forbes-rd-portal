@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
       // Download file from storage
       const { data: fileData, error: dlErr } = await supabase.storage
-        .from('documents')
+        .from('rd-documents')
         .download(doc.storage_path)
 
       if (dlErr || !fileData) {

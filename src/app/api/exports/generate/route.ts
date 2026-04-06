@@ -102,11 +102,11 @@ export async function POST(request: NextRequest) {
           summaries, qreByYear, totalQRE,
         })
         const path = `${basePath}/data.xlsx`
-        await supabase.storage.from('documents').upload(path, excelBuffer, {
+        await supabase.storage.from('rd-documents').upload(path, excelBuffer, {
           contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           upsert: true,
         })
-        const { data: signed } = await supabase.storage.from('documents').createSignedUrl(path, 60 * 60 * 24 * 7)
+        const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
         results.excel_url = signed?.signedUrl || ''
         generatedFiles.push({ name: 'data.xlsx', buffer: excelBuffer, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       } catch (e) {
@@ -122,11 +122,11 @@ export async function POST(request: NextRequest) {
           documents: docs, summaries, credits, qreByYear, totalQRE,
         })
         const path = `${basePath}/summary-report.pdf`
-        await supabase.storage.from('documents').upload(path, pdfBuffer, {
+        await supabase.storage.from('rd-documents').upload(path, pdfBuffer, {
           contentType: 'application/pdf',
           upsert: true,
         })
-        const { data: signed } = await supabase.storage.from('documents').createSignedUrl(path, 60 * 60 * 24 * 7)
+        const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
         results.pdf_url = signed?.signedUrl || ''
         generatedFiles.push({ name: 'summary-report.pdf', buffer: pdfBuffer, contentType: 'application/pdf' })
       } catch (e) {
@@ -139,11 +139,11 @@ export async function POST(request: NextRequest) {
       try {
         const discoveryBuffer = await generateDiscoveryPDF(submission)
         const path = `${basePath}/discovery-questionnaire.pdf`
-        await supabase.storage.from('documents').upload(path, discoveryBuffer, {
+        await supabase.storage.from('rd-documents').upload(path, discoveryBuffer, {
           contentType: 'application/pdf',
           upsert: true,
         })
-        const { data: signed } = await supabase.storage.from('documents').createSignedUrl(path, 60 * 60 * 24 * 7)
+        const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
         results.discovery_pdf_url = signed?.signedUrl || ''
         generatedFiles.push({ name: 'discovery-questionnaire.pdf', buffer: discoveryBuffer, contentType: 'application/pdf' })
       } catch (e) {
@@ -156,11 +156,11 @@ export async function POST(request: NextRequest) {
       try {
         const zipBuffer = await generateDocumentZIP(supabase, docs)
         const path = `${basePath}/documents.zip`
-        await supabase.storage.from('documents').upload(path, zipBuffer, {
+        await supabase.storage.from('rd-documents').upload(path, zipBuffer, {
           contentType: 'application/zip',
           upsert: true,
         })
-        const { data: signed } = await supabase.storage.from('documents').createSignedUrl(path, 60 * 60 * 24 * 7)
+        const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
         results.document_zip_url = signed?.signedUrl || ''
         generatedFiles.push({ name: 'documents.zip', buffer: zipBuffer, contentType: 'application/zip' })
       } catch (e) {
@@ -177,11 +177,11 @@ export async function POST(request: NextRequest) {
         }
         const fullZipBuffer = Buffer.from(await fullZip.generateAsync({ type: 'nodebuffer' }))
         const path = `${basePath}/full-package.zip`
-        await supabase.storage.from('documents').upload(path, fullZipBuffer, {
+        await supabase.storage.from('rd-documents').upload(path, fullZipBuffer, {
           contentType: 'application/zip',
           upsert: true,
         })
-        const { data: signed } = await supabase.storage.from('documents').createSignedUrl(path, 60 * 60 * 24 * 7)
+        const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
         results.full_package_url = signed?.signedUrl || ''
       } catch (e) {
         console.error('Full package ZIP failed:', e)
