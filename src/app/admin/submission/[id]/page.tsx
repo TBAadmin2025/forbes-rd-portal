@@ -154,6 +154,22 @@ export default function SubmissionDetailPage() {
     setSubmission((prev) => prev ? { ...prev, flagged: !prev.flagged } : prev)
   }
 
+  const [activating, setActivating] = useState(false)
+  const handleActivatePortal = async () => {
+    setActivating(true)
+    const res = await fetch('/api/admin/invite', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ submission_id: id }),
+    })
+    if (res.ok) {
+      // Refresh submission to get updated client_user_id
+      const { data } = await supabase.from('submissions').select('*').eq('id', id).single()
+      if (data) setSubmission(data as Submission)
+    }
+    setActivating(false)
+  }
+
   return (
     <div>
       {/* Back link */}
@@ -217,6 +233,16 @@ export default function SubmissionDetailPage() {
           </Tag>
         </div>
         <div className="flex" style={{ gap: 8, flexShrink: 0 }}>
+          {!submission.client_user_id && (
+            <Button
+              variant="emerald"
+              size="sm"
+              onClick={handleActivatePortal}
+              disabled={activating}
+            >
+              {activating ? 'Sending...' : 'Activate Portal'}
+            </Button>
+          )}
           <Button
             variant="champagne"
             size="sm"

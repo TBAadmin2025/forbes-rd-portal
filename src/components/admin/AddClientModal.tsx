@@ -19,6 +19,7 @@ export default function AddClientModal({
   const [businessName, setBusinessName] = useState('')
   const [email, setEmail] = useState('')
   const [note, setNote] = useState('')
+  const [sendInvite, setSendInvite] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
@@ -36,6 +37,7 @@ export default function AddClientModal({
           company_name: businessName,
           contact_email: email,
           admin_notes: note || null,
+          send_invite: sendInvite,
         }),
       })
 
@@ -51,6 +53,7 @@ export default function AddClientModal({
       setBusinessName('')
       setEmail('')
       setNote('')
+      setSendInvite(true)
       onSuccess()
       onClose()
     } catch {
@@ -132,7 +135,7 @@ export default function AddClientModal({
                 fontWeight: 300,
               }}
             >
-              They&apos;ll receive an email to set their password and access the portal.
+              Create a client record. Optionally send a portal invite.
             </div>
           </div>
         </div>
@@ -170,7 +173,7 @@ export default function AddClientModal({
             />
           </FormField>
 
-          <FormField label="Email Address" hint="We'll send an invitation to this address">
+          <FormField label="Email Address">
             <input
               className="finput"
               type="email"
@@ -179,16 +182,47 @@ export default function AddClientModal({
             />
           </FormField>
 
-          <FormField label="Note to Client">
+          <FormField label="Note (Internal)">
             <textarea
               className="finput"
-              placeholder="Optional"
-              rows={3}
+              placeholder="Optional — only visible to your team"
+              rows={2}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               style={{ resize: 'vertical' }}
             />
           </FormField>
+
+          {/* Portal invite toggle */}
+          <div
+            style={{
+              background: sendInvite ? 'rgba(0,79,53,0.05)' : 'var(--warm)',
+              border: sendInvite ? '1.5px solid rgba(0,79,53,0.2)' : '1.5px solid var(--border)',
+              borderRadius: 4,
+              padding: '14px 16px',
+              marginTop: 4,
+              transition: 'all 0.15s',
+            }}
+          >
+            <label className="flex items-start" style={{ gap: 12, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={sendInvite}
+                onChange={(e) => setSendInvite(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: 'var(--emerald)', marginTop: 1, flexShrink: 0 }}
+              />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--charcoal)' }}>
+                  Send portal invite now
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 300, marginTop: 2, lineHeight: 1.5 }}>
+                  {sendInvite
+                    ? 'Client will receive an email to set their password and access the portal.'
+                    : 'Client record will be created without portal access. You can activate it later.'}
+                </div>
+              </div>
+            </label>
+          </div>
         </div>
 
         {/* Footer */}
@@ -200,11 +234,15 @@ export default function AddClientModal({
             Cancel
           </Button>
           <Button
-            variant="cherry"
+            variant={sendInvite ? 'cherry' : 'dark'}
             onClick={handleSubmit}
             disabled={sending || !fullName || !email}
           >
-            {sending ? 'Sending...' : 'Send Invitation →'}
+            {sending
+              ? 'Creating...'
+              : sendInvite
+                ? 'Create & Send Invite'
+                : 'Create Client Record'}
           </Button>
         </div>
       </div>
