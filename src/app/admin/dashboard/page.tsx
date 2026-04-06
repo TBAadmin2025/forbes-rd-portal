@@ -21,6 +21,14 @@ export default function DashboardPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [firstName, setFirstName] = useState('')
 
+  const loadSubmissions = async () => {
+    const { data } = await supabase
+      .from('submissions')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (data) setSubmissions(data as Submission[])
+  }
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -33,14 +41,17 @@ export default function DashboardPage() {
         const name = profile?.full_name || user.user_metadata?.full_name || ''
         setFirstName(name.split(' ')[0] || 'there')
       }
-
-      const { data } = await supabase
-        .from('submissions')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (data) setSubmissions(data as Submission[])
+      await loadSubmissions()
     }
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Refresh when a new client is added
+  useEffect(() => {
+    const handler = () => loadSubmissions()
+    window.addEventListener('refresh-admin-data', handler)
+    return () => window.removeEventListener('refresh-admin-data', handler)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

@@ -68,6 +68,9 @@ export default function AdminLayout({
       .eq('status', 'submitted')
 
     setSubmittedCount(count || 0)
+
+    // Notify dashboard and other pages to refresh their data
+    window.dispatchEvent(new CustomEvent('refresh-admin-data'))
   }
 
   return (

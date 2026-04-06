@@ -49,29 +49,22 @@ export default function SubmissionDetailPage() {
 
   useEffect(() => {
     async function load() {
-      // Use API route to bypass RLS
+      // Use API route — returns submission + documents + qre_summary via service client
       const subRes = await fetch(`/api/submissions/${id}`)
-      if (subRes.ok) {
-        const sub = await subRes.json()
-        if (sub?.id) setSubmission(sub as Submission)
-      }
+      if (!subRes.ok) return
 
-      const { data: docs } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('submission_id', id)
+      const data = await subRes.json()
+      if (!data?.id) return
 
-      if (docs) setDocuments(docs as DocType[])
+      // Separate merged data
+      const { documents: apiDocs, qre_summary: apiSummaries, ...sub } = data
+      setSubmission(sub as Submission)
 
-      const { data: summaries } = await supabase
-        .from('qre_summary')
-        .select('*')
-        .eq('submission_id', id)
-        .order('tax_year', { ascending: false })
+      if (apiDocs) setDocuments(apiDocs as DocType[])
 
-      if (summaries) {
+      if (apiSummaries) {
         setQreRows(
-          summaries.map((s) => ({
+          apiSummaries.map((s: Record<string, number | null>) => ({
             tax_year: s.tax_year ?? 0,
             employee_count: s.employee_count ?? 0,
             total_rd_hours: s.total_rd_hours ?? 0,
@@ -82,6 +75,7 @@ export default function SubmissionDetailPage() {
         )
       }
 
+      // Credit estimates — fetch separately (not in API response)
       const { data: estimates } = await supabase
         .from('credit_estimates')
         .select('*')
