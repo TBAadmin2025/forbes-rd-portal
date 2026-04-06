@@ -48,24 +48,18 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        setError(data.error || 'Something went wrong. Please try again.')
-      } else {
-        setResetSent(true)
-      }
-    } catch {
-      setError('Something went wrong. Please try again.')
-    }
+    const supabase = createClient()
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    })
 
     setLoading(false)
+
+    if (resetError) {
+      setError(resetError.message)
+    } else {
+      setResetSent(true)
+    }
   }
 
   return (
