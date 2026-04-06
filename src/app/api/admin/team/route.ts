@@ -87,7 +87,7 @@ export async function GET() {
   // Get all team members (admins and super_admins)
   const { data: team, error } = await serviceClient
     .from('profiles')
-    .select('id, full_name, role, created_at')
+    .select('id, full_name, email, role, created_at')
     .in('role', ['admin', 'super_admin'])
     .order('created_at', { ascending: true })
 
@@ -96,4 +96,45 @@ export async function GET() {
   }
 
   return Response.json(team)
+}
+
+// PATCH — resend invite to a team member
+export async function PATCH(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const serviceClient = createServiceClient()
+  const { data: profile } = await serviceClient.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'super_admin') {
+    return Response.json({ error: 'Only super admins can resend invites' }, { status: 403 })
+  }
+
+  const body = await request.json()
+  const { email } = body
+  if (!email) return Response.json({ error: 'Email required' }, { status: 400 })
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
+  // Resend invite by generating a new invite link
+  const { error: inviteError } = await serviceClient.auth.admin.inviteUserByEmail(
+    email,
+    { redirectTo: `${siteUrl}/auth/callback` }
+  )
+
+  if (inviteError) {
+    // If user already confirmed, send a password reset instead
+    if (inviteError.message.includes('already confirmed')) {
+      const { error: resetError } = await serviceClient.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+        options: { redirectTo: `${siteUrl}/auth/reset-password` },
+      })
+      if (resetError) return Response.json({ error: resetError.message }, { status: 500 })
+      return Response.json({ message: 'Password reset link sent.' })
+    }
+    return Response.json({ error: inviteError.message }, { status: 500 })
+  }
+
+  return Response.json({ message: `Invite resent to ${email}.` })
 }

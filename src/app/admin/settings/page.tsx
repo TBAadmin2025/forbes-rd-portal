@@ -26,7 +26,9 @@ export default function SettingsPage() {
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
   const [showAddTeamMember, setShowAddTeamMember] = useState(false)
-  const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string | null; role: string; created_at: string }[]>([])
+  const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string | null; email: string; role: string; created_at: string }[]>([])
+  const [resending, setResending] = useState<string | null>(null)
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null)
 
   const loadTeamMembers = async () => {
     const res = await fetch('/api/admin/team')
@@ -34,6 +36,21 @@ export default function SettingsPage() {
       const data = await res.json()
       setTeamMembers(data)
     }
+  }
+
+  const handleResendInvite = async (memberEmail: string) => {
+    setResending(memberEmail)
+    setResendSuccess(null)
+    const res = await fetch('/api/admin/team', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: memberEmail }),
+    })
+    if (res.ok) {
+      setResendSuccess(memberEmail)
+      setTimeout(() => setResendSuccess(null), 3000)
+    }
+    setResending(null)
   }
 
   useEffect(() => {
@@ -274,21 +291,42 @@ export default function SettingsPage() {
                   key={m.id}
                   className="flex items-center justify-between"
                   style={{
-                    padding: '10px 0',
+                    padding: '12px 0',
                     borderBottom: '1px solid var(--border)',
                   }}
                 >
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--charcoal)' }}>
                       {m.full_name || 'Unnamed'}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 300, marginTop: 2 }}>
-                      Added {new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {m.email} · Added {new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                   </div>
-                  <Tag variant={m.role === 'super_admin' ? 'complete' : 'progress'}>
-                    {m.role === 'super_admin' ? 'Super Admin' : 'Admin'}
-                  </Tag>
+                  <div className="flex items-center" style={{ gap: 10 }}>
+                    {m.id !== email && (
+                      <button
+                        onClick={() => handleResendInvite(m.email)}
+                        disabled={resending === m.email}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          fontSize: 11,
+                          fontWeight: 500,
+                          color: resendSuccess === m.email ? 'var(--emerald)' : 'var(--cherry)',
+                          cursor: resending === m.email ? 'wait' : 'pointer',
+                          padding: 0,
+                          textDecoration: 'underline',
+                          textUnderlineOffset: 2,
+                        }}
+                      >
+                        {resending === m.email ? 'Sending...' : resendSuccess === m.email ? 'Sent ✓' : 'Resend Invite'}
+                      </button>
+                    )}
+                    <Tag variant={m.role === 'super_admin' ? 'complete' : 'progress'}>
+                      {m.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                    </Tag>
+                  </div>
                 </div>
               ))}
             </div>
