@@ -169,7 +169,7 @@ export default function GuideArticlePage() {
       </aside>
 
       {/* Article Content */}
-      <main style={{ flex: 1, maxWidth: 760, padding: '48px 56px 96px' }}>
+      <main style={{ flex: 1, padding: '48px 56px 96px' }}>
 
         {/* Breadcrumb */}
         <nav style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, letterSpacing: '1px', color: 'var(--muted)', marginBottom: 28, fontWeight: 400 }}>
