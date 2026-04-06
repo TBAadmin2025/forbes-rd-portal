@@ -167,7 +167,7 @@ export default function DashboardPage() {
           >
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'var(--emerald)' }} />
             <div style={{ fontSize: 36, marginBottom: 12 }}>📦</div>
-            <div className="font-serif" style={{ fontSize: 18, color: 'var(--charcoal)', marginBottom: 6 }}>Send to Solutions Made Simple</div>
+            <div className="font-serif" style={{ fontSize: 18, color: 'var(--charcoal)', marginBottom: 6 }}>Send to Partner</div>
             <div style={{ fontSize: 13, fontWeight: 300, color: 'var(--muted)', lineHeight: 1.7, marginBottom: 20 }}>
               Generate the R&D package for a completed client and send it to your partner.
             </div>

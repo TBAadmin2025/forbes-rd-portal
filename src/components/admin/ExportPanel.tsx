@@ -360,7 +360,7 @@ admin@forbesmgt.com`
             }}
           >
             <div style={{ fontSize: 13, color: 'var(--ivory)', fontWeight: 500, marginBottom: 8 }}>
-              Did you send the package to Solutions Made Simple?
+              Did you send the package to your partner?
             </div>
             <div style={{ fontSize: 11, color: 'rgba(240,231,215,0.5)', fontWeight: 300, marginBottom: 12, lineHeight: 1.6 }}>
               After you&apos;ve emailed the files, click below to mark this client as sent. This helps you track which packages have been delivered.

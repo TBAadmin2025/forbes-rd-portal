@@ -22,7 +22,7 @@ interface NavItem {
 const NAV_ITEMS: (NavItem | 'divider')[] = [
   { label: 'Dashboard', icon: '🏠', href: '/admin/dashboard', tooltip: 'Your home base. See what needs attention and take action.' },
   { label: 'All Clients', icon: '👥', href: '/admin/clients', tooltip: 'See every client you\'ve added and where they are in the process.' },
-  { label: 'Send to Partner', icon: '📦', href: '/admin/exports', tooltip: 'Generate and send the R&D package to Solutions Made Simple.' },
+  { label: 'Send to Partner', icon: '📦', href: '/admin/exports', tooltip: 'Generate and send the R&D package to your partner.' },
   'divider',
   { label: 'Add Client', icon: '➕', action: 'addClient', tooltip: 'Invite a new client to fill out their R&D information.' },
   'divider',
