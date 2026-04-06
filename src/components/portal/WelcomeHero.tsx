@@ -4,6 +4,7 @@ import Button from '@/components/shared/Button'
 interface WelcomeHeroProps {
   firstName: string
   resumeRoute?: string | null
+  startRoute?: string
 }
 
 const STEPS = [
@@ -12,7 +13,7 @@ const STEPS = [
   { num: '03', label: 'Review & submit' },
 ]
 
-export default function WelcomeHero({ firstName, resumeRoute }: WelcomeHeroProps) {
+export default function WelcomeHero({ firstName, resumeRoute, startRoute = '/portal/company-info' }: WelcomeHeroProps) {
   return (
     <>
       <div
@@ -157,7 +158,7 @@ export default function WelcomeHero({ firstName, resumeRoute }: WelcomeHeroProps
                   Continue where you left off →
                 </Button>
               </Link>
-              <Link href="/portal/company-info">
+              <Link href={startRoute}>
                 <Button variant="ghost-light" size="lg">
                   Start over
                 </Button>

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import SiteHeader from '@/components/shared/SiteHeader'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import AddClientModal from '@/components/admin/AddClientModal'
+import AddTeamMemberModal from '@/components/admin/AddTeamMemberModal'
 
 export default function AdminLayout({
   children,
@@ -15,6 +16,7 @@ export default function AdminLayout({
   const pathname = usePathname()
   const supabase = createClient()
   const [showAddClient, setShowAddClient] = useState(false)
+  const [showAddTeamMember, setShowAddTeamMember] = useState(false)
   const [submittedCount, setSubmittedCount] = useState(0)
 
   useEffect(() => {
@@ -47,6 +49,7 @@ export default function AdminLayout({
           activeRoute={pathname}
           submittedCount={submittedCount}
           onAddClient={() => setShowAddClient(true)}
+          onAddTeamMember={() => setShowAddTeamMember(true)}
         />
         <main
           className="flex-1 overflow-y-auto"
@@ -60,6 +63,11 @@ export default function AdminLayout({
         isOpen={showAddClient}
         onClose={() => setShowAddClient(false)}
         onSuccess={refreshData}
+      />
+      <AddTeamMemberModal
+        isOpen={showAddTeamMember}
+        onClose={() => setShowAddTeamMember(false)}
+        onSuccess={() => {}}
       />
     </div>
   )

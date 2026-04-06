@@ -2,9 +2,11 @@
 
 import { useRouter } from 'next/navigation'
 import Button from '@/components/shared/Button'
+import { useAdminSid, portalUrl } from '@/lib/utils/use-submission-id'
 
 export default function PathPicker() {
   const router = useRouter()
+  const sid = useAdminSid()
 
   return (
     <div>
@@ -41,11 +43,11 @@ export default function PathPicker() {
           {/* Upload card */}
           <div
             className="path-card"
-            onClick={() => router.push('/portal/upload')}
+            onClick={() => router.push(portalUrl('/portal/upload', sid))}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') router.push('/portal/upload')
+              if (e.key === 'Enter') router.push(portalUrl('/portal/upload', sid))
             }}
             style={{
               background: 'var(--white)',
@@ -121,11 +123,11 @@ export default function PathPicker() {
           {/* Manual card */}
           <div
             className="path-card"
-            onClick={() => router.push('/portal/manual')}
+            onClick={() => router.push(portalUrl('/portal/manual', sid))}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') router.push('/portal/manual')
+              if (e.key === 'Enter') router.push(portalUrl('/portal/manual', sid))
             }}
             style={{
               background: 'var(--white)',
@@ -212,7 +214,7 @@ export default function PathPicker() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push('/portal/company-info')}
+          onClick={() => router.push(portalUrl('/portal/company-info', sid))}
         >
           ← Back
         </Button>

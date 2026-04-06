@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useAdminSid, portalUrl } from '@/lib/utils/use-submission-id'
 import Card from '@/components/shared/Card'
 import Button from '@/components/shared/Button'
 import UploadCategory from '@/components/portal/UploadCategory'
@@ -20,6 +21,7 @@ const YEARS = [2025, 2024, 2023, 2022]
 export default function UploadPage() {
   const router = useRouter()
   const supabase = createClient()
+  const sid = useAdminSid()
 
   const [submissionId, setSubmissionId] = useState<string | null>(null)
   const [files, setFiles] = useState<Record<Category, UploadedFile[]>>({
@@ -38,16 +40,28 @@ export default function UploadPage() {
   // Load submission
   useEffect(() => {
     async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
+      let submission: { id: string } | null = null
 
-      const { data: submission } = await supabase
-        .from('submissions')
-        .select('id')
-        .eq('client_user_id', user.id)
-        .single()
+      if (sid) {
+        const { data } = await supabase
+          .from('submissions')
+          .select('id')
+          .eq('id', sid)
+          .single()
+        submission = data
+      } else {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data } = await supabase
+          .from('submissions')
+          .select('id')
+          .eq('client_user_id', user.id)
+          .single()
+        submission = data
+      }
 
       if (submission) {
         setSubmissionId(submission.id)
@@ -148,7 +162,7 @@ export default function UploadPage() {
     <div style={{ animation: 'fadeUp 0.3s ease' }}>
       {/* Back link */}
       <button
-        onClick={() => router.push('/portal/data-entry')}
+        onClick={() => router.push(portalUrl('/portal/data-entry', sid))}
         style={{
           background: 'none',
           border: 'none',
@@ -301,7 +315,7 @@ export default function UploadPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push('/portal/data-entry')}
+          onClick={() => router.push(portalUrl('/portal/data-entry', sid))}
         >
           ← Back
         </Button>
@@ -311,7 +325,7 @@ export default function UploadPage() {
           </span>
           <Button
             variant="dark"
-            onClick={() => router.push('/portal/review')}
+            onClick={() => router.push(portalUrl('/portal/review', sid))}
           >
             Continue →
           </Button>

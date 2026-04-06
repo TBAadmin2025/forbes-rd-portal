@@ -6,13 +6,14 @@ interface AdminSidebarProps {
   activeRoute: string
   submittedCount?: number
   onAddClient?: () => void
+  onAddTeamMember?: () => void
 }
 
 interface NavItem {
   label: string
   icon: string
   href?: string
-  action?: 'addClient'
+  action?: 'addClient' | 'addTeamMember'
   badge?: boolean
 }
 
@@ -29,6 +30,7 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
     title: 'ACTIONS',
     items: [
       { label: 'Add Client', icon: '➕', action: 'addClient' },
+      { label: 'Add Team Member', icon: '🧑‍💼', action: 'addTeamMember' },
     ],
   },
   {
@@ -43,6 +45,7 @@ export default function AdminSidebar({
   activeRoute,
   submittedCount = 0,
   onAddClient,
+  onAddTeamMember,
 }: AdminSidebarProps) {
   const linkStyle = (isActive: boolean): React.CSSProperties => ({
     display: 'flex',
@@ -86,11 +89,12 @@ export default function AdminSidebar({
           {section.items.map((item) => {
             const isActive = item.href ? activeRoute.startsWith(item.href) : false
 
-            if (item.action === 'addClient') {
+            if (item.action === 'addClient' || item.action === 'addTeamMember') {
+              const handler = item.action === 'addClient' ? onAddClient : onAddTeamMember
               return (
                 <button
                   key={item.label}
-                  onClick={onAddClient}
+                  onClick={handler}
                   style={{
                     ...linkStyle(false),
                     width: '100%',

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useAdminSid, portalUrl } from '@/lib/utils/use-submission-id'
 import Button from '@/components/shared/Button'
 import InfoBox from '@/components/shared/InfoBox'
 import YearBlock from '@/components/portal/YearBlock'
@@ -13,6 +14,7 @@ const YEARS = [2025, 2024, 2023, 2022]
 export default function ManualPage() {
   const router = useRouter()
   const supabase = createClient()
+  const sid = useAdminSid()
 
   const [submissionId, setSubmissionId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -33,7 +35,7 @@ export default function ManualPage() {
 
       // Try to find existing submission via API (bypasses RLS)
       console.log('manual: fetching submission via API...')
-      const getRes = await fetch('/api/submissions')
+      const getRes = await fetch(sid ? `/api/submissions/${sid}` : '/api/submissions')
       let submission: { id: string } | null = null
 
       if (getRes.ok) {
@@ -111,7 +113,7 @@ export default function ManualPage() {
     <div style={{ animation: 'fadeUp 0.3s ease' }}>
       {/* Back link */}
       <button
-        onClick={() => router.push('/portal/data-entry')}
+        onClick={() => router.push(portalUrl('/portal/data-entry', sid))}
         style={{
           background: 'none',
           border: 'none',
@@ -162,7 +164,7 @@ export default function ManualPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push('/portal/data-entry')}
+          onClick={() => router.push(portalUrl('/portal/data-entry', sid))}
         >
           ← Back
         </Button>
@@ -180,7 +182,7 @@ export default function ManualPage() {
                   body: JSON.stringify({ current_step: 3 }),
                 })
               }
-              router.push('/portal/review')
+              router.push(portalUrl('/portal/review', sid))
             }}
           >
             Continue →

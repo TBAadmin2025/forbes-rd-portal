@@ -6,6 +6,7 @@ import ConfirmationHero from '@/components/portal/ConfirmationHero'
 import InfoBox from '@/components/shared/InfoBox'
 import { formatCurrency } from '@/lib/utils/formatting'
 import { calcConservativeFederal, calcGeorgiaCredit } from '@/lib/utils/calculations'
+import { useAdminSid } from '@/lib/utils/use-submission-id'
 
 interface PageData {
   firstName: string
@@ -17,6 +18,7 @@ interface PageData {
 
 export default function ConfirmationPage() {
   const supabase = createClient()
+  const sid = useAdminSid()
   const [data, setData] = useState<PageData | null>(null)
 
   useEffect(() => {
@@ -26,11 +28,10 @@ export default function ConfirmationPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: submission } = await supabase
-        .from('submissions')
-        .select('id, contact_name')
-        .eq('client_user_id', user.id)
-        .single()
+      const subQuery = sid
+        ? supabase.from('submissions').select('id, contact_name').eq('id', sid).single()
+        : supabase.from('submissions').select('id, contact_name').eq('client_user_id', user.id).single()
+      const { data: submission } = await subQuery
 
       if (!submission) return
 

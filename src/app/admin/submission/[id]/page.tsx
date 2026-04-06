@@ -217,6 +217,13 @@ export default function SubmissionDetailPage() {
           </Tag>
         </div>
         <div className="flex" style={{ gap: 8, flexShrink: 0 }}>
+          <Button
+            variant="champagne"
+            size="sm"
+            onClick={() => router.push(`/portal/welcome?sid=${id}`)}
+          >
+            Work on Behalf
+          </Button>
           <Button variant="ghost" size="sm" onClick={handleFlag}>
             {submission.flagged ? '⚑ Flagged' : 'Flag for Review'}
           </Button>

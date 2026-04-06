@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import Card from '@/components/shared/Card'
 import FormField from '@/components/shared/FormField'
 import Button from '@/components/shared/Button'
+import { useAdminSid, portalUrl } from '@/lib/utils/use-submission-id'
 
 const US_STATES = [
   'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut',
@@ -21,6 +22,7 @@ const US_STATES = [
 export default function CompanyInfoPage() {
   const router = useRouter()
   const supabase = createClient()
+  const sid = useAdminSid()
 
   const [submissionId, setSubmissionId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -54,12 +56,11 @@ export default function CompanyInfoPage() {
 
       console.log('company-info: profile =', profile?.email ?? 'null')
 
-      // Step 2: Get submission
-      const { data: submission, error: subErr } = await supabase
-        .from('submissions')
-        .select('*')
-        .eq('client_user_id', user.id)
-        .single()
+      // Step 2: Get submission — by sid if admin, by user id if client
+      const subQuery = sid
+        ? supabase.from('submissions').select('*').eq('id', sid).single()
+        : supabase.from('submissions').select('*').eq('client_user_id', user.id).single()
+      const { data: submission, error: subErr } = await subQuery
 
       console.log('company-info: submission =', submission?.id ?? 'null', 'error =', subErr?.message ?? 'none')
 
@@ -90,7 +91,7 @@ export default function CompanyInfoPage() {
     if (!submissionId) {
       console.log('company-info: no submissionId — cannot save')
       // Still navigate even if no submission exists
-      router.push('/portal/data-entry')
+      router.push(portalUrl('/portal/data-entry', sid))
       return
     }
 
@@ -118,12 +119,12 @@ export default function CompanyInfoPage() {
       console.log('company-info: update result, error =', updateErr?.message ?? 'none')
 
       setSaving(false)
-      router.push('/portal/data-entry')
+      router.push(portalUrl('/portal/data-entry', sid))
     } catch (err) {
       console.error('company-info: submit error:', err)
       setSaving(false)
       // Navigate anyway so the user isn't stuck
-      router.push('/portal/data-entry')
+      router.push(portalUrl('/portal/data-entry', sid))
     }
   }
 
@@ -248,7 +249,7 @@ export default function CompanyInfoPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push('/portal/welcome')}
+          onClick={() => router.push(portalUrl('/portal/welcome', sid))}
         >
           ← Back
         </Button>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useAdminSid, portalUrl } from '@/lib/utils/use-submission-id'
 import Card from '@/components/shared/Card'
 import Button from '@/components/shared/Button'
 import CreditSummary from '@/components/portal/CreditSummary'
@@ -20,6 +21,7 @@ interface YearRow {
 export default function ReviewPage() {
   const router = useRouter()
   const supabase = createClient()
+  const sid = useAdminSid()
 
   const [submissionId, setSubmissionId] = useState<string | null>(null)
   const [yearRows, setYearRows] = useState<YearRow[]>([])
@@ -27,16 +29,28 @@ export default function ReviewPage() {
 
   useEffect(() => {
     async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
+      let submission: { id: string } | null = null
 
-      const { data: submission } = await supabase
-        .from('submissions')
-        .select('id')
-        .eq('client_user_id', user.id)
-        .single()
+      if (sid) {
+        const { data } = await supabase
+          .from('submissions')
+          .select('id')
+          .eq('id', sid)
+          .single()
+        submission = data
+      } else {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data } = await supabase
+          .from('submissions')
+          .select('id')
+          .eq('client_user_id', user.id)
+          .single()
+        submission = data
+      }
 
       if (!submission) return
       setSubmissionId(submission.id)
@@ -89,7 +103,7 @@ export default function ReviewPage() {
       }),
     })
 
-    router.push('/portal/confirmation')
+    router.push(portalUrl('/portal/confirmation', sid))
   }
 
   const thStyle: React.CSSProperties = {

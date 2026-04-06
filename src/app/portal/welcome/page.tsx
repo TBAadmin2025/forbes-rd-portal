@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import WelcomeHero from '@/components/portal/WelcomeHero'
+import { useAdminSid, portalUrl } from '@/lib/utils/use-submission-id'
 
 const STEP_ROUTES = [
   '/portal/welcome',
@@ -14,11 +15,13 @@ const STEP_ROUTES = [
 export default function WelcomePage() {
   const [firstName, setFirstName] = useState('there')
   const [resumeRoute, setResumeRoute] = useState<string | null>(null)
+  const sid = useAdminSid()
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch('/api/submissions')
+        const url = sid ? `/api/submissions/${sid}` : '/api/submissions'
+        const res = await fetch(url)
         if (!res.ok) return
         const sub = await res.json()
         if (!sub?.id) return
@@ -27,19 +30,18 @@ export default function WelcomePage() {
           setFirstName(sub.contact_name.split(' ')[0])
         }
 
-        // If they have progress, show resume
         const step = sub.current_step ?? 0
         if (step > 0 && step < 4) {
-          setResumeRoute(STEP_ROUTES[step] || '/portal/company-info')
+          setResumeRoute(portalUrl(STEP_ROUTES[step] || '/portal/company-info', sid))
         } else if (sub.status === 'submitted') {
-          setResumeRoute('/portal/confirmation')
+          setResumeRoute(portalUrl('/portal/confirmation', sid))
         }
       } catch {
         // silent
       }
     }
     load()
-  }, [])
+  }, [sid])
 
-  return <WelcomeHero firstName={firstName} resumeRoute={resumeRoute} />
+  return <WelcomeHero firstName={firstName} resumeRoute={resumeRoute} startRoute={portalUrl('/portal/company-info', sid)} />
 }
