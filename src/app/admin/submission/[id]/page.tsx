@@ -220,7 +220,7 @@ export default function SubmissionDetailPage() {
           <Button
             variant="champagne"
             size="sm"
-            onClick={() => router.push(`/portal/welcome?sid=${id}`)}
+            onClick={() => router.push(`/admin/submission/${id}/workspace`)}
           >
             Work on Behalf
           </Button>

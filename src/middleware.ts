@@ -59,15 +59,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Allow admins on /portal if they have a ?sid= param (working on behalf of client)
     if (pathname.startsWith('/portal') && (role === 'admin' || role === 'super_admin')) {
-      const sid = request.nextUrl.searchParams.get('sid')
-      if (!sid) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/admin/pipeline'
-        return NextResponse.redirect(url)
-      }
-      // Admin with sid= param — allow through to portal
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin/pipeline'
+      return NextResponse.redirect(url)
     }
 
     if (pathname === '/login') {
