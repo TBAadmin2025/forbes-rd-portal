@@ -37,46 +37,69 @@ export default function CompanyInfoPage() {
   const [businessState, setBusinessState] = useState('Georgia')
   const [contactPhone, setContactPhone] = useState('')
 
-  // Load existing data: profile first, then submission (submission values take priority)
+  // Address
+  const [streetAddress, setStreetAddress] = useState('')
+  const [streetAddress2, setStreetAddress2] = useState('')
+  const [city, setCity] = useState('')
+  const [addressState, setAddressState] = useState('Georgia')
+  const [zipCode, setZipCode] = useState('')
+  const [taxReturnAddressSame, setTaxReturnAddressSame] = useState(true)
+
+  // Ownership
+  const [hasAdditionalOwners, setHasAdditionalOwners] = useState(false)
+  const [additionalOwners, setAdditionalOwners] = useState('')
+
+  // Business details
+  const [industry, setIndustry] = useState('')
+  const [totalEmployees, setTotalEmployees] = useState('')
+  const [totalFtEmployees, setTotalFtEmployees] = useState('')
+  const [employeeStates, setEmployeeStates] = useState('')
+  const [dateIncorporated, setDateIncorporated] = useState('')
+  const [taxYearEnd, setTaxYearEnd] = useState('')
+
   useEffect(() => {
     async function loadData() {
-      console.log('company-info: loading data...')
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      console.log('company-info: user =', user?.id ?? 'null')
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Step 1: Get profile for fallback values
       const { data: profile } = await supabase
         .from('profiles')
         .select('email, full_name')
         .eq('id', user.id)
         .single()
 
-      console.log('company-info: profile =', profile?.email ?? 'null')
-
-      // Step 2: Get submission — by sid if admin, by user id if client
       const subQuery = sid
         ? supabase.from('submissions').select('*').eq('id', sid).single()
         : supabase.from('submissions').select('*').eq('client_user_id', user.id).single()
-      const { data: submission, error: subErr } = await subQuery
-
-      console.log('company-info: submission =', submission?.id ?? 'null', 'error =', subErr?.message ?? 'none')
+      const { data: submission } = await subQuery
 
       if (submission) {
         setSubmissionId(submission.id)
         setCompanyName(submission.company_name || '')
         setDbaName(submission.dba_name || '')
-        // Submission values take priority, fall back to profile values
         setContactName(submission.contact_name || profile?.full_name || '')
         setContactEmail(submission.contact_email || profile?.email || '')
         setFein(submission.fein || '')
         setStateTaxId(submission.state_tax_id || '')
         setBusinessState(submission.business_state || 'Georgia')
         setContactPhone(submission.contact_phone || '')
+
+        // New fields
+        setStreetAddress(submission.street_address || '')
+        setStreetAddress2(submission.street_address_2 || '')
+        setCity(submission.city || '')
+        setAddressState(submission.address_state || 'Georgia')
+        setZipCode(submission.zip_code || '')
+        setTaxReturnAddressSame(submission.tax_return_address_same ?? true)
+        setHasAdditionalOwners(submission.has_additional_owners ?? false)
+        setAdditionalOwners(submission.additional_owners || '')
+        setIndustry(submission.industry || '')
+        setTotalEmployees(submission.total_employees?.toString() || '')
+        setTotalFtEmployees(submission.total_ft_employees?.toString() || '')
+        setEmployeeStates(submission.employee_states || '')
+        setDateIncorporated(submission.date_incorporated || '')
+        setTaxYearEnd(submission.tax_year_end || '')
       } else {
-        // No submission yet — pre-fill from profile
         setContactName(profile?.full_name || '')
         setContactEmail(profile?.email || '')
       }
@@ -86,11 +109,7 @@ export default function CompanyInfoPage() {
   }, [])
 
   const handleSubmit = async () => {
-    console.log('company-info: handleSubmit called, submissionId =', submissionId)
-
     if (!submissionId) {
-      console.log('company-info: no submissionId — cannot save')
-      // Still navigate even if no submission exists
       router.push(portalUrl('/portal/data-entry', sid))
       return
     }
@@ -98,8 +117,7 @@ export default function CompanyInfoPage() {
     setSaving(true)
 
     try {
-      // Update submission with company fields
-      const { error: updateErr } = await supabase
+      await supabase
         .from('submissions')
         .update({
           company_name: companyName,
@@ -110,147 +128,203 @@ export default function CompanyInfoPage() {
           state_tax_id: stateTaxId,
           business_state: businessState,
           contact_phone: contactPhone,
+          street_address: streetAddress || null,
+          street_address_2: streetAddress2 || null,
+          city: city || null,
+          address_state: addressState || null,
+          zip_code: zipCode || null,
+          tax_return_address_same: taxReturnAddressSame,
+          has_additional_owners: hasAdditionalOwners,
+          additional_owners: hasAdditionalOwners ? additionalOwners || null : null,
+          industry: industry || null,
+          total_employees: totalEmployees ? parseInt(totalEmployees) : null,
+          total_ft_employees: totalFtEmployees ? parseInt(totalFtEmployees) : null,
+          employee_states: employeeStates || null,
+          date_incorporated: dateIncorporated || null,
+          tax_year_end: taxYearEnd || null,
           status: 'in_progress',
           started_at: new Date().toISOString(),
           current_step: 2,
         })
         .eq('id', submissionId)
 
-      console.log('company-info: update result, error =', updateErr?.message ?? 'none')
-
       setSaving(false)
       router.push(portalUrl('/portal/data-entry', sid))
-    } catch (err) {
-      console.error('company-info: submit error:', err)
+    } catch {
       setSaving(false)
-      // Navigate anyway so the user isn't stuck
       router.push(portalUrl('/portal/data-entry', sid))
     }
   }
 
   return (
     <div style={{ animation: 'fadeUp 0.3s ease' }}>
+      {/* Card 1 — Contact & Identity */}
       <Card>
         <div
           className="font-serif"
-          style={{
-            fontSize: 20,
-            fontWeight: 700,
-            color: 'var(--charcoal)',
-            marginBottom: 4,
-          }}
+          style={{ fontSize: 20, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 4 }}
         >
           Your Business Information
         </div>
         <div
-          style={{
-            fontSize: 12,
-            color: 'var(--muted)',
-            fontWeight: 300,
-            marginBottom: 20,
-            lineHeight: 1.6,
-          }}
+          style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 300, marginBottom: 20, lineHeight: 1.6 }}
         >
-          Basic details about your company. Takes about 2 minutes.
+          Basic details about your company. Takes about 5 minutes.
         </div>
 
-        {/* Row 1 */}
         <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
           <FormField label="Legal Business Name">
-            <input
-              className="finput"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-            />
+            <input className="finput" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
           </FormField>
           <FormField label="DBA / Trade Name">
-            <input
-              className="finput"
-              placeholder="Optional"
-              value={dbaName}
-              onChange={(e) => setDbaName(e.target.value)}
-            />
+            <input className="finput" placeholder="Optional" value={dbaName} onChange={(e) => setDbaName(e.target.value)} />
           </FormField>
         </div>
 
-        {/* Row 2 */}
         <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
-          <FormField label="Contact Name">
-            <input
-              className="finput"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-            />
+          <FormField label="Business Owner / Contact Name">
+            <input className="finput" value={contactName} onChange={(e) => setContactName(e.target.value)} />
           </FormField>
           <FormField label="Email Address">
-            <input
-              className="finput"
-              type="email"
-              value={contactEmail}
-              onChange={(e) => setContactEmail(e.target.value)}
-            />
+            <input className="finput" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
           </FormField>
         </div>
 
-        {/* Row 3 */}
+        <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
+          <FormField label="Phone">
+            <input className="finput" type="tel" placeholder="(000) 000-0000" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+          </FormField>
+          <FormField label="Industry">
+            <input className="finput" placeholder="e.g., Construction, Software, Manufacturing" value={industry} onChange={(e) => setIndustry(e.target.value)} />
+          </FormField>
+        </div>
+
         <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
           <FormField label="Federal EIN (FEIN)" hint="Found on your IRS EIN letter or prior tax return">
-            <input
-              className="finput"
-              value={fein}
-              onChange={(e) => setFein(e.target.value)}
-            />
+            <input className="finput" value={fein} onChange={(e) => setFein(e.target.value)} />
           </FormField>
           <FormField label="State Tax ID">
-            <input
-              className="finput"
-              placeholder="State tax ID number"
-              value={stateTaxId}
-              onChange={(e) => setStateTaxId(e.target.value)}
-            />
+            <input className="finput" value={stateTaxId} onChange={(e) => setStateTaxId(e.target.value)} />
           </FormField>
         </div>
 
-        {/* Row 4 */}
         <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
-          <FormField label="Primary State">
-            <select
-              className="finput"
-              value={businessState}
-              onChange={(e) => setBusinessState(e.target.value)}
-            >
-              {US_STATES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
+          <FormField label="Primary State of Operations">
+            <select className="finput" value={businessState} onChange={(e) => setBusinessState(e.target.value)}>
+              {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </FormField>
-          <FormField label="Phone">
-            <input
-              className="finput"
-              type="tel"
-              value={contactPhone}
-              onChange={(e) => setContactPhone(e.target.value)}
-            />
+          <FormField label="Date Company Incorporated">
+            <input className="finput" type="date" value={dateIncorporated} onChange={(e) => setDateIncorporated(e.target.value)} />
           </FormField>
         </div>
       </Card>
 
+      {/* Card 2 — Address */}
+      <div style={{ marginTop: 20 }}>
+        <Card>
+          <div
+            className="font-serif"
+            style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 16 }}
+          >
+            Business Address
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <FormField label="Street Address">
+              <input className="finput" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} />
+            </FormField>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <FormField label="Street Address Line 2">
+              <input className="finput" placeholder="Suite, Unit, Floor (optional)" value={streetAddress2} onChange={(e) => setStreetAddress2(e.target.value)} />
+            </FormField>
+          </div>
+          <div className="grid gap-4" style={{ gridTemplateColumns: '2fr 1fr 1fr', marginBottom: 16 }}>
+            <FormField label="City">
+              <input className="finput" value={city} onChange={(e) => setCity(e.target.value)} />
+            </FormField>
+            <FormField label="State">
+              <select className="finput" value={addressState} onChange={(e) => setAddressState(e.target.value)}>
+                {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Zip Code">
+              <input className="finput" value={zipCode} onChange={(e) => setZipCode(e.target.value)} />
+            </FormField>
+          </div>
+
+          <div style={{ marginBottom: 8 }}>
+            <label className="flex items-center" style={{ gap: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={taxReturnAddressSame}
+                onChange={(e) => setTaxReturnAddressSame(e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: 'var(--cherry)' }}
+              />
+              <span style={{ fontSize: 13, color: 'var(--charcoal)', fontWeight: 400 }}>
+                The address on our tax returns is the same as above
+              </span>
+            </label>
+          </div>
+        </Card>
+      </div>
+
+      {/* Card 3 — Ownership & Workforce */}
+      <div style={{ marginTop: 20 }}>
+        <Card>
+          <div
+            className="font-serif"
+            style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 16 }}
+          >
+            Ownership & Workforce
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label className="flex items-center" style={{ gap: 10, cursor: 'pointer', marginBottom: 12 }}>
+              <input
+                type="checkbox"
+                checked={hasAdditionalOwners}
+                onChange={(e) => setHasAdditionalOwners(e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: 'var(--cherry)' }}
+              />
+              <span style={{ fontSize: 13, color: 'var(--charcoal)', fontWeight: 400 }}>
+                There are additional business owners
+              </span>
+            </label>
+            {hasAdditionalOwners && (
+              <FormField label="Additional Owner Names" hint="Separate multiple names with commas">
+                <input className="finput" placeholder="e.g., John Smith, Jane Doe" value={additionalOwners} onChange={(e) => setAdditionalOwners(e.target.value)} />
+              </FormField>
+            )}
+          </div>
+
+          <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
+            <FormField label="Total Number of Employees">
+              <input className="finput" type="number" placeholder="e.g., 23" value={totalEmployees} onChange={(e) => setTotalEmployees(e.target.value)} />
+            </FormField>
+            <FormField label="Total Full-Time Employees">
+              <input className="finput" type="number" placeholder="e.g., 18" value={totalFtEmployees} onChange={(e) => setTotalFtEmployees(e.target.value)} />
+            </FormField>
+          </div>
+
+          <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
+            <FormField label="States Where Employees Are Located" hint="Include all in-person and remote workers">
+              <input className="finput" placeholder="e.g., Georgia, Florida, Texas" value={employeeStates} onChange={(e) => setEmployeeStates(e.target.value)} />
+            </FormField>
+            <FormField label="Tax Year End Date">
+              <input className="finput" type="date" value={taxYearEnd} onChange={(e) => setTaxYearEnd(e.target.value)} />
+            </FormField>
+          </div>
+        </Card>
+      </div>
+
       {/* Nav row */}
       <div
         className="flex items-center justify-between"
-        style={{
-          marginTop: 32,
-          paddingTop: 24,
-          borderTop: '1px solid var(--border)',
-        }}
+        style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--border)' }}
       >
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push(portalUrl('/portal/welcome', sid))}
-        >
+        <Button variant="ghost" size="sm" onClick={() => router.push(portalUrl('/portal/welcome', sid))}>
           ← Back
         </Button>
         <Button variant="dark" onClick={handleSubmit} disabled={saving}>

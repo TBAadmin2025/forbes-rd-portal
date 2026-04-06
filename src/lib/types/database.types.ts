@@ -20,6 +20,76 @@ export interface Submission {
   contact_name: string | null
   contact_email: string | null
   contact_phone: string | null
+
+  // Address
+  street_address: string | null
+  street_address_2: string | null
+  city: string | null
+  address_state: string | null
+  zip_code: string | null
+  tax_return_address_same: boolean | null
+
+  // Ownership
+  has_additional_owners: boolean | null
+  additional_owners: string | null
+
+  // Business details
+  industry: string | null
+  total_employees: number | null
+  total_ft_employees: number | null
+  employee_states: string | null
+  date_incorporated: string | null
+  tax_year_end: string | null
+
+  // Forbes-assisted fields
+  field_consultant_name: string | null
+  field_consultant_email: string | null
+  sic_code: string | null
+
+  // Filing status
+  filing_status_2022: string | null
+  filing_date_2022: string | null
+  filing_status_2023: string | null
+  filing_date_2023: string | null
+  filing_status_2024: string | null
+  filing_date_2024: string | null
+  filing_status_2025: string | null
+
+  // Tax details
+  short_year_credit: boolean | null
+  controlled_group: boolean | null
+  tax_years_filed_for: string | null
+
+  // Credit method eligibility
+  year_started_revenue: number | null
+  year_started_rd: number | null
+  gross_revenue_over_5m: boolean | null
+
+  // Contracts / rights
+  owns_substantial_rights: boolean | null
+  activities_under_contract: boolean | null
+  contract_fee_structure: string | null
+
+  // R&D Project Indicators
+  rd_new_processes: boolean | null
+  rd_products_designed: boolean | null
+  rd_new_materials: boolean | null
+  rd_formulas_methods: boolean | null
+  rd_software: boolean | null
+  rd_prototypes: boolean | null
+  rd_equipment: boolean | null
+  rd_lab_equipment: boolean | null
+  rd_documented_research: boolean | null
+  rd_certification_testing: boolean | null
+  rd_environmental: boolean | null
+  rd_acoustical: boolean | null
+  rd_electrical_lighting: boolean | null
+  rd_ventilation: boolean | null
+  rd_water_plumbing: boolean | null
+  rd_cybersecurity: boolean | null
+  rd_underground_infra: boolean | null
+  rd_value_engineering: boolean | null
+
   invited_at: string
   started_at: string | null
   submitted_at: string | null

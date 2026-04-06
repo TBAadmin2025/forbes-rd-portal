@@ -31,7 +31,7 @@ const US_STATES = [
   'Virginia','Washington','West Virginia','Wisconsin','Wyoming',
 ]
 
-type Section = 'info' | 'data' | 'review'
+type Section = 'info' | 'data' | 'discovery' | 'review'
 
 export default function WorkspacePage() {
   const params = useParams()
@@ -53,6 +53,69 @@ export default function WorkspacePage() {
   const [stateTaxId, setStateTaxId] = useState('')
   const [businessState, setBusinessState] = useState('Georgia')
   const [contactPhone, setContactPhone] = useState('')
+
+  // Address
+  const [streetAddress, setStreetAddress] = useState('')
+  const [streetAddress2, setStreetAddress2] = useState('')
+  const [city, setCity] = useState('')
+  const [addressState, setAddressState] = useState('Georgia')
+  const [zipCode, setZipCode] = useState('')
+  const [taxReturnAddressSame, setTaxReturnAddressSame] = useState(true)
+
+  // Ownership
+  const [hasAdditionalOwners, setHasAdditionalOwners] = useState(false)
+  const [additionalOwners, setAdditionalOwners] = useState('')
+
+  // Business details
+  const [industry, setIndustry] = useState('')
+  const [totalEmployees, setTotalEmployees] = useState('')
+  const [totalFtEmployees, setTotalFtEmployees] = useState('')
+  const [employeeStates, setEmployeeStates] = useState('')
+  const [dateIncorporated, setDateIncorporated] = useState('')
+  const [taxYearEnd, setTaxYearEnd] = useState('')
+
+  // Forbes-assisted
+  const [fieldConsultantName, setFieldConsultantName] = useState('')
+  const [fieldConsultantEmail, setFieldConsultantEmail] = useState('')
+  const [sicCode, setSicCode] = useState('')
+  const [filingStatus2022, setFilingStatus2022] = useState('')
+  const [filingDate2022, setFilingDate2022] = useState('')
+  const [filingStatus2023, setFilingStatus2023] = useState('')
+  const [filingDate2023, setFilingDate2023] = useState('')
+  const [filingStatus2024, setFilingStatus2024] = useState('')
+  const [filingDate2024, setFilingDate2024] = useState('')
+  const [filingStatus2025, setFilingStatus2025] = useState('')
+  const [shortYearCredit, setShortYearCredit] = useState<boolean | null>(null)
+  const [controlledGroup, setControlledGroup] = useState<boolean | null>(null)
+  const [taxYearsFiledFor, setTaxYearsFiledFor] = useState('')
+  const [yearStartedRevenue, setYearStartedRevenue] = useState('')
+  const [yearStartedRd, setYearStartedRd] = useState('')
+  const [grossRevenueOver5m, setGrossRevenueOver5m] = useState<boolean | null>(null)
+  const [ownsSubstantialRights, setOwnsSubstantialRights] = useState<boolean | null>(null)
+  const [activitiesUnderContract, setActivitiesUnderContract] = useState<boolean | null>(null)
+  const [contractFeeStructure, setContractFeeStructure] = useState('')
+
+  // R&D Indicators
+  const [rdIndicators, setRdIndicators] = useState<Record<string, boolean | null>>({
+    rd_new_processes: null,
+    rd_products_designed: null,
+    rd_new_materials: null,
+    rd_formulas_methods: null,
+    rd_software: null,
+    rd_prototypes: null,
+    rd_equipment: null,
+    rd_lab_equipment: null,
+    rd_documented_research: null,
+    rd_certification_testing: null,
+    rd_environmental: null,
+    rd_acoustical: null,
+    rd_electrical_lighting: null,
+    rd_ventilation: null,
+    rd_water_plumbing: null,
+    rd_cybersecurity: null,
+    rd_underground_infra: null,
+    rd_value_engineering: null,
+  })
 
   // Data entry — mode toggle
   const [dataMode, setDataMode] = useState<'upload' | 'manual'>('manual')
@@ -89,6 +152,65 @@ export default function WorkspacePage() {
       setStateTaxId(sub.state_tax_id || '')
       setBusinessState(sub.business_state || 'Georgia')
       setContactPhone(sub.contact_phone || '')
+
+      // New client-facing fields
+      setStreetAddress(sub.street_address || '')
+      setStreetAddress2(sub.street_address_2 || '')
+      setCity(sub.city || '')
+      setAddressState(sub.address_state || 'Georgia')
+      setZipCode(sub.zip_code || '')
+      setTaxReturnAddressSame(sub.tax_return_address_same ?? true)
+      setHasAdditionalOwners(sub.has_additional_owners ?? false)
+      setAdditionalOwners(sub.additional_owners || '')
+      setIndustry(sub.industry || '')
+      setTotalEmployees(sub.total_employees?.toString() || '')
+      setTotalFtEmployees(sub.total_ft_employees?.toString() || '')
+      setEmployeeStates(sub.employee_states || '')
+      setDateIncorporated(sub.date_incorporated || '')
+      setTaxYearEnd(sub.tax_year_end || '')
+
+      // Forbes-assisted fields
+      setFieldConsultantName(sub.field_consultant_name || '')
+      setFieldConsultantEmail(sub.field_consultant_email || '')
+      setSicCode(sub.sic_code || '')
+      setFilingStatus2022(sub.filing_status_2022 || '')
+      setFilingDate2022(sub.filing_date_2022 || '')
+      setFilingStatus2023(sub.filing_status_2023 || '')
+      setFilingDate2023(sub.filing_date_2023 || '')
+      setFilingStatus2024(sub.filing_status_2024 || '')
+      setFilingDate2024(sub.filing_date_2024 || '')
+      setFilingStatus2025(sub.filing_status_2025 || '')
+      setShortYearCredit(sub.short_year_credit)
+      setControlledGroup(sub.controlled_group)
+      setTaxYearsFiledFor(sub.tax_years_filed_for || '')
+      setYearStartedRevenue(sub.year_started_revenue?.toString() || '')
+      setYearStartedRd(sub.year_started_rd?.toString() || '')
+      setGrossRevenueOver5m(sub.gross_revenue_over_5m)
+      setOwnsSubstantialRights(sub.owns_substantial_rights)
+      setActivitiesUnderContract(sub.activities_under_contract)
+      setContractFeeStructure(sub.contract_fee_structure || '')
+
+      // R&D indicators
+      setRdIndicators({
+        rd_new_processes: sub.rd_new_processes,
+        rd_products_designed: sub.rd_products_designed,
+        rd_new_materials: sub.rd_new_materials,
+        rd_formulas_methods: sub.rd_formulas_methods,
+        rd_software: sub.rd_software,
+        rd_prototypes: sub.rd_prototypes,
+        rd_equipment: sub.rd_equipment,
+        rd_lab_equipment: sub.rd_lab_equipment,
+        rd_documented_research: sub.rd_documented_research,
+        rd_certification_testing: sub.rd_certification_testing,
+        rd_environmental: sub.rd_environmental,
+        rd_acoustical: sub.rd_acoustical,
+        rd_electrical_lighting: sub.rd_electrical_lighting,
+        rd_ventilation: sub.rd_ventilation,
+        rd_water_plumbing: sub.rd_water_plumbing,
+        rd_cybersecurity: sub.rd_cybersecurity,
+        rd_underground_infra: sub.rd_underground_infra,
+        rd_value_engineering: sub.rd_value_engineering,
+      })
 
       if (sub.submission_method === 'upload') setDataMode('upload')
 
@@ -154,8 +276,58 @@ export default function WorkspacePage() {
         state_tax_id: stateTaxId,
         business_state: businessState,
         contact_phone: contactPhone,
+        street_address: streetAddress || null,
+        street_address_2: streetAddress2 || null,
+        city: city || null,
+        address_state: addressState || null,
+        zip_code: zipCode || null,
+        tax_return_address_same: taxReturnAddressSame,
+        has_additional_owners: hasAdditionalOwners,
+        additional_owners: hasAdditionalOwners ? additionalOwners || null : null,
+        industry: industry || null,
+        total_employees: totalEmployees ? parseInt(totalEmployees) : null,
+        total_ft_employees: totalFtEmployees ? parseInt(totalFtEmployees) : null,
+        employee_states: employeeStates || null,
+        date_incorporated: dateIncorporated || null,
+        tax_year_end: taxYearEnd || null,
         status: submission?.status === 'invited' ? 'in_progress' : submission?.status,
         started_at: submission?.started_at || new Date().toISOString(),
+      })
+      .eq('id', id)
+
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
+  }
+
+  // Save discovery info
+  const handleSaveDiscovery = async () => {
+    setSaving(true)
+    setSaved(false)
+
+    await supabase
+      .from('submissions')
+      .update({
+        field_consultant_name: fieldConsultantName || null,
+        field_consultant_email: fieldConsultantEmail || null,
+        sic_code: sicCode || null,
+        filing_status_2022: filingStatus2022 || null,
+        filing_date_2022: filingDate2022 || null,
+        filing_status_2023: filingStatus2023 || null,
+        filing_date_2023: filingDate2023 || null,
+        filing_status_2024: filingStatus2024 || null,
+        filing_date_2024: filingDate2024 || null,
+        filing_status_2025: filingStatus2025 || null,
+        short_year_credit: shortYearCredit,
+        controlled_group: controlledGroup,
+        tax_years_filed_for: taxYearsFiledFor || null,
+        year_started_revenue: yearStartedRevenue ? parseInt(yearStartedRevenue) : null,
+        year_started_rd: yearStartedRd ? parseInt(yearStartedRd) : null,
+        gross_revenue_over_5m: grossRevenueOver5m,
+        owns_substantial_rights: ownsSubstantialRights,
+        activities_under_contract: activitiesUnderContract,
+        contract_fee_structure: contractFeeStructure || null,
+        ...rdIndicators,
       })
       .eq('id', id)
 
@@ -240,6 +412,7 @@ export default function WorkspacePage() {
   const sections: { key: Section; label: string; icon: string }[] = [
     { key: 'info', label: 'Business Info', icon: '🏢' },
     { key: 'data', label: 'Data Entry', icon: '📊' },
+    { key: 'discovery', label: 'Discovery', icon: '🔍' },
     { key: 'review', label: 'Review & Submit', icon: '✅' },
   ]
 
@@ -367,24 +540,132 @@ export default function WorkspacePage() {
                 <input className="finput" type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
               </FormField>
             </div>
-
-            <div className="flex items-center" style={{ gap: 12, marginTop: 8 }}>
-              <Button variant="cherry" size="sm" onClick={handleSaveInfo} disabled={saving}>
-                {saving ? 'Saving...' : 'Save Business Info'}
-              </Button>
-              {saved && (
-                <span style={{ fontSize: 12, color: 'var(--emerald)', fontWeight: 500 }}>Saved</span>
-              )}
-              <Button
-                variant="dark"
-                size="sm"
-                onClick={() => { handleSaveInfo(); setActiveSection('data') }}
-                style={{ marginLeft: 'auto' }}
-              >
-                Save & Continue to Data →
-              </Button>
-            </div>
           </Card>
+
+          {/* Address */}
+          <div style={{ marginTop: 20 }}>
+            <Card>
+              <div
+                className="font-serif"
+                style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 20 }}
+              >
+                Address
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <FormField label="Street Address">
+                  <input className="finput" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} />
+                </FormField>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <FormField label="Street Address Line 2">
+                  <input className="finput" placeholder="Suite, Unit, etc." value={streetAddress2} onChange={(e) => setStreetAddress2(e.target.value)} />
+                </FormField>
+              </div>
+
+              <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginBottom: 16 }}>
+                <FormField label="City">
+                  <input className="finput" value={city} onChange={(e) => setCity(e.target.value)} />
+                </FormField>
+                <FormField label="State">
+                  <select className="finput" value={addressState} onChange={(e) => setAddressState(e.target.value)}>
+                    {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </FormField>
+                <FormField label="Zip Code">
+                  <input className="finput" value={zipCode} onChange={(e) => setZipCode(e.target.value)} />
+                </FormField>
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--charcoal)', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={taxReturnAddressSame}
+                  onChange={(e) => setTaxReturnAddressSame(e.target.checked)}
+                  style={{ accentColor: 'var(--cherry)' }}
+                />
+                Tax return address is the same as above
+              </label>
+            </Card>
+          </div>
+
+          {/* Ownership */}
+          <div style={{ marginTop: 20 }}>
+            <Card>
+              <div
+                className="font-serif"
+                style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 20 }}
+              >
+                Ownership & Workforce
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--charcoal)', cursor: 'pointer', marginBottom: 16 }}>
+                <input
+                  type="checkbox"
+                  checked={hasAdditionalOwners}
+                  onChange={(e) => setHasAdditionalOwners(e.target.checked)}
+                  style={{ accentColor: 'var(--cherry)' }}
+                />
+                This business has additional owners
+              </label>
+
+              {hasAdditionalOwners && (
+                <div style={{ marginBottom: 16 }}>
+                  <FormField label="Additional Owner Names" hint="Comma-separated">
+                    <input className="finput" placeholder="e.g., Jane Doe, John Smith" value={additionalOwners} onChange={(e) => setAdditionalOwners(e.target.value)} />
+                  </FormField>
+                </div>
+              )}
+
+              <div style={{ marginBottom: 16 }}>
+                <FormField label="Industry">
+                  <input className="finput" placeholder="e.g., Construction, Software, Manufacturing" value={industry} onChange={(e) => setIndustry(e.target.value)} />
+                </FormField>
+              </div>
+
+              <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
+                <FormField label="Total Employees">
+                  <input className="finput" type="number" value={totalEmployees} onChange={(e) => setTotalEmployees(e.target.value)} />
+                </FormField>
+                <FormField label="Total Full-Time Employees">
+                  <input className="finput" type="number" value={totalFtEmployees} onChange={(e) => setTotalFtEmployees(e.target.value)} />
+                </FormField>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <FormField label="States Where Employees Are Located" hint="Comma-separated">
+                  <input className="finput" placeholder="e.g., Georgia, Florida, Tennessee" value={employeeStates} onChange={(e) => setEmployeeStates(e.target.value)} />
+                </FormField>
+              </div>
+
+              <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
+                <FormField label="Date Incorporated">
+                  <input className="finput" type="date" value={dateIncorporated} onChange={(e) => setDateIncorporated(e.target.value)} />
+                </FormField>
+                <FormField label="Tax Year End" hint="e.g., 12/31">
+                  <input className="finput" placeholder="MM/DD" value={taxYearEnd} onChange={(e) => setTaxYearEnd(e.target.value)} />
+                </FormField>
+              </div>
+            </Card>
+          </div>
+
+          <div className="flex items-center" style={{ gap: 12, marginTop: 20 }}>
+            <Button variant="cherry" size="sm" onClick={handleSaveInfo} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Business Info'}
+            </Button>
+            {saved && (
+              <span style={{ fontSize: 12, color: 'var(--emerald)', fontWeight: 500 }}>Saved</span>
+            )}
+            <Button
+              variant="dark"
+              size="sm"
+              onClick={() => { handleSaveInfo(); setActiveSection('data') }}
+              style={{ marginLeft: 'auto' }}
+            >
+              Save & Continue to Data →
+            </Button>
+          </div>
         </div>
       )}
 
@@ -496,8 +777,208 @@ export default function WorkspacePage() {
           </div>
 
           <div className="flex justify-end" style={{ marginTop: 20 }}>
-            <Button variant="dark" size="sm" onClick={() => setActiveSection('review')}>
-              Continue to Review →
+            <Button variant="dark" size="sm" onClick={() => setActiveSection('discovery')}>
+              Continue to Discovery →
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== DISCOVERY ===== */}
+      {activeSection === 'discovery' && (
+        <div style={{ animation: 'fadeUp 0.2s ease' }}>
+          {/* Consultant Info */}
+          <Card>
+            <div className="font-serif" style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 16 }}>
+              Field Consultant
+            </div>
+            <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
+              <FormField label="Consultant Name">
+                <input className="finput" value={fieldConsultantName} onChange={(e) => setFieldConsultantName(e.target.value)} />
+              </FormField>
+              <FormField label="Consultant Email">
+                <input className="finput" type="email" value={fieldConsultantEmail} onChange={(e) => setFieldConsultantEmail(e.target.value)} />
+              </FormField>
+            </div>
+            <FormField label="SIC Code">
+              <input className="finput" value={sicCode} onChange={(e) => setSicCode(e.target.value)} style={{ maxWidth: 200 }} />
+            </FormField>
+          </Card>
+
+          {/* Filing Status */}
+          <div style={{ marginTop: 20 }}>
+            <Card>
+              <div className="font-serif" style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 16 }}>
+                Tax Filing Information
+              </div>
+              {/* For each year 2022-2024, show filing status dropdown and date filed */}
+              {[
+                { year: '2022', status: filingStatus2022, setStatus: setFilingStatus2022, date: filingDate2022, setDate: setFilingDate2022 },
+                { year: '2023', status: filingStatus2023, setStatus: setFilingStatus2023, date: filingDate2023, setDate: setFilingDate2023 },
+                { year: '2024', status: filingStatus2024, setStatus: setFilingStatus2024, date: filingDate2024, setDate: setFilingDate2024 },
+              ].map(({ year, status, setStatus, date, setDate }) => (
+                <div key={year} className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
+                  <FormField label={`${year} Filing Status`}>
+                    <select className="finput" value={status} onChange={(e) => setStatus(e.target.value)}>
+                      <option value="">Select...</option>
+                      <option value="filed">Filed</option>
+                      <option value="extended">Extended</option>
+                      <option value="not_filed">Not Filed</option>
+                      <option value="amended">Amended</option>
+                    </select>
+                  </FormField>
+                  <FormField label={`Date Filed ${year} Original Return`}>
+                    <input className="finput" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                  </FormField>
+                </div>
+              ))}
+              <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
+                <FormField label="2025 Filing Status">
+                  <select className="finput" value={filingStatus2025} onChange={(e) => setFilingStatus2025(e.target.value)}>
+                    <option value="">Select...</option>
+                    <option value="filed">Filed</option>
+                    <option value="extended">Extended</option>
+                    <option value="not_filed">Not Filed</option>
+                    <option value="amended">Amended</option>
+                  </select>
+                </FormField>
+                <FormField label="Tax Years Being Filed For">
+                  <input className="finput" placeholder="e.g., 2022, 2023, 2024" value={taxYearsFiledFor} onChange={(e) => setTaxYearsFiledFor(e.target.value)} />
+                </FormField>
+              </div>
+
+              {/* Yes/No toggles for tax questions */}
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[
+                  { label: 'Computing a credit for a short year?', value: shortYearCredit, set: setShortYearCredit },
+                  { label: 'Part of a controlled group?', value: controlledGroup, set: setControlledGroup },
+                ].map(({ label, value, set }) => (
+                  <div key={label} className="flex items-center justify-between" style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 13, color: 'var(--charcoal)', fontWeight: 400 }}>{label}</span>
+                    <select
+                      className="finput"
+                      style={{ width: 100 }}
+                      value={value === null ? '' : value ? 'yes' : 'no'}
+                      onChange={(e) => set(e.target.value === '' ? null : e.target.value === 'yes')}
+                    >
+                      <option value="">—</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          {/* Credit Method Eligibility */}
+          <div style={{ marginTop: 20 }}>
+            <Card>
+              <div className="font-serif" style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 16 }}>
+                Credit Method Eligibility
+              </div>
+              <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
+                <FormField label="Year Company Started Making Revenue" hint="e.g., 2005">
+                  <input className="finput" type="number" value={yearStartedRevenue} onChange={(e) => setYearStartedRevenue(e.target.value)} />
+                </FormField>
+                <FormField label="Year Started R&D Efforts" hint="e.g., 2005">
+                  <input className="finput" type="number" value={yearStartedRd} onChange={(e) => setYearStartedRd(e.target.value)} />
+                </FormField>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[
+                  { label: 'Gross revenue exceed $5 Million in 2024?', value: grossRevenueOver5m, set: setGrossRevenueOver5m },
+                  { label: 'Owns substantial rights to R&D results?', value: ownsSubstantialRights, set: setOwnsSubstantialRights },
+                  { label: 'Any R&D activities under contract for outside party?', value: activitiesUnderContract, set: setActivitiesUnderContract },
+                ].map(({ label, value, set }) => (
+                  <div key={label} className="flex items-center justify-between" style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 13, color: 'var(--charcoal)', fontWeight: 400 }}>{label}</span>
+                    <select
+                      className="finput"
+                      style={{ width: 100 }}
+                      value={value === null ? '' : value ? 'yes' : 'no'}
+                      onChange={(e) => set(e.target.value === '' ? null : e.target.value === 'yes')}
+                    >
+                      <option value="">—</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                ))}
+              </div>
+              {activitiesUnderContract && (
+                <div style={{ marginTop: 16 }}>
+                  <FormField label="Typical Fee Structure for Contracts" hint="e.g., Lump Sum, Fixed Fee, Hourly, Material based">
+                    <input className="finput" value={contractFeeStructure} onChange={(e) => setContractFeeStructure(e.target.value)} />
+                  </FormField>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* R&D Project Indicators */}
+          <div style={{ marginTop: 20 }}>
+            <Card>
+              <div className="font-serif" style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 4 }}>
+                R&D Project Indicators
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 300, marginBottom: 16, lineHeight: 1.6 }}>
+                Select Yes or No for each activity that applies to this client.
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {[
+                  { key: 'rd_new_processes', label: 'Researched, developed, streamlined, or implemented any new processes' },
+                  { key: 'rd_products_designed', label: 'Products designed, developed, or improved' },
+                  { key: 'rd_new_materials', label: 'Tested new materials or concepts' },
+                  { key: 'rd_formulas_methods', label: 'Developed or improved formulas or manufacturing methods' },
+                  { key: 'rd_software', label: 'Developed, customized, improved, or updated software technology' },
+                  { key: 'rd_prototypes', label: 'Developed, designed, or improved prototypes or models' },
+                  { key: 'rd_equipment', label: 'Developed, designed, or improved equipment for material handling or new tasks' },
+                  { key: 'rd_lab_equipment', label: 'Maintained or improved laboratory equipment' },
+                  { key: 'rd_documented_research', label: 'Documented research activities' },
+                  { key: 'rd_certification_testing', label: 'Completed certification testing' },
+                  { key: 'rd_environmental', label: 'Completed environmental upgrades' },
+                  { key: 'rd_acoustical', label: 'Developed or improved acoustical qualities' },
+                  { key: 'rd_electrical_lighting', label: 'Developed or improved alternative electricity or lighting systems' },
+                  { key: 'rd_ventilation', label: 'Developed or improved ventilation systems' },
+                  { key: 'rd_water_plumbing', label: 'Developed or improved water/plumbing systems' },
+                  { key: 'rd_cybersecurity', label: 'Developed systems for cybersecurity or to combat terrorism/criminal activities' },
+                  { key: 'rd_underground_infra', label: 'Developed or improved electrical underground infrastructure' },
+                  { key: 'rd_value_engineering', label: 'Developed or improved value engineering, construction, or landscaping methods' },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center justify-between" style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 13, color: 'var(--charcoal)', fontWeight: 400, flex: 1, paddingRight: 16 }}>{label}</span>
+                    <select
+                      className="finput"
+                      style={{ width: 100, flexShrink: 0 }}
+                      value={rdIndicators[key] === null || rdIndicators[key] === undefined ? '' : rdIndicators[key] ? 'yes' : 'no'}
+                      onChange={(e) => setRdIndicators(prev => ({ ...prev, [key]: e.target.value === '' ? null : e.target.value === 'yes' }))}
+                    >
+                      <option value="">—</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          {/* Save */}
+          <div className="flex items-center" style={{ gap: 12, marginTop: 20 }}>
+            <Button variant="cherry" onClick={handleSaveDiscovery} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Discovery Info'}
+            </Button>
+            {saved && (
+              <span style={{ fontSize: 12, color: 'var(--emerald)', fontWeight: 500 }}>Saved</span>
+            )}
+            <Button
+              variant="dark"
+              size="sm"
+              onClick={() => { handleSaveDiscovery(); setActiveSection('review') }}
+              style={{ marginLeft: 'auto' }}
+            >
+              Save & Continue to Review →
             </Button>
           </div>
         </div>
