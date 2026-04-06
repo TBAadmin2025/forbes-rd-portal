@@ -1,3 +1,8 @@
+'use client'
+
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+
 interface SiteHeaderProps {
   context: 'portal' | 'admin'
   userLabel?: string
@@ -7,6 +12,14 @@ interface SiteHeaderProps {
 const LOGO_URL = 'https://assets.cdn.filesafe.space/urR6xH3XyBfmLBzEzkKY/media/69c40c28d0b6d3d9f1a59b5a.svg'
 
 export default function SiteHeader({ context, userLabel, userInitials }: SiteHeaderProps) {
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
   return (
     <header
       className="flex items-center justify-between relative overflow-hidden"
@@ -41,15 +54,35 @@ export default function SiteHeader({ context, userLabel, userInitials }: SiteHea
 
         {/* Right side */}
         {context === 'portal' ? (
-          <div
-            style={{
-              fontSize: 10,
-              letterSpacing: '2px',
-              textTransform: 'uppercase',
-              color: 'rgba(240,231,215,0.55)',
-            }}
-          >
-            Secure &amp; Confidential
+          <div className="flex items-center" style={{ gap: 20 }}>
+            <div
+              style={{
+                fontSize: 10,
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                color: 'rgba(240,231,215,0.55)',
+              }}
+            >
+              Secure &amp; Confidential
+            </div>
+            <button
+              onClick={handleSignOut}
+              style={{
+                background: 'rgba(240,231,215,0.1)',
+                border: '1px solid rgba(240,231,215,0.15)',
+                borderRadius: 3,
+                padding: '5px 14px',
+                fontSize: 9,
+                fontWeight: 600,
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                color: 'rgba(240,231,215,0.5)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              Sign Out
+            </button>
           </div>
         ) : (
           <div className="flex items-center" style={{ gap: 16 }}>
@@ -77,6 +110,24 @@ export default function SiteHeader({ context, userLabel, userInitials }: SiteHea
                 {userInitials}
               </div>
             )}
+            <button
+              onClick={handleSignOut}
+              style={{
+                background: 'rgba(240,231,215,0.1)',
+                border: '1px solid rgba(240,231,215,0.15)',
+                borderRadius: 3,
+                padding: '5px 14px',
+                fontSize: 9,
+                fontWeight: 600,
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                color: 'rgba(240,231,215,0.5)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              Sign Out
+            </button>
           </div>
         )}
       </div>
