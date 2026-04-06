@@ -59,6 +59,9 @@ export default function CompanyInfoPage() {
   const [dateIncorporated, setDateIncorporated] = useState('')
   const [taxYearEnd, setTaxYearEnd] = useState('')
 
+  // Gross receipts (8 years)
+  const [grossReceipts, setGrossReceipts] = useState<Record<number, string>>({})
+
   useEffect(() => {
     async function loadData() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -103,6 +106,19 @@ export default function CompanyInfoPage() {
         setEmployeeStates(submission.employee_states || '')
         setDateIncorporated(submission.date_incorporated || '')
         setTaxYearEnd(submission.tax_year_end || '')
+
+        // Load gross receipts
+        const { data: receipts } = await supabase
+          .from('gross_receipts')
+          .select('tax_year, amount')
+          .eq('submission_id', submission.id)
+        if (receipts) {
+          const gr: Record<number, string> = {}
+          receipts.forEach((r: { tax_year: number; amount: number }) => {
+            gr[r.tax_year] = r.amount.toString()
+          })
+          setGrossReceipts(gr)
+        }
       } else {
         setContactName(profile?.full_name || '')
         setContactEmail(profile?.email || '')
@@ -153,6 +169,21 @@ export default function CompanyInfoPage() {
           current_step: 2,
         })
         .eq('id', submissionId)
+
+      // Save gross receipts
+      const grYears = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+      for (const yr of grYears) {
+        const amount = grossReceipts[yr]
+        if (amount && parseFloat(amount) > 0) {
+          await supabase
+            .from('gross_receipts')
+            .upsert({
+              submission_id: submissionId,
+              tax_year: yr,
+              amount: parseFloat(amount),
+            }, { onConflict: 'submission_id,tax_year' })
+        }
+      }
 
       setSaving(false)
       router.push(portalUrl('/portal/data-entry', sid))
@@ -345,6 +376,48 @@ export default function CompanyInfoPage() {
             <FormField label="Tax Year End Date">
               <input className="finput" type="date" value={taxYearEnd} onChange={(e) => setTaxYearEnd(e.target.value)} />
             </FormField>
+          </div>
+        </Card>
+      </div>
+
+      {/* Card 4 — Gross Receipts */}
+      <div style={{ marginTop: 20 }}>
+        <Card>
+          <div
+            className="font-serif"
+            style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 4 }}
+          >
+            Gross Receipts
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 300, marginBottom: 16, lineHeight: 1.6 }}>
+            Total gross receipts for each year. This is used to calculate your R&D credit eligibility.
+          </div>
+
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 12 }}>
+            {[2025, 2024, 2023, 2022].map((yr) => (
+              <FormField key={yr} label={String(yr)}>
+                <input
+                  className="finput"
+                  type="number"
+                  placeholder="$0"
+                  value={grossReceipts[yr] || ''}
+                  onChange={(e) => setGrossReceipts(prev => ({ ...prev, [yr]: e.target.value }))}
+                />
+              </FormField>
+            ))}
+          </div>
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            {[2021, 2020, 2019, 2018].map((yr) => (
+              <FormField key={yr} label={String(yr)}>
+                <input
+                  className="finput"
+                  type="number"
+                  placeholder="$0"
+                  value={grossReceipts[yr] || ''}
+                  onChange={(e) => setGrossReceipts(prev => ({ ...prev, [yr]: e.target.value }))}
+                />
+              </FormField>
+            ))}
           </div>
         </Card>
       </div>

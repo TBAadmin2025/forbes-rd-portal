@@ -155,6 +155,8 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
     { 'Section': '', 'Question': 'FEIN', 'Answer': str(submission.fein) },
     { 'Section': '', 'Question': 'State Tax ID', 'Answer': str(submission.state_tax_id) },
     { 'Section': '', 'Question': 'Primary State of Operations', 'Answer': str(submission.business_state) },
+    { 'Section': '', 'Question': 'Entity Type', 'Answer': str(submission.entity_type) },
+    { 'Section': '', 'Question': '§280C(c)(3) Reduced Credit Election', 'Answer': yesNo(submission.section_280c_election) },
     { 'Section': '', 'Question': 'Date Company Incorporated', 'Answer': str(submission.date_incorporated) },
     { 'Section': '', 'Question': 'Tax Year End', 'Answer': str(submission.tax_year_end) },
 
@@ -219,6 +221,41 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
   ws4['!cols'] = [{ wch: 28 }, { wch: 52 }, { wch: 40 }]
   ws4['!freeze'] = { xSplit: 0, ySplit: 1 }
   XLSX.utils.book_append_sheet(wb, ws4, 'Discovery Questionnaire')
+
+  // Sheet 5: Payroll Data Key — employee wages across all years side-by-side
+  const years = [2022, 2023, 2024, 2025]
+  const employeeMap: Record<string, Record<number, number>> = {}
+
+  employees.forEach((e) => {
+    const name = (e.full_name as string) || 'Unknown'
+    const yr = e.tax_year as number
+    const wages = (e.total_wages as number) || 0
+    if (!employeeMap[name]) employeeMap[name] = {}
+    employeeMap[name][yr] = (employeeMap[name][yr] || 0) + wages
+  })
+
+  const payrollRows = Object.entries(employeeMap).map(([name, yearWages]) => {
+    const row: Record<string, string | number> = {
+      'Employee Name': name,
+    }
+    years.forEach((yr) => {
+      row[`Total Gross Wages ${yr}`] = yearWages[yr] || 0
+    })
+    return row
+  })
+
+  const ws5 = XLSX.utils.json_to_sheet(payrollRows.length > 0 ? payrollRows : [{ 'Employee Name': '', 'Total Gross Wages 2022': 0, 'Total Gross Wages 2023': 0, 'Total Gross Wages 2024': 0, 'Total Gross Wages 2025': 0 }])
+
+  // Add FEIN and State Tax ID at top as metadata
+  const payrollColCount = 5
+  for (let c = 0; c < payrollColCount; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c })
+    if (ws5[addr]) ws5[addr].s = headerStyle
+  }
+  ws5['!cols'] = [{ wch: 30 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 22 }]
+  ws5['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(payrollRows.length, 1), c: payrollColCount - 1 } }) }
+  ws5['!freeze'] = { xSplit: 0, ySplit: 1 }
+  XLSX.utils.book_append_sheet(wb, ws5, 'Payroll Data Key')
 
   return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }))
 }

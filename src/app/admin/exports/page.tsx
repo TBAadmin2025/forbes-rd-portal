@@ -57,7 +57,7 @@ export default function ExportsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'var(--charcoal)' }}>
-                {['Client', 'Generated', 'Discovery', 'Summary', 'Excel', 'Docs', 'Package'].map((h) => (
+                {['Client', 'Generated', 'Discovery', 'QRA', 'Summary', 'Excel', 'Docs', 'Package'].map((h) => (
                   <th
                     key={h}
                     style={{
@@ -90,6 +90,7 @@ export default function ExportsPage() {
                       : '—'}
                   </td>
                   <td style={{ padding: '12px' }}>{dlBtn(s.export_discovery_pdf_url, '📋 PDF')}</td>
+                  <td style={{ padding: '12px' }}>{dlBtn(s.export_qra_pdf_url, '🔬 PDF')}</td>
                   <td style={{ padding: '12px' }}>{dlBtn(s.export_pdf_url, '📄 PDF')}</td>
                   <td style={{ padding: '12px' }}>{dlBtn(s.export_excel_url, '📊 XLS')}</td>
                   <td style={{ padding: '12px' }}>{dlBtn(s.export_document_zip_url, '📁 ZIP')}</td>

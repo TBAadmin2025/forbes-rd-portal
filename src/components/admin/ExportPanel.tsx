@@ -14,14 +14,16 @@ interface ExportResult {
   pdf_url?: string
   excel_url?: string
   discovery_pdf_url?: string
+  qra_pdf_url?: string
   document_zip_url?: string
   full_package_url?: string
 }
 
 const ITEMS = [
   { key: 'discovery_pdf', icon: '📋', label: 'Discovery Questionnaire', desc: 'Filled questionnaire PDF' },
+  { key: 'qra_pdf', icon: '🔬', label: 'QRA Project Report', desc: 'R&D project narratives for IRS' },
   { key: 'summary_pdf', icon: '📄', label: 'Summary PDF Report', desc: 'Credit calculations & QRE data' },
-  { key: 'excel', icon: '📊', label: 'Excel Flat File', desc: 'Raw data for partner review' },
+  { key: 'excel', icon: '📊', label: 'Excel Flat File', desc: 'Raw data + payroll key + discovery' },
   { key: 'document_zip', icon: '📁', label: 'Supporting Documents', desc: 'ZIP of all uploaded files' },
 ] as const
 
@@ -35,6 +37,7 @@ export default function ExportPanel({
 }: ExportPanelProps) {
   const [selected, setSelected] = useState<Record<ItemKey, boolean>>({
     discovery_pdf: true,
+    qra_pdf: true,
     summary_pdf: true,
     excel: true,
     document_zip: true,
@@ -86,8 +89,9 @@ export default function ExportPanel({
 
   const includedItems: string[] = []
   if (selected.discovery_pdf) includedItems.push('Discovery Questionnaire (PDF)')
+  if (selected.qra_pdf) includedItems.push('QRA Project Report — R&D Activity Narratives (PDF)')
   if (selected.summary_pdf) includedItems.push('R&D Tax Credit Summary Report (PDF)')
-  if (selected.excel) includedItems.push('QRE Data Spreadsheet (Excel)')
+  if (selected.excel) includedItems.push('QRE Data Spreadsheet with Payroll Key (Excel)')
   if (selected.document_zip) includedItems.push('Supporting Documents (ZIP)')
 
   const emailBody = `Hi,
@@ -224,6 +228,11 @@ admin@forbesmgt.com`
               {result.discovery_pdf_url && (
                 <a href={result.discovery_pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>
                   📋 Discovery PDF
+                </a>
+              )}
+              {result.qra_pdf_url && (
+                <a href={result.qra_pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+                  🔬 QRA Report
                 </a>
               )}
               {result.pdf_url && (
