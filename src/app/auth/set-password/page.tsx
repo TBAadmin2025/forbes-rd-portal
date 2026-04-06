@@ -19,32 +19,43 @@ function SetPasswordContent() {
   const supabase = createClient()
 
   useEffect(() => {
-    // This page is for invited users who received a link with a token.
-    // Supabase invite links include a token_hash and type=invite.
-    const tokenHash = searchParams.get('token_hash')
-    const type = searchParams.get('type')
+    async function init() {
+      // Check if user already has an active session — if so, redirect them
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
 
-    if (tokenHash && type) {
-      supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: type as 'invite' | 'magiclink' | 'email',
-      }).then(({ error: verifyError }) => {
+        if (profile?.role === 'admin' || profile?.role === 'super_admin') {
+          router.push('/admin/dashboard')
+        } else {
+          router.push('/portal/welcome')
+        }
+        return
+      }
+
+      // No session — try to verify the invite token
+      const tokenHash = searchParams.get('token_hash')
+      const type = searchParams.get('type')
+
+      if (tokenHash && type) {
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: type as 'invite' | 'magiclink' | 'email',
+        })
         if (verifyError) {
           setError('This invitation link has expired or is invalid. Please contact your administrator.')
         }
         setVerifying(false)
-      })
-    } else {
-      // Check if already authenticated (e.g. coming from invite email redirect)
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          setVerifying(false)
-        } else {
-          setError('No valid invitation found. Please contact your administrator.')
-          setVerifying(false)
-        }
-      })
+      } else {
+        setError('No valid invitation found. Please contact your administrator.')
+        setVerifying(false)
+      }
     }
+    init()
   }, [searchParams, supabase.auth])
 
   const handleSubmit = async (e: React.FormEvent) => {
