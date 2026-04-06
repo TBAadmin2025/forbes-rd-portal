@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
 
     if (pathname === '/') {
       const url = request.nextUrl.clone()
-      url.pathname = (role === 'admin' || role === 'super_admin') ? '/admin/pipeline' : '/portal/welcome'
+      url.pathname = (role === 'admin' || role === 'super_admin') ? '/admin/dashboard' : '/portal/welcome'
       return NextResponse.redirect(url)
     }
 
@@ -61,13 +61,13 @@ export async function middleware(request: NextRequest) {
 
     if (pathname.startsWith('/portal') && (role === 'admin' || role === 'super_admin')) {
       const url = request.nextUrl.clone()
-      url.pathname = '/admin/pipeline'
+      url.pathname = '/admin/dashboard'
       return NextResponse.redirect(url)
     }
 
     if (pathname === '/login') {
       const url = request.nextUrl.clone()
-      url.pathname = (role === 'admin' || role === 'super_admin') ? '/admin/pipeline' : '/portal/welcome'
+      url.pathname = (role === 'admin' || role === 'super_admin') ? '/admin/dashboard' : '/portal/welcome'
       return NextResponse.redirect(url)
     }
   }

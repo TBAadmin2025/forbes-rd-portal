@@ -81,7 +81,7 @@ function SetPasswordContent() {
 
         setTimeout(() => {
           if (profile?.role === 'admin' || profile?.role === 'super_admin') {
-            router.push('/admin/pipeline')
+            router.push('/admin/dashboard')
           } else {
             router.push('/portal/welcome')
           }

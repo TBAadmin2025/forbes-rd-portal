@@ -21,6 +21,13 @@ export default function AdminLayout({
   const [userName, setUserName] = useState('')
   const [userInitials, setUserInitials] = useState('')
 
+  // Listen for custom event from dashboard "Add Client" button
+  useEffect(() => {
+    const handler = () => setShowAddClient(true)
+    window.addEventListener('open-add-client', handler)
+    return () => window.removeEventListener('open-add-client', handler)
+  }, [])
+
   useEffect(() => {
     async function loadData() {
       // Load user profile

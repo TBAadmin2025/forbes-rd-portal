@@ -18,7 +18,7 @@ const COLUMNS: {
 }[] = [
   {
     key: 'invited',
-    label: 'Invited',
+    label: 'Link Sent',
     statuses: ['invited'],
     labelColor: 'var(--champ-dk)',
     badgeBg: 'rgba(226,196,155,0.2)',
@@ -26,7 +26,7 @@ const COLUMNS: {
   },
   {
     key: 'progress',
-    label: 'In Progress',
+    label: 'Working On It',
     statuses: ['in_progress'],
     labelColor: 'var(--emerald)',
     badgeBg: 'rgba(0,79,53,0.12)',
@@ -34,7 +34,7 @@ const COLUMNS: {
   },
   {
     key: 'submitted',
-    label: 'Submitted',
+    label: 'Ready to Review',
     statuses: ['submitted', 'in_review'],
     labelColor: 'var(--cherry)',
     badgeBg: 'rgba(108,22,28,0.1)',
@@ -42,7 +42,7 @@ const COLUMNS: {
   },
   {
     key: 'complete',
-    label: 'Complete',
+    label: 'Done & Sent',
     statuses: ['complete'],
     labelColor: 'var(--charcoal)',
     badgeBg: 'var(--charcoal)',

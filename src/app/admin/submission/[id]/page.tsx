@@ -174,7 +174,7 @@ export default function SubmissionDetailPage() {
     <div>
       {/* Back link */}
       <button
-        onClick={() => router.push('/admin/pipeline')}
+        onClick={() => router.push('/admin/dashboard')}
         style={{
           display: 'inline-flex',
           alignItems: 'center',

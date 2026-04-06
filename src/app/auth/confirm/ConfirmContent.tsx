@@ -65,7 +65,7 @@ export default function ConfirmContent() {
 
       // Route based on role — default to portal if no profile yet
       if (profile?.role === 'admin' || profile?.role === 'super_admin') {
-        router.push('/admin/pipeline')
+        router.push('/admin/dashboard')
       } else {
         router.push('/portal/welcome')
       }

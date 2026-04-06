@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       .single()
     const role = profile?.role
     if (role === 'admin' || role === 'super_admin') {
-      return NextResponse.redirect(new URL('/admin/pipeline', requestUrl.origin))
+      return NextResponse.redirect(new URL('/admin/dashboard', requestUrl.origin))
     }
     return NextResponse.redirect(new URL('/portal/welcome', requestUrl.origin))
   }
