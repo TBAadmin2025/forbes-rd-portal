@@ -235,10 +235,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3 — Update submission record
+    // Step 3 — Update submission record + mark as complete
     await supabase
       .from('submissions')
       .update({
+        status: 'complete',
+        completed_at: new Date().toISOString(),
         export_generated_at: new Date().toISOString(),
         export_pdf_url: results.pdf_url || submission.export_pdf_url,
         export_excel_url: results.excel_url || submission.export_excel_url,
