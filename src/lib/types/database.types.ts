@@ -215,6 +215,20 @@ export interface QRAChallenge {
   updated_at: string
 }
 
+export interface GuideArticle {
+  id: string
+  title: string
+  slug: string
+  body: string
+  video_url: string | null
+  category: string
+  sort_order: number
+  published: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface CreditEstimate {
   submission_id: string
   current_year: number

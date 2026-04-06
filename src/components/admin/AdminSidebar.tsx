@@ -26,6 +26,7 @@ const NAV_ITEMS: (NavItem | 'divider')[] = [
   'divider',
   { label: 'Add Client', icon: '➕', action: 'addClient', tooltip: 'Invite a new client to fill out their R&D information.' },
   'divider',
+  { label: 'Guide', icon: '📖', href: '/admin/guide', tooltip: 'Step-by-step articles on how to use the portal.' },
   { label: 'Settings', icon: '⚙️', href: '/admin/settings', tooltip: 'Manage your team members and account settings.' },
 ]
 

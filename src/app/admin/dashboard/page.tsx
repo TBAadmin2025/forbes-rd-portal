@@ -84,6 +84,41 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* Guide banner — show when few or no clients */}
+      {submissions.length < 3 && (
+        <div
+          onClick={() => router.push('/admin/guide')}
+          style={{
+            background: 'var(--white)',
+            border: '1px solid var(--border)',
+            borderLeft: '3px solid var(--champagne)',
+            borderRadius: '0 4px 4px 0',
+            padding: '14px 20px',
+            marginBottom: 24,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            transition: 'all 0.15s',
+          }}
+          onMouseOver={(e) => { e.currentTarget.style.background = 'var(--warm)' }}
+          onMouseOut={(e) => { e.currentTarget.style.background = 'var(--white)' }}
+        >
+          <span style={{ fontSize: 24 }}>📖</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--charcoal)' }}>
+              New to the portal?
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 300 }}>
+              Check out the Guide for step-by-step instructions on how everything works.
+            </div>
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--cherry)', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>
+            View Guide →
+          </span>
+        </div>
+      )}
+
       {/* Section 2 — Stats */}
       <StatsRow stats={stats} />
 
