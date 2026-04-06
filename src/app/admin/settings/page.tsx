@@ -7,6 +7,7 @@ import Card from '@/components/shared/Card'
 import FormField from '@/components/shared/FormField'
 import Button from '@/components/shared/Button'
 import Tag from '@/components/shared/Tag'
+import AddTeamMemberModal from '@/components/admin/AddTeamMemberModal'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -24,6 +25,16 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
+  const [showAddTeamMember, setShowAddTeamMember] = useState(false)
+  const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string | null; role: string; created_at: string }[]>([])
+
+  const loadTeamMembers = async () => {
+    const res = await fetch('/api/admin/team')
+    if (res.ok) {
+      const data = await res.json()
+      setTeamMembers(data)
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -44,6 +55,7 @@ export default function SettingsPage() {
       }
     }
     load()
+    loadTeamMembers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -231,6 +243,64 @@ export default function SettingsPage() {
           </div>
         </Card>
       </div>
+
+      {/* Team Members */}
+      <div style={{ marginTop: 20 }}>
+        <Card>
+          <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+            <div
+              className="font-serif"
+              style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)' }}
+            >
+              Team Members
+            </div>
+            <Button
+              variant="cherry"
+              size="sm"
+              onClick={() => setShowAddTeamMember(true)}
+            >
+              Add Team Member
+            </Button>
+          </div>
+
+          {teamMembers.length === 0 ? (
+            <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 300 }}>
+              No team members yet.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {teamMembers.map((m) => (
+                <div
+                  key={m.id}
+                  className="flex items-center justify-between"
+                  style={{
+                    padding: '10px 0',
+                    borderBottom: '1px solid var(--border)',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--charcoal)' }}>
+                      {m.full_name || 'Unnamed'}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 300, marginTop: 2 }}>
+                      Added {new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  </div>
+                  <Tag variant={m.role === 'super_admin' ? 'complete' : 'progress'}>
+                    {m.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                  </Tag>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <AddTeamMemberModal
+        isOpen={showAddTeamMember}
+        onClose={() => setShowAddTeamMember(false)}
+        onSuccess={loadTeamMembers}
+      />
 
       {/* Sign Out */}
       <div style={{ marginTop: 20 }}>
