@@ -18,9 +18,31 @@ export default function AdminLayout({
   const [showAddClient, setShowAddClient] = useState(false)
   const [showAddTeamMember, setShowAddTeamMember] = useState(false)
   const [submittedCount, setSubmittedCount] = useState(0)
+  const [userName, setUserName] = useState('')
+  const [userInitials, setUserInitials] = useState('')
 
   useEffect(() => {
-    async function loadCount() {
+    async function loadData() {
+      // Load user profile
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single()
+
+        const name = profile?.full_name || user.user_metadata?.full_name || user.email || ''
+        setUserName(name)
+        const parts = name.split(' ').filter(Boolean)
+        setUserInitials(
+          parts.length >= 2
+            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+            : name.slice(0, 2).toUpperCase()
+        )
+      }
+
+      // Load submitted count
       const { count } = await supabase
         .from('submissions')
         .select('*', { count: 'exact', head: true })
@@ -28,7 +50,7 @@ export default function AdminLayout({
 
       setSubmittedCount(count || 0)
     }
-    loadCount()
+    loadData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -43,7 +65,7 @@ export default function AdminLayout({
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--warm)' }}>
-      <SiteHeader context="admin" userLabel="Jessica Forbes" userInitials="JF" />
+      <SiteHeader context="admin" userLabel={userName} userInitials={userInitials} />
       <div className="flex flex-1" style={{ minHeight: 'calc(100vh - 64px)' }}>
         <AdminSidebar
           activeRoute={pathname}
