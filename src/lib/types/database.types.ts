@@ -21,6 +21,10 @@ export interface Submission {
   contact_email: string | null
   contact_phone: string | null
 
+  // Entity
+  entity_type: string | null
+  section_280c_election: boolean | null
+
   // Address
   street_address: string | null
   street_address_2: string | null
@@ -179,6 +183,35 @@ export interface QRESummary {
   total_rd_hours: number
   supplies_qre: number
   total_qre: number
+}
+
+export interface QRAProject {
+  id: string
+  submission_id: string
+  project_name: string
+  start_date: string | null
+  end_date: string | null
+  description: string | null
+  business_problem: string | null
+  technologies_used: string | null
+  improvements: string | null
+  measurable_outcomes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface QRAChallenge {
+  id: string
+  project_id: string
+  technical_problem: string | null
+  why_no_existing_solution: string | null
+  approaches_tried: string | null
+  testing_methods: string | null
+  iteration_count: number | null
+  outcome: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
 }
 
 export interface CreditEstimate {

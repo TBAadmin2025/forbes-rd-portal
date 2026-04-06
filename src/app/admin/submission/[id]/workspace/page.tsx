@@ -12,6 +12,7 @@ import YearBlock from '@/components/portal/YearBlock'
 import UploadCategory from '@/components/portal/UploadCategory'
 import UploadModal from '@/components/portal/UploadModal'
 import ExtractionProgress from '@/components/portal/ExtractionProgress'
+import QRAProjectForm from '@/components/portal/QRAProjectForm'
 import type { UploadedFile } from '@/components/portal/UploadCategory'
 import type { Employee, Supply, Submission } from '@/lib/types/database.types'
 import { formatCurrency } from '@/lib/utils/formatting'
@@ -31,7 +32,7 @@ const US_STATES = [
   'Virginia','Washington','West Virginia','Wisconsin','Wyoming',
 ]
 
-type Section = 'info' | 'data' | 'discovery' | 'review'
+type Section = 'info' | 'data' | 'projects' | 'discovery' | 'review'
 
 export default function WorkspacePage() {
   const params = useParams()
@@ -412,6 +413,7 @@ export default function WorkspacePage() {
   const sections: { key: Section; label: string; icon: string }[] = [
     { key: 'info', label: 'Business Info', icon: '🏢' },
     { key: 'data', label: 'Data Entry', icon: '📊' },
+    { key: 'projects', label: 'R&D Projects', icon: '🔬' },
     { key: 'discovery', label: 'Discovery', icon: '🔍' },
     { key: 'review', label: 'Review & Submit', icon: '✅' },
   ]
@@ -776,6 +778,18 @@ export default function WorkspacePage() {
             ))}
           </div>
 
+          <div className="flex justify-end" style={{ marginTop: 20 }}>
+            <Button variant="dark" size="sm" onClick={() => setActiveSection('projects')}>
+              Continue to R&D Projects →
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== R&D PROJECTS ===== */}
+      {activeSection === 'projects' && (
+        <div style={{ animation: 'fadeUp 0.2s ease' }}>
+          <QRAProjectForm submissionId={id} />
           <div className="flex justify-end" style={{ marginTop: 20 }}>
             <Button variant="dark" size="sm" onClick={() => setActiveSection('discovery')}>
               Continue to Discovery →

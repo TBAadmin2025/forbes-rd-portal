@@ -36,6 +36,8 @@ export default function CompanyInfoPage() {
   const [stateTaxId, setStateTaxId] = useState('')
   const [businessState, setBusinessState] = useState('Georgia')
   const [contactPhone, setContactPhone] = useState('')
+  const [entityType, setEntityType] = useState('')
+  const [section280c, setSection280c] = useState<boolean | null>(null)
 
   // Address
   const [streetAddress, setStreetAddress] = useState('')
@@ -83,6 +85,8 @@ export default function CompanyInfoPage() {
         setStateTaxId(submission.state_tax_id || '')
         setBusinessState(submission.business_state || 'Georgia')
         setContactPhone(submission.contact_phone || '')
+        setEntityType(submission.entity_type || '')
+        setSection280c(submission.section_280c_election)
 
         // New fields
         setStreetAddress(submission.street_address || '')
@@ -128,6 +132,8 @@ export default function CompanyInfoPage() {
           state_tax_id: stateTaxId,
           business_state: businessState,
           contact_phone: contactPhone,
+          entity_type: entityType || null,
+          section_280c_election: section280c,
           street_address: streetAddress || null,
           street_address_2: streetAddress2 || null,
           city: city || null,
@@ -216,6 +222,30 @@ export default function CompanyInfoPage() {
           </FormField>
           <FormField label="Date Company Incorporated">
             <input className="finput" type="date" value={dateIncorporated} onChange={(e) => setDateIncorporated(e.target.value)} />
+          </FormField>
+        </div>
+
+        <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
+          <FormField label="Entity Type">
+            <select className="finput" value={entityType} onChange={(e) => setEntityType(e.target.value)}>
+              <option value="">Select...</option>
+              <option value="C-Corporation">C-Corporation</option>
+              <option value="S-Corporation">S-Corporation</option>
+              <option value="Partnership">Partnership</option>
+              <option value="LLC">LLC</option>
+              <option value="Sole Proprietor">Sole Proprietor</option>
+            </select>
+          </FormField>
+          <FormField label="§280C(c)(3) Reduced Credit Election" hint="Most businesses choose Yes — preserves your full R&D expense deduction">
+            <select
+              className="finput"
+              value={section280c === null ? '' : section280c ? 'yes' : 'no'}
+              onChange={(e) => setSection280c(e.target.value === '' ? null : e.target.value === 'yes')}
+            >
+              <option value="">Select...</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
           </FormField>
         </div>
       </Card>
