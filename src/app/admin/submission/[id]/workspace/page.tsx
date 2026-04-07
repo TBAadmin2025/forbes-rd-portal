@@ -1096,6 +1096,74 @@ export default function WorkspacePage() {
               </tbody>
             </table>
 
+            {/* QRA Activities */}
+            {qraActivities.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <div
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 600,
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    color: 'var(--muted)',
+                    marginBottom: 12,
+                  }}
+                >
+                  QRA Activities ({qraActivities.length})
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[...qraActivities]
+                    .sort((a, b) => (a.project_number || 0) - (b.project_number || 0))
+                    .map((a) => (
+                      <div
+                        key={a.id}
+                        style={{
+                          padding: '12px 16px',
+                          background: 'var(--warm)',
+                          borderRadius: 4,
+                          borderLeft: '3px solid var(--cherry)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+                          {a.project_number && (
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: 'var(--cherry)',
+                                letterSpacing: '0.5px',
+                              }}
+                            >
+                              {a.project_number}.
+                            </span>
+                          )}
+                          <span
+                            className="font-serif"
+                            style={{ fontSize: 14, fontWeight: 600, color: 'var(--charcoal)' }}
+                          >
+                            {a.name}
+                          </span>
+                        </div>
+                        {a.description && (
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: 'var(--muted)',
+                              fontWeight: 300,
+                              lineHeight: 1.6,
+                            }}
+                          >
+                            {a.description.length > 200
+                              ? a.description.slice(0, 200) + '...'
+                              : a.description}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
             {submission.status === 'submitted' || submission.status === 'complete' ? (
               <InfoBox>
                 This submission has already been submitted.

@@ -51,9 +51,10 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Submission not found' }, { status: 404 })
     }
 
-    const { data: employees } = await supabase
+    // Employees with junction → activity_ids
+    const { data: employeesRaw } = await supabase
       .from('employees')
-      .select('*')
+      .select('*, employee_year_activities(activity_id)')
       .eq('submission_id', submission_id)
       .order('tax_year', { ascending: true })
 
@@ -85,7 +86,32 @@ export async function POST(request: NextRequest) {
       .eq('submission_id', submission_id)
       .order('tax_year', { ascending: true })
 
-    const emps = employees || []
+    // QRA activities for this submission
+    const { data: qraActivities } = await supabase
+      .from('qra_activities')
+      .select('*')
+      .eq('submission_id', submission_id)
+      .order('project_number', { ascending: true })
+
+    const activities = qraActivities || []
+    const activityMap: Record<string, string> = {}
+    activities.forEach((a: { id: string; name: string; project_number: number | null }) => {
+      activityMap[a.id] = a.project_number ? `${a.project_number}. ${a.name}` : a.name
+    })
+
+    // Hydrate employees with activity_names array
+    type RawEmployeeRow = Record<string, unknown> & {
+      employee_year_activities?: { activity_id: string }[]
+    }
+    const emps = (employeesRaw || []).map((row: RawEmployeeRow) => {
+      const junction = (row.employee_year_activities || []) as { activity_id: string }[]
+      const activity_names = junction
+        .map((j) => activityMap[j.activity_id])
+        .filter(Boolean)
+      const { employee_year_activities: _, ...rest } = row
+      return { ...rest, activity_names }
+    })
+
     const sups = supplies || []
     const docs = documents || []
     const summaries = qreSummary || []
@@ -117,6 +143,7 @@ export async function POST(request: NextRequest) {
           submission, employees: emps, supplies: sups,
           summaries, qreByYear, totalQRE,
           grossReceipts: grossReceipts || [],
+          qraActivities: activities,
         })
         const fileName = `${clientSlug}-QRE-Data.xlsx`
         const path = `${basePath}/${fileName}`

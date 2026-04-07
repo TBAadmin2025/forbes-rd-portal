@@ -307,7 +307,7 @@ export async function generateSummaryPDF(input: SummaryPDFInput): Promise<Buffer
               React.createElement(
                 Text,
                 { style: { ...styles.tableCell, flex: 2 } },
-                (e.project_name as string) || ''
+                ((e.activity_names as string[] | undefined) || []).join('; ') || (e.project_name as string) || ''
               )
             )
           ),

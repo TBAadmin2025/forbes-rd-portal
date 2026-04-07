@@ -14,9 +14,10 @@ interface ExcelInput {
   qreByYear: Record<number, number>
   totalQRE: number
   grossReceipts?: Record<string, unknown>[]
+  qraActivities?: Record<string, unknown>[]
 }
 
-export function generateExcel({ submission, employees, supplies, summaries, qreByYear, totalQRE, grossReceipts = [] }: ExcelInput): Buffer {
+export function generateExcel({ submission, employees, supplies, summaries, qreByYear, totalQRE, grossReceipts = [], qraActivities = [] }: ExcelInput): Buffer {
   const wb = XLSX.utils.book_new()
 
   const headerStyle = {
@@ -81,22 +82,25 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
   XLSX.utils.book_append_sheet(wb, ws1, 'Summary')
 
   // Sheet 2: Employee Data
-  const empRows = employees.map((e) => ({
-    'Company': submission.company_name || '',
-    'FEIN': submission.fein || '',
-    'State': submission.business_state || '',
-    'Tax Year': e.tax_year,
-    'Employee Name': e.full_name,
-    'Type': e.employee_type,
-    'Employee State': e.state,
-    'Total Wages': e.total_wages,
-    'Total Hours Worked': (e.total_hours_worked as number) || 0,
-    '% R&D': (e.rd_percentage as number) || 0,
-    'R&D Hours': (e.rd_hours as number) || 0,
-    'Qualified Amount': (e.qualified_amount as number) || 0,
-    'Project': e.project_name || '',
-    'AI Extracted': e.ai_extracted ? 'Yes' : 'No',
-  }))
+  const empRows = employees.map((e) => {
+    const activityNames = (e.activity_names as string[] | undefined) || []
+    return {
+      'Company': submission.company_name || '',
+      'FEIN': submission.fein || '',
+      'State': submission.business_state || '',
+      'Tax Year': e.tax_year,
+      'Employee Name': e.full_name,
+      'Type': e.employee_type,
+      'Employee State': e.state,
+      'Total Wages': e.total_wages,
+      'Total Hours Worked': (e.total_hours_worked as number) || 0,
+      '% R&D': (e.rd_percentage as number) || 0,
+      'R&D Hours': (e.rd_hours as number) || 0,
+      'Qualified Amount': (e.qualified_amount as number) || 0,
+      'QRA Activities': activityNames.length > 0 ? activityNames.join('; ') : (e.project_name || ''),
+      'AI Extracted': e.ai_extracted ? 'Yes' : 'No',
+    }
+  })
 
   const ws2 = XLSX.utils.json_to_sheet(empRows.length > 0 ? empRows : [{}])
   const colCount2 = 14
@@ -115,13 +119,14 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
     'FEIN': submission.fein || '',
     'Tax Year': s.tax_year,
     'Description': s.description,
-    'Project': s.project_name || '',
+    'Vendor': s.vendor || '',
+    'QRA Activities': s.project_name || '',
     'Amount': s.amount,
     'AI Extracted': s.ai_extracted ? 'Yes' : 'No',
   }))
 
   const ws3 = XLSX.utils.json_to_sheet(supRows.length > 0 ? supRows : [{}])
-  const colCount3 = 7
+  const colCount3 = 8
   for (let c = 0; c < colCount3; c++) {
     const addr = XLSX.utils.encode_cell({ r: 0, c })
     if (ws3[addr]) ws3[addr].s = headerStyle
@@ -276,6 +281,32 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
   ws6['!cols'] = [{ wch: 12 }, { wch: 20 }]
   ws6['!freeze'] = { xSplit: 0, ySplit: 1 }
   XLSX.utils.book_append_sheet(wb, ws6, 'Gross Receipts')
+
+  // Sheet 7: QRA Activities — full narrative export
+  const qraRows = [...qraActivities]
+    .sort((a, b) => ((a.project_number as number) || 0) - ((b.project_number as number) || 0))
+    .map((a) => ({
+      'Project #': (a.project_number as number) || '',
+      'Project Name': str(a.name),
+      'Description': str(a.description),
+      'Technical Uncertainty': str(a.technical_uncertainty),
+      'Experimentation': str(a.experimentation),
+      'Outcomes': str(a.outcomes),
+    }))
+
+  const ws7 = XLSX.utils.json_to_sheet(
+    qraRows.length > 0
+      ? qraRows
+      : [{ 'Project #': '', 'Project Name': '', 'Description': '', 'Technical Uncertainty': '', 'Experimentation': '', 'Outcomes': '' }]
+  )
+  const qraColCount = 6
+  for (let c = 0; c < qraColCount; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c })
+    if (ws7[addr]) ws7[addr].s = headerStyle
+  }
+  ws7['!cols'] = [{ wch: 10 }, { wch: 40 }, { wch: 50 }, { wch: 50 }, { wch: 50 }, { wch: 50 }]
+  ws7['!freeze'] = { xSplit: 0, ySplit: 1 }
+  XLSX.utils.book_append_sheet(wb, ws7, 'QRA Activities')
 
   return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }))
 }
