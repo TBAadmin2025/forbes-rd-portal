@@ -139,19 +139,7 @@ export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps
   }
 
   if (state === 'uploading' || state === 'extracting') {
-    return (
-      <Card>
-        <div style={{ padding: 40, textAlign: 'center' }}>
-          <div style={{ fontSize: 36, marginBottom: 16 }}>📄</div>
-          <div className="font-serif" style={{ fontSize: 20, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 8 }}>
-            {state === 'uploading' ? 'Uploading PDF...' : 'Reading your QRA document...'}
-          </div>
-          <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 300 }}>
-            {state === 'uploading' ? 'Just a moment.' : 'AI is extracting your R&D projects. This usually takes 10-30 seconds.'}
-          </div>
-        </div>
-      </Card>
-    )
+    return <ExtractionProgress state={state} />
   }
 
   if (state === 'reviewing') {
@@ -378,5 +366,165 @@ export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps
         />
       </div>
     </div>
+  )
+}
+
+// ── EXTRACTION PROGRESS ──
+const STEPS = [
+  { label: 'Uploading PDF to secure storage', icon: '📤' },
+  { label: 'Reading the document', icon: '📄' },
+  { label: 'Identifying R&D projects', icon: '🔍' },
+  { label: 'Extracting project details', icon: '✨' },
+  { label: 'Preparing your review', icon: '✅' },
+]
+
+function ExtractionProgress({ state }: { state: 'uploading' | 'extracting' }) {
+  const [currentStep, setCurrentStep] = useState(0)
+  const [progress, setProgress] = useState(5)
+
+  useEffect(() => {
+    // Step animation: ~6s per step (5 steps total = 30s, matching typical extraction time)
+    const stepTimer = setInterval(() => {
+      setCurrentStep((s) => {
+        if (s < STEPS.length - 1) return s + 1
+        return s
+      })
+    }, 6000)
+
+    // Progress bar animation: smoothly fill from 5% to 95% over 30s
+    // Capped at 95% so it never looks "done" until the API actually responds
+    const startTime = Date.now()
+    const progressTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      // Logarithmic curve: fast at start, slow near end
+      const pct = Math.min(95, 5 + 90 * (1 - Math.exp(-elapsed / 12000)))
+      setProgress(pct)
+    }, 100)
+
+    return () => {
+      clearInterval(stepTimer)
+      clearInterval(progressTimer)
+    }
+  }, [])
+
+  return (
+    <Card>
+      <div style={{ padding: '32px 28px' }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ fontSize: 36, marginBottom: 12 }}>📄</div>
+          <div className="font-serif" style={{ fontSize: 22, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 6 }}>
+            {state === 'uploading' ? 'Uploading your PDF...' : 'Reading your QRA document...'}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 300 }}>
+            This usually takes 15-30 seconds. Please don&apos;t close this tab.
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{ marginBottom: 28 }}>
+          <div
+            style={{
+              height: 8,
+              background: 'var(--warm)',
+              borderRadius: 100,
+              overflow: 'hidden',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${progress}%`,
+                background: 'linear-gradient(90deg, var(--cherry), var(--champagne))',
+                borderRadius: 100,
+                transition: 'width 0.3s ease-out',
+              }}
+            />
+          </div>
+          <div
+            style={{
+              fontSize: 10,
+              color: 'var(--muted)',
+              marginTop: 6,
+              textAlign: 'right',
+              fontWeight: 600,
+              letterSpacing: '1px',
+            }}
+          >
+            {Math.round(progress)}%
+          </div>
+        </div>
+
+        {/* Steps */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {STEPS.map((step, i) => {
+            const isDone = i < currentStep
+            const isActive = i === currentStep
+            const isPending = i > currentStep
+            return (
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '10px 0',
+                  borderBottom: i < STEPS.length - 1 ? '1px solid var(--border)' : 'none',
+                  opacity: isPending ? 0.4 : 1,
+                  transition: 'opacity 0.3s',
+                }}
+              >
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    background: isDone ? 'var(--emerald)' : isActive ? 'var(--cherry)' : 'var(--border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 13,
+                    color: 'var(--white)',
+                    fontWeight: 700,
+                    flexShrink: 0,
+                    transition: 'background 0.3s',
+                  }}
+                >
+                  {isDone ? '✓' : isActive ? <Spinner /> : i + 1}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: isPending ? 'var(--muted)' : 'var(--charcoal)',
+                      fontWeight: isActive ? 600 : 400,
+                    }}
+                  >
+                    {step.label}
+                  </div>
+                </div>
+                <span style={{ fontSize: 16 }}>{step.icon}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function Spinner() {
+  return (
+    <div
+      style={{
+        width: 14,
+        height: 14,
+        border: '2px solid rgba(255,255,255,0.3)',
+        borderTopColor: 'var(--white)',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
+      }}
+    />
   )
 }
