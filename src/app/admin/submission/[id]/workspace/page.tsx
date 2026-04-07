@@ -425,7 +425,7 @@ export default function WorkspacePage() {
     { key: 'info', label: 'Business Info', icon: '🏢' },
     { key: 'qra', label: 'QRA Activities', icon: '🔬' },
     { key: 'employees', label: 'Employees', icon: '👥' },
-    { key: 'data', label: 'Data Entry', icon: '📊' },
+    { key: 'data', label: 'QRE Data', icon: '📊' },
     { key: 'documents', label: 'Documents', icon: '📁' },
     { key: 'discovery', label: 'Discovery', icon: '🔍' },
     { key: 'review', label: 'Review & Submit', icon: '✅' },
@@ -734,7 +734,7 @@ export default function WorkspacePage() {
                 setActiveSection('data')
               }}
             >
-              Continue to Data Entry →
+              Continue to QRE Data →
             </Button>
           </div>
         </div>
