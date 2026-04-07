@@ -11,15 +11,15 @@ interface ClientCardProps {
 
 function getActionButton(status: Submission['status']) {
   switch (status) {
+    case 'internal':
+      return { variant: 'ghost' as const, label: 'Open Workspace' }
     case 'invited':
-      return { variant: 'ghost' as const, label: 'Resend Link' }
+      return { variant: 'ghost' as const, label: 'Resend Invite' }
     case 'in_progress':
       return { variant: 'ghost' as const, label: 'View Progress' }
     case 'submitted':
       return { variant: 'cherry' as const, label: 'Review Now' }
-    case 'in_review':
-      return { variant: 'cherry' as const, label: 'Continue Review' }
-    case 'complete':
+    case 'sent':
       return { variant: 'dark' as const, label: 'View Export' }
   }
 }

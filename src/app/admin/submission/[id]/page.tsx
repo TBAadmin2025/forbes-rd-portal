@@ -27,11 +27,11 @@ interface CreditRow {
 
 const statusTagVariant = (status: Submission['status']) => {
   switch (status) {
+    case 'internal': return 'internal' as const
     case 'invited': return 'invited' as const
     case 'in_progress': return 'progress' as const
-    case 'submitted':
-    case 'in_review': return 'submitted' as const
-    case 'complete': return 'complete' as const
+    case 'submitted': return 'submitted' as const
+    case 'sent': return 'sent' as const
   }
 }
 

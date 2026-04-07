@@ -1,4 +1,4 @@
-type TagVariant = 'invited' | 'progress' | 'submitted' | 'complete'
+type TagVariant = 'internal' | 'invited' | 'progress' | 'submitted' | 'sent'
 
 interface TagProps {
   variant: TagVariant
@@ -6,6 +6,10 @@ interface TagProps {
 }
 
 const variantStyles: Record<TagVariant, React.CSSProperties> = {
+  internal: {
+    background: 'rgba(122,112,96,0.15)',
+    color: 'var(--muted)',
+  },
   invited: {
     background: 'rgba(226,196,155,0.2)',
     color: 'var(--champ-dk)',
@@ -18,7 +22,7 @@ const variantStyles: Record<TagVariant, React.CSSProperties> = {
     background: 'rgba(108,22,28,0.1)',
     color: 'var(--cherry)',
   },
-  complete: {
+  sent: {
     background: 'var(--charcoal)',
     color: 'var(--champagne)',
   },

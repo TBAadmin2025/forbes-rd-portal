@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('submissions')
       .update({
-        status: 'complete',
+        status: 'sent',
         completed_at: new Date().toISOString(),
         export_generated_at: new Date().toISOString(),
         export_pdf_url: results.pdf_url || submission.export_pdf_url,

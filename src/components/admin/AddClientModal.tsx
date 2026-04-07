@@ -38,7 +38,6 @@ export default function AddClientModal({
           company_name: businessName,
           contact_email: email,
           admin_notes: note || null,
-          send_invite: false, // never send invite from this modal
         }),
       })
 

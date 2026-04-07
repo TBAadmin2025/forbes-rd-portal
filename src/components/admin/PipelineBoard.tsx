@@ -17,8 +17,16 @@ const COLUMNS: {
   badgeColor: string
 }[] = [
   {
+    key: 'internal',
+    label: 'Internal',
+    statuses: ['internal'],
+    labelColor: 'var(--muted)',
+    badgeBg: 'rgba(122,112,96,0.15)',
+    badgeColor: 'var(--muted)',
+  },
+  {
     key: 'invited',
-    label: 'Link Sent',
+    label: 'Invited',
     statuses: ['invited'],
     labelColor: 'var(--champ-dk)',
     badgeBg: 'rgba(226,196,155,0.2)',
@@ -35,15 +43,15 @@ const COLUMNS: {
   {
     key: 'submitted',
     label: 'Ready to Review',
-    statuses: ['submitted', 'in_review'],
+    statuses: ['submitted'],
     labelColor: 'var(--cherry)',
     badgeBg: 'rgba(108,22,28,0.1)',
     badgeColor: 'var(--cherry)',
   },
   {
-    key: 'complete',
-    label: 'Done & Sent',
-    statuses: ['complete'],
+    key: 'sent',
+    label: 'Sent to Partner',
+    statuses: ['sent'],
     labelColor: 'var(--charcoal)',
     badgeBg: 'var(--charcoal)',
     badgeColor: 'var(--champagne)',
@@ -54,7 +62,7 @@ export default function PipelineBoard({ submissions, onCardClick }: PipelineBoar
   return (
     <div
       className="grid"
-      style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}
+      style={{ gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}
     >
       {COLUMNS.map((col) => {
         const items = submissions.filter((s) => col.statuses.includes(s.status))
@@ -67,7 +75,6 @@ export default function PipelineBoard({ submissions, onCardClick }: PipelineBoar
               padding: 12,
             }}
           >
-            {/* Column header */}
             <div
               className="flex items-center justify-between"
               style={{
@@ -103,7 +110,6 @@ export default function PipelineBoard({ submissions, onCardClick }: PipelineBoar
               </span>
             </div>
 
-            {/* Cards */}
             {items.map((sub) => (
               <ClientCard
                 key={sub.id}

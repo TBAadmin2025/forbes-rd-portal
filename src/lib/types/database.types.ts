@@ -10,7 +10,7 @@ export interface Profile {
 export interface Submission {
   id: string
   client_user_id: string | null
-  status: 'invited' | 'in_progress' | 'submitted' | 'in_review' | 'complete'
+  status: 'internal' | 'invited' | 'in_progress' | 'submitted' | 'sent'
   submission_method: 'upload' | 'manual' | null
   company_name: string | null
   dba_name: string | null

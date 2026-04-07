@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       company_name: body.company_name || null,
       contact_email: body.contact_email,
       admin_notes: body.admin_notes || null,
-      status: body.status || 'invited',
+      status: body.status || 'internal',
       submission_method: body.submission_method || null,
       invited_at: new Date().toISOString(),
       last_active_at: new Date().toISOString(),

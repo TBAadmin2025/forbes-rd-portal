@@ -353,7 +353,10 @@ export default function WorkspacePage() {
         employee_states: employeeStates || null,
         date_incorporated: dateIncorporated || null,
         tax_year_end: taxYearEnd || null,
-        status: submission?.status === 'invited' ? 'in_progress' : submission?.status,
+        status:
+          submission?.status === 'internal' || submission?.status === 'invited'
+            ? 'in_progress'
+            : submission?.status,
         started_at: submission?.started_at || new Date().toISOString(),
       })
       .eq('id', id)
@@ -480,7 +483,15 @@ export default function WorkspacePage() {
               {activatingPortal ? 'Sending...' : 'Send Portal Invite'}
             </Button>
           )}
-          <Tag variant={submission.status === 'invited' ? 'invited' : submission.status === 'in_progress' ? 'progress' : submission.status === 'submitted' ? 'submitted' : 'complete'}>
+          <Tag
+            variant={
+              submission.status === 'internal' ? 'internal' :
+              submission.status === 'invited' ? 'invited' :
+              submission.status === 'in_progress' ? 'progress' :
+              submission.status === 'submitted' ? 'submitted' :
+              'sent'
+            }
+          >
             {submission.status.replace('_', ' ')}
           </Tag>
         </div>
@@ -1171,7 +1182,7 @@ export default function WorkspacePage() {
               </div>
             )}
 
-            {submission.status === 'submitted' || submission.status === 'complete' ? (
+            {submission.status === 'submitted' || submission.status === 'sent' ? (
               <InfoBox>
                 This submission has already been submitted.
               </InfoBox>

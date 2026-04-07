@@ -157,7 +157,7 @@ export default function SettingsPage() {
           >
             Profile
           </div>
-          <Tag variant="complete">{roleLabel}</Tag>
+          <Tag variant="sent">{roleLabel}</Tag>
         </div>
 
         <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
@@ -323,7 +323,7 @@ export default function SettingsPage() {
                         {resending === m.email ? 'Sending...' : resendSuccess === m.email ? 'Sent ✓' : 'Resend Invite'}
                       </button>
                     )}
-                    <Tag variant={m.role === 'super_admin' ? 'complete' : 'progress'}>
+                    <Tag variant={m.role === 'super_admin' ? 'sent' : 'progress'}>
                       {m.role === 'super_admin' ? 'Super Admin' : 'Admin'}
                     </Tag>
                   </div>

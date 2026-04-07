@@ -9,21 +9,21 @@ import type { Submission } from '@/lib/types/database.types'
 
 const statusVariant = (s: Submission['status']) => {
   switch (s) {
+    case 'internal': return 'internal' as const
     case 'invited': return 'invited' as const
     case 'in_progress': return 'progress' as const
-    case 'submitted':
-    case 'in_review': return 'submitted' as const
-    case 'complete': return 'complete' as const
+    case 'submitted': return 'submitted' as const
+    case 'sent': return 'sent' as const
   }
 }
 
 const statusLabel = (s: Submission['status']) => {
   switch (s) {
+    case 'internal': return 'Internal'
     case 'invited': return 'Invited'
     case 'in_progress': return 'In Progress'
     case 'submitted': return 'Submitted'
-    case 'in_review': return 'In Review'
-    case 'complete': return 'Complete'
+    case 'sent': return 'Sent'
   }
 }
 
@@ -58,7 +58,7 @@ export default function ClientsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const statuses = ['all', 'invited', 'in_progress', 'submitted', 'in_review', 'complete']
+  const statuses = ['all', 'internal', 'invited', 'in_progress', 'submitted', 'sent']
 
   return (
     <div>
@@ -106,7 +106,7 @@ export default function ClientsPage() {
                 transition: 'all 0.15s',
               }}
             >
-              {s === 'all' ? 'All' : s === 'in_progress' ? 'In Progress' : s === 'in_review' ? 'In Review' : s.charAt(0).toUpperCase() + s.slice(1)}
+              {s === 'all' ? 'All' : s === 'in_progress' ? 'In Progress' : s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
           ))}
         </div>
@@ -185,7 +185,15 @@ export default function ClientsPage() {
                   {s.contact_email || '—'}
                 </td>
                 <td style={{ padding: '12px 16px' }}>
-                  <Tag variant={statusVariant(s.status)}>{statusLabel(s.status)}</Tag>
+                  <div className="flex items-center" style={{ gap: 8 }}>
+                    <Tag variant={statusVariant(s.status)}>{statusLabel(s.status)}</Tag>
+                    <span
+                      title={s.client_user_id ? 'Portal access enabled' : 'No portal access yet'}
+                      style={{ fontSize: 12, color: 'var(--muted)' }}
+                    >
+                      {s.client_user_id ? '👤' : '🔒'}
+                    </span>
+                  </div>
                 </td>
                 <td style={{ padding: '12px 16px', fontSize: 11, color: 'var(--muted)', fontWeight: 300 }}>
                   {s.last_active_at

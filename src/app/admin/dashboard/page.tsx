@@ -57,13 +57,13 @@ export default function DashboardPage() {
 
   const stats = {
     total: submissions.length,
-    submitted: submissions.filter((s) => s.status === 'submitted' || s.status === 'in_review').length,
-    inProgress: submissions.filter((s) => s.status === 'in_progress').length,
-    complete: submissions.filter((s) => s.status === 'complete').length,
-    sent: submissions.filter((s) => s.export_sent_at).length,
+    internal: submissions.filter((s) => s.status === 'internal').length,
+    withClient: submissions.filter((s) => s.status === 'invited' || s.status === 'in_progress').length,
+    submitted: submissions.filter((s) => s.status === 'submitted').length,
+    sent: submissions.filter((s) => s.status === 'sent').length,
   }
 
-  const submitted = submissions.filter((s) => s.status === 'submitted' || s.status === 'in_review')
+  const submitted = submissions.filter((s) => s.status === 'submitted')
 
   const handleAddClient = () => {
     window.dispatchEvent(new CustomEvent('open-add-client'))
