@@ -149,6 +149,15 @@ export default function WorkspacePage() {
     }
   }, [id])
 
+  // Reload QRA activities (called after QRA tab saves new activities)
+  const loadQraActivities = useCallback(async () => {
+    const qraRes = await fetch(`/api/qra-activities?submission_id=${id}`)
+    if (qraRes.ok) {
+      const data = await qraRes.json()
+      setQraActivities(data)
+    }
+  }, [id])
+
   // Send portal invite
   const handleSendInvite = async () => {
     if (!submission?.contact_email) {
@@ -484,7 +493,13 @@ export default function WorkspacePage() {
         {sections.map((s) => (
           <button
             key={s.key}
-            onClick={() => setActiveSection(s.key)}
+            onClick={async () => {
+              // Refresh activities and employees when entering data tab
+              if (s.key === 'data') {
+                await Promise.all([loadQraActivities(), loadEmployeesByYear()])
+              }
+              setActiveSection(s.key)
+            }}
             style={{
               flex: 1,
               padding: '14px 20px',
@@ -692,7 +707,14 @@ export default function WorkspacePage() {
         <div style={{ animation: 'fadeUp 0.2s ease' }}>
           <QRAActivitiesTab submissionId={id} />
           <div className="flex justify-end" style={{ marginTop: 20 }}>
-            <Button variant="dark" size="sm" onClick={() => setActiveSection('employees')}>
+            <Button
+              variant="dark"
+              size="sm"
+              onClick={async () => {
+                await loadQraActivities()
+                setActiveSection('employees')
+              }}
+            >
               Continue to Employees →
             </Button>
           </div>
@@ -708,7 +730,7 @@ export default function WorkspacePage() {
               variant="dark"
               size="sm"
               onClick={async () => {
-                await loadEmployeesByYear()
+                await Promise.all([loadEmployeesByYear(), loadQraActivities()])
                 setActiveSection('data')
               }}
             >

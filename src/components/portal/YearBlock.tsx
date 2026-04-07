@@ -255,6 +255,7 @@ export default function YearBlock({
                     supply={sup}
                     submissionId={submissionId}
                     taxYear={year}
+                    qraActivities={qraActivities}
                     onSaved={handleSupplySaved}
                     onUpdated={handleSupplyUpdated}
                     onDelete={handleSupplyDelete}

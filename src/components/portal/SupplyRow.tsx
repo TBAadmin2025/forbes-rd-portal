@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { formatCurrency } from '@/lib/utils/formatting'
-import type { Supply } from '@/lib/types/database.types'
+import type { Supply, QRAActivity } from '@/lib/types/database.types'
 
 type RowMode = 'draft' | 'viewing' | 'editing'
 
@@ -10,6 +10,7 @@ interface SupplyRowProps {
   supply: Partial<Supply> & { _localId: string }
   submissionId: string
   taxYear: number
+  qraActivities?: QRAActivity[]
   onSaved: (localId: string, saved: Supply) => void
   onUpdated: (id: string, data: Partial<Supply>) => void
   onDelete: (id: string | undefined, localId: string) => void
@@ -19,6 +20,7 @@ export default function SupplyRow({
   supply,
   submissionId,
   taxYear,
+  qraActivities = [],
   onSaved,
   onUpdated,
   onDelete,
@@ -32,6 +34,7 @@ export default function SupplyRow({
   const [vendor, setVendor] = useState(supply.vendor || '')
   const [projectName, setProjectName] = useState(supply.project_name || '')
   const [amount, setAmount] = useState(supply.amount ?? 0)
+  const [showProjectPicker, setShowProjectPicker] = useState(false)
 
   const [snapshot, setSnapshot] = useState({
     description: supply.description || '',
@@ -43,6 +46,18 @@ export default function SupplyRow({
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   const canSave = description.trim() !== '' && amount > 0
+
+  // Parse the comma-separated project_name back into selected IDs
+  const selectedActivityIds = qraActivities
+    .filter((a) => projectName.split(',').map(s => s.trim()).includes(a.name))
+    .map((a) => a.id)
+
+  function toggleActivity(activity: QRAActivity) {
+    const names = projectName ? projectName.split(',').map(s => s.trim()).filter(Boolean) : []
+    const has = names.includes(activity.name)
+    const next = has ? names.filter((n) => n !== activity.name) : [...names, activity.name]
+    setProjectName(next.join(', '))
+  }
 
   // Draft auto-save
   useEffect(() => {
@@ -120,7 +135,7 @@ export default function SupplyRow({
   }
 
   // Styles
-  const cellPad: React.CSSProperties = { padding: '6px 4px' }
+  const cellPad: React.CSSProperties = { padding: '6px 4px', verticalAlign: 'middle' }
   const inputStyle: React.CSSProperties = {
     border: '1.5px solid var(--border)', background: 'var(--warm)', borderRadius: 2,
     padding: '6px 8px', fontSize: 11, fontFamily: 'inherit', color: 'var(--charcoal)',
@@ -140,6 +155,93 @@ export default function SupplyRow({
     : mode === 'editing'
       ? 'rgba(108,22,28,0.02)'
       : undefined
+
+  // Build the project picker UI used in both draft and editing modes
+  const projectPicker = (
+    <div style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setShowProjectPicker((s) => !s)}
+        style={{
+          ...inputStyle,
+          textAlign: 'left',
+          cursor: 'pointer',
+          color: projectName ? 'var(--charcoal)' : 'var(--muted)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {projectName || 'Select R&D project(s)...'}
+      </button>
+      {showProjectPicker && (
+        <>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 10 }}
+            onClick={() => setShowProjectPicker(false)}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: 4,
+              background: 'var(--white)',
+              border: '1px solid var(--border)',
+              borderRadius: 4,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+              zIndex: 11,
+              maxHeight: 280,
+              overflowY: 'auto',
+              minWidth: 260,
+            }}
+          >
+            {qraActivities.length === 0 ? (
+              <div style={{ padding: 16, fontSize: 11, color: 'var(--muted)', fontStyle: 'italic' }}>
+                No activities yet. Upload the QRA PDF on the QRA Activities tab.
+              </div>
+            ) : (
+              qraActivities.map((a) => {
+                const checked = selectedActivityIds.includes(a.id)
+                return (
+                  <label
+                    key={a.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '10px 14px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid var(--border)',
+                      background: checked ? 'rgba(108,22,28,0.04)' : 'transparent',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleActivity(a)}
+                      style={{ marginTop: 2, accentColor: 'var(--cherry)', flexShrink: 0 }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--charcoal)', marginBottom: 2 }}>
+                        {a.project_number ? `${a.project_number}. ` : ''}{a.name}
+                      </div>
+                      {a.description && (
+                        <div style={{ fontSize: 10, color: 'var(--muted)', lineHeight: 1.4 }}>
+                          {a.description.slice(0, 80)}{a.description.length > 80 ? '...' : ''}
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                )
+              })
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  )
 
   // --- VIEWING ---
   if (mode === 'viewing') {
@@ -213,10 +315,7 @@ export default function SupplyRow({
         <input style={inputStyle} placeholder="Vendor name" value={vendor}
           onChange={(e) => setVendor(e.target.value)} />
       </td>
-      <td style={cellPad}>
-        <input style={inputStyle} placeholder="R&D project" value={projectName}
-          onChange={(e) => setProjectName(e.target.value)} />
-      </td>
+      <td style={cellPad}>{projectPicker}</td>
       <td style={cellPad}>
         <input style={{ ...inputStyle, textAlign: 'right' }} type="number" min={0}
           value={amount || ''} onChange={(e) => setAmount(Number(e.target.value) || 0)} />
