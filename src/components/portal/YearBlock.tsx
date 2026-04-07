@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import EmployeeSummaryRow from './EmployeeSummaryRow'
 import EmployeeDetailDrawer from './EmployeeDetailDrawer'
 import BulkAssignProjectsModal from './BulkAssignProjectsModal'
-import SupplyRow from './SupplyRow'
+import SupplySummaryRow from './SupplySummaryRow'
+import SupplyDetailDrawer from './SupplyDetailDrawer'
 import { calcQualifiedAmount } from '@/lib/utils/calculations'
 import { formatCurrency } from '@/lib/utils/formatting'
 import type { Employee, Supply, QRAActivity } from '@/lib/types/database.types'
@@ -40,6 +41,7 @@ export default function YearBlock({
   )
   const [drawerEmployeeId, setDrawerEmployeeId] = useState<string | null>(null)
   const [showBulkAssign, setShowBulkAssign] = useState(false)
+  const [supplyDrawer, setSupplyDrawer] = useState<{ mode: 'edit' | 'new'; supply: Supply | null } | null>(null)
 
   // Update local state when parent props change
   useEffect(() => {
@@ -65,44 +67,18 @@ export default function YearBlock({
     }
   }, [submissionId, year])
 
-  // Supply callbacks
-  const addSupply = () => {
-    setSupplies((prev) => [
-      ...prev,
-      {
-        _localId: localId(),
-        tax_year: year,
-        submission_id: submissionId,
-        description: '',
-        vendor: null,
-        project_name: null,
-        amount: 0,
-      },
-    ])
-  }
+  // Supply callbacks — drawer-based
+  const handleSupplyCreated = useCallback((saved: Supply) => {
+    setSupplies((prev) => [...prev, { ...saved, _localId: saved.id || localId() }])
+  }, [])
 
-  const handleSupplySaved = useCallback(
-    (lid: string, saved: Supply) => {
-      setSupplies((prev) =>
-        prev.map((s) => (s._localId === lid ? { ...saved, _localId: lid } : s))
-      )
-    },
-    []
-  )
+  const handleSupplyUpdated = useCallback((id: string, data: Partial<Supply>) => {
+    setSupplies((prev) => prev.map((s) => (s.id === id ? { ...s, ...data } : s)))
+  }, [])
 
-  const handleSupplyUpdated = useCallback(
-    (id: string, data: Partial<Supply>) => {
-      setSupplies((prev) => prev.map((s) => (s.id === id ? { ...s, ...data } : s)))
-    },
-    []
-  )
-
-  const handleSupplyDelete = useCallback(
-    (_id: string | undefined, lid: string) => {
-      setSupplies((prev) => prev.filter((s) => s._localId !== lid))
-    },
-    []
-  )
+  const handleSupplyDeleted = useCallback((id: string) => {
+    setSupplies((prev) => prev.filter((s) => s.id !== id))
+  }, [])
 
   // Year total
   const empTotal = employees.reduce((sum, e) => {
@@ -273,26 +249,37 @@ export default function YearBlock({
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  <th style={thStyle}>Description</th>
-                  <th style={thStyle}>Vendor</th>
-                  <th style={thStyle}>R&D Project</th>
+                  <th style={thStyle}>Expense</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>Projects</th>
                   <th style={{ ...thStyle, textAlign: 'right' }}>Amount</th>
                   <th style={{ ...thStyle, width: 30 }}></th>
                 </tr>
               </thead>
               <tbody>
-                {supplies.map((sup) => (
-                  <SupplyRow
-                    key={sup._localId}
-                    supply={sup}
-                    submissionId={submissionId}
-                    taxYear={year}
-                    qraActivities={qraActivities}
-                    onSaved={handleSupplySaved}
-                    onUpdated={handleSupplyUpdated}
-                    onDelete={handleSupplyDelete}
-                  />
-                ))}
+                {supplies.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} style={{
+                      padding: '20px 12px',
+                      textAlign: 'center',
+                      fontSize: 12,
+                      color: 'var(--muted)',
+                      fontWeight: 300,
+                      fontStyle: 'italic',
+                    }}>
+                      No expenses yet. Click + Add Expense below.
+                    </td>
+                  </tr>
+                ) : (
+                  supplies.filter((s) => !!s.id).map((sup) => (
+                    <SupplySummaryRow
+                      key={sup._localId}
+                      supply={sup}
+                      qraActivities={qraActivities}
+                      isSelected={supplyDrawer?.mode === 'edit' && supplyDrawer.supply?.id === sup.id}
+                      onClick={() => setSupplyDrawer({ mode: 'edit', supply: sup as Supply })}
+                    />
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -300,7 +287,7 @@ export default function YearBlock({
           {/* Add Supply button */}
           <div style={{ padding: '10px 12px' }}>
             <button
-              onClick={addSupply}
+              onClick={() => setSupplyDrawer({ mode: 'new', supply: null })}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -331,6 +318,20 @@ export default function YearBlock({
         year={year}
         onSelect={setDrawerEmployeeId}
         onUpdated={handleEmployeeUpdated}
+      />
+
+      {/* Supply detail drawer */}
+      <SupplyDetailDrawer
+        isOpen={supplyDrawer !== null}
+        mode={supplyDrawer?.mode || null}
+        supply={supplyDrawer?.supply || null}
+        submissionId={submissionId}
+        taxYear={year}
+        qraActivities={qraActivities}
+        onClose={() => setSupplyDrawer(null)}
+        onSaved={handleSupplyCreated}
+        onUpdated={handleSupplyUpdated}
+        onDeleted={handleSupplyDeleted}
       />
 
       {/* Bulk assign modal */}
