@@ -779,7 +779,7 @@ export default function WorkspacePage() {
       {/* ===== EMPLOYEES ===== */}
       {activeSection === 'employees' && (
         <div style={{ animation: 'fadeUp 0.2s ease' }}>
-          <EmployeesTab submissionId={id} />
+          <EmployeesTab submissionId={id} taxYears={taxYears} />
           <div className="flex justify-end" style={{ marginTop: 20 }}>
             <Button
               variant="dark"

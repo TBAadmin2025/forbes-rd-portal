@@ -2,10 +2,11 @@
 
 import { useRouter } from 'next/navigation'
 
-const STEPS = ['Welcome', 'Business Info', 'Your Data', 'Documents', 'Review', 'Done']
+const STEPS = ['Welcome', 'Business Info', 'Employees', 'Your Data', 'Documents', 'Review', 'Done']
 const STEP_ROUTES = [
   '/portal/welcome',
   '/portal/company-info',
+  '/portal/employees',
   '/portal/data-entry',
   '/portal/upload',
   '/portal/review',

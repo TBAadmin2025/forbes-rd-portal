@@ -7,7 +7,9 @@ import { useAdminSid, portalUrl } from '@/lib/utils/use-submission-id'
 const STEP_ROUTES = [
   '/portal/welcome',
   '/portal/company-info',
+  '/portal/employees',
   '/portal/data-entry',
+  '/portal/upload',
   '/portal/review',
   '/portal/confirmation',
 ]

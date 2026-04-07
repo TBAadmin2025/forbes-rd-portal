@@ -10,11 +10,12 @@ const STEP_ROUTES: Record<string, number> = {
   '/portal/welcome': 0,
   '/portal': 0,
   '/portal/company-info': 1,
-  '/portal/data-entry': 2,
-  '/portal/manual': 2,
-  '/portal/upload': 3,
-  '/portal/review': 4,
-  '/portal/confirmation': 5,
+  '/portal/employees': 2,
+  '/portal/data-entry': 3,
+  '/portal/manual': 3,
+  '/portal/upload': 4,
+  '/portal/review': 5,
+  '/portal/confirmation': 6,
 }
 
 function PortalLayoutInner({ children }: { children: React.ReactNode }) {
@@ -80,7 +81,7 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
             if (Array.isArray(emps) && emps.length > 0) max = Math.max(max, 2)
           }
         }
-        if (sub.status === 'submitted' || sub.status === 'sent') max = 4
+        if (sub.status === 'submitted' || sub.status === 'sent') max = 5
         if (sub.current_step) max = Math.max(max, sub.current_step)
         setMaxStepReached(max)
       } catch {

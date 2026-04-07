@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import Button from '@/components/shared/Button'
 import FormField from '@/components/shared/FormField'
 import Tag from '@/components/shared/Tag'
+import EmployeeImportModal from '@/components/portal/EmployeeImportModal'
 import type { ClientEmployee } from '@/lib/types/database.types'
 
 interface EmployeesTabProps {
   submissionId: string
+  taxYears: number[]
 }
 
 const US_STATES = [
@@ -21,8 +23,6 @@ const US_STATES = [
   'Virginia','Washington','West Virginia','Wisconsin','Wyoming',
 ]
 
-const YEARS = [2025, 2024, 2023, 2022]
-
 interface DraftEmployee {
   full_name: string
   employee_type: 'Employee' | 'Contractor'
@@ -30,17 +30,19 @@ interface DraftEmployee {
   years_worked: number[]
 }
 
-function emptyDraft(): DraftEmployee {
-  return { full_name: '', employee_type: 'Employee', state: 'Georgia', years_worked: [] }
+function emptyDraft(taxYears: number[]): DraftEmployee {
+  return { full_name: '', employee_type: 'Employee', state: 'Georgia', years_worked: [...taxYears] }
 }
 
-export default function EmployeesTab({ submissionId }: EmployeesTabProps) {
+export default function EmployeesTab({ submissionId, taxYears }: EmployeesTabProps) {
+  const orderedYears = [...taxYears].sort((a, b) => b - a)
   const [employees, setEmployees] = useState<ClientEmployee[]>([])
   const [loading, setLoading] = useState(true)
   const [draft, setDraft] = useState<DraftEmployee | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState<DraftEmployee | null>(null)
   const [saving, setSaving] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
   useEffect(() => {
     load()
@@ -146,11 +148,25 @@ export default function EmployeesTab({ submissionId }: EmployeesTabProps) {
           </div>
         </div>
         {!draft && (
-          <Button variant="cherry" size="sm" onClick={() => setDraft(emptyDraft())}>
-            + Add Employee
-          </Button>
+          <div className="flex" style={{ gap: 8 }}>
+            <Button variant="ghost" size="sm" onClick={() => setShowImport(true)}>
+              ↑ Import CSV
+            </Button>
+            <Button variant="cherry" size="sm" onClick={() => setDraft(emptyDraft(taxYears))}>
+              + Add Employee
+            </Button>
+          </div>
         )}
       </div>
+
+      <EmployeeImportModal
+        isOpen={showImport}
+        submissionId={submissionId}
+        taxYears={taxYears}
+        existingNames={employees.map((e) => e.full_name)}
+        onClose={() => setShowImport(false)}
+        onImported={load}
+      />
 
       {/* Empty state */}
       {employees.length === 0 && !draft && (
@@ -222,7 +238,7 @@ export default function EmployeesTab({ submissionId }: EmployeesTabProps) {
                             Years Worked
                           </div>
                           <div className="flex" style={{ gap: 8, flexWrap: 'wrap' }}>
-                            {YEARS.map((y) => {
+                            {orderedYears.map((y) => {
                               const checked = editDraft.years_worked.includes(y)
                               return (
                                 <button
@@ -329,7 +345,7 @@ export default function EmployeesTab({ submissionId }: EmployeesTabProps) {
               Years Worked
             </div>
             <div className="flex" style={{ gap: 8, flexWrap: 'wrap' }}>
-              {YEARS.map((y) => {
+              {orderedYears.map((y) => {
                 const checked = draft.years_worked.includes(y)
                 return (
                   <button

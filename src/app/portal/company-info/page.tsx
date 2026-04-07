@@ -132,7 +132,7 @@ export default function CompanyInfoPage() {
 
   const handleSubmit = async () => {
     if (!submissionId) {
-      router.push(portalUrl('/portal/data-entry', sid))
+      router.push(portalUrl('/portal/employees', sid))
       return
     }
 
@@ -192,10 +192,10 @@ export default function CompanyInfoPage() {
       }
 
       setSaving(false)
-      router.push(portalUrl('/portal/data-entry', sid))
+      router.push(portalUrl('/portal/employees', sid))
     } catch {
       setSaving(false)
-      router.push(portalUrl('/portal/data-entry', sid))
+      router.push(portalUrl('/portal/employees', sid))
     }
   }
 

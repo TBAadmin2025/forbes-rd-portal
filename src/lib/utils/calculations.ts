@@ -25,3 +25,21 @@ export function calcPrior3YrAvg(qreByYear: Record<number, number>, currentYear: 
   const priorQREs = priorYears.map(y => qreByYear[y] || 0)
   return priorQREs.reduce((a, b) => a + b, 0) / 3
 }
+
+// Given a hire date, optional termination date, and the submission's tax window,
+// return the subset of tax years the employee was active for at least part of.
+// - hireDate must be present
+// - termDate null means still employed; gets every year >= hire year
+// - An employee active for any portion of a year qualifies for that year
+export function deriveYearsWorked(
+  hireDate: Date | null,
+  termDate: Date | null,
+  taxYears: number[],
+): number[] {
+  if (!hireDate || isNaN(hireDate.getTime())) return []
+  const hireYear = hireDate.getFullYear()
+  const termYear = termDate && !isNaN(termDate.getTime()) ? termDate.getFullYear() : null
+  return taxYears
+    .filter((y) => y >= hireYear && (termYear === null || y <= termYear))
+    .sort((a, b) => a - b)
+}
