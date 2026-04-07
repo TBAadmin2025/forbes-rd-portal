@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import EmployeeRow from './EmployeeRow'
+import EmployeeSummaryRow from './EmployeeSummaryRow'
+import EmployeeDetailDrawer from './EmployeeDetailDrawer'
+import BulkAssignProjectsModal from './BulkAssignProjectsModal'
 import SupplyRow from './SupplyRow'
 import { calcQualifiedAmount } from '@/lib/utils/calculations'
 import { formatCurrency } from '@/lib/utils/formatting'
@@ -36,8 +38,10 @@ export default function YearBlock({
   const [supplies, setSupplies] = useState<LocalSupply[]>(
     initialSupplies.map((s) => ({ ...s, _localId: s.id || localId() }))
   )
+  const [drawerEmployeeId, setDrawerEmployeeId] = useState<string | null>(null)
+  const [showBulkAssign, setShowBulkAssign] = useState(false)
 
-  // Update local state when parent props change (e.g., after add/remove employees)
+  // Update local state when parent props change
   useEffect(() => {
     setEmployees(initialEmployees)
   }, [initialEmployees])
@@ -51,6 +55,15 @@ export default function YearBlock({
     },
     []
   )
+
+  // Bulk assign saved → reload employees from API
+  const handleBulkSaved = useCallback(async () => {
+    const res = await fetch(`/api/employees?submission_id=${submissionId}&tax_year=${year}`)
+    if (res.ok) {
+      const data = await res.json()
+      setEmployees(data)
+    }
+  }, [submissionId, year])
 
   // Supply callbacks
   const addSupply = () => {
@@ -101,7 +114,7 @@ export default function YearBlock({
   const yearTotal = empTotal + supTotal
 
   const thStyle: React.CSSProperties = {
-    padding: '8px 4px',
+    padding: '10px 12px',
     fontSize: 9,
     fontWeight: 600,
     letterSpacing: '1.5px',
@@ -162,40 +175,58 @@ export default function YearBlock({
             borderRadius: '0 0 3px 3px',
           }}
         >
-          {/* Employee table — horizontal scroll container */}
-          <div
-            style={{
-              overflowX: 'auto',
-              position: 'relative',
-              maskImage: 'linear-gradient(to right, black calc(100% - 24px), transparent)',
-              WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 24px), transparent)',
-            }}
-          >
-            <table style={{ width: '100%', minWidth: 1450, borderCollapse: 'collapse' }}>
+          {/* Toolbar — Quick Assign button */}
+          {employees.length > 0 && qraActivities.length > 0 && (
+            <div
+              style={{
+                padding: '10px 14px',
+                borderBottom: '1px solid var(--border)',
+                background: '#faf7f1',
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <button
+                onClick={() => setShowBulkAssign(true)}
+                style={{
+                  background: 'var(--white)',
+                  border: '1.5px solid var(--cherry)',
+                  color: 'var(--cherry)',
+                  padding: '6px 14px',
+                  borderRadius: 3,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                ⚡ Quick Assign Projects
+              </button>
+            </div>
+          )}
+
+          {/* Employee table — simplified, click-to-edit */}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  <th style={{ ...thStyle, minWidth: 200 }}>Name</th>
-                  <th style={{ ...thStyle, minWidth: 130 }}>Type</th>
-                  <th style={{ ...thStyle, minWidth: 130 }}>State</th>
-                  <th style={{ ...thStyle, textAlign: 'right', minWidth: 150 }}>Total Wages</th>
-                  <th style={{ ...thStyle, textAlign: 'right', minWidth: 130 }}>Total Hrs</th>
-                  <th style={{ ...thStyle, textAlign: 'right', minWidth: 110 }}>% R&D</th>
-                  <th style={{ ...thStyle, textAlign: 'right', minWidth: 130 }}>
-                    R&D Hrs
-                    <div style={{ fontSize: 9, fontWeight: 400, letterSpacing: '1px', color: 'var(--muted)', marginTop: 2 }}>AUTO</div>
-                  </th>
-                  <th style={{ ...thStyle, textAlign: 'right', minWidth: 150 }}>
-                    Qualified Amt
-                    <div style={{ fontSize: 9, fontWeight: 400, letterSpacing: '1px', color: 'var(--muted)', marginTop: 2 }}>AUTO</div>
-                  </th>
-                  <th style={{ ...thStyle, minWidth: 240 }}>R&D Projects</th>
-                  <th style={{ ...thStyle, minWidth: 30, width: 30 }}></th>
+                  <th style={thStyle}>Name</th>
+                  <th style={{ ...thStyle, textAlign: 'right' }}>Wages</th>
+                  <th style={{ ...thStyle, textAlign: 'right' }}>Hours</th>
+                  <th style={{ ...thStyle, textAlign: 'right' }}>% R&D</th>
+                  <th style={{ ...thStyle, textAlign: 'right' }}>Qualified</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>Projects</th>
+                  <th style={{ ...thStyle, width: 30 }}></th>
                 </tr>
               </thead>
               <tbody>
                 {employees.length === 0 ? (
                   <tr>
-                    <td colSpan={10} style={{
+                    <td colSpan={7} style={{
                       padding: '24px 12px',
                       textAlign: 'center',
                       fontSize: 12,
@@ -208,11 +239,12 @@ export default function YearBlock({
                   </tr>
                 ) : (
                   employees.map((emp) => (
-                    <EmployeeRow
+                    <EmployeeSummaryRow
                       key={emp.id}
                       employee={emp}
                       qraActivities={qraActivities}
-                      onUpdated={handleEmployeeUpdated}
+                      isSelected={drawerEmployeeId === emp.id}
+                      onClick={() => setDrawerEmployeeId(emp.id)}
                     />
                   ))
                 )}
@@ -290,6 +322,26 @@ export default function YearBlock({
           </div>
         </div>
       )}
+
+      {/* Drawer (persistent across row clicks) */}
+      <EmployeeDetailDrawer
+        employees={employees}
+        qraActivities={qraActivities}
+        selectedId={drawerEmployeeId}
+        year={year}
+        onSelect={setDrawerEmployeeId}
+        onUpdated={handleEmployeeUpdated}
+      />
+
+      {/* Bulk assign modal */}
+      <BulkAssignProjectsModal
+        isOpen={showBulkAssign}
+        year={year}
+        employees={employees}
+        qraActivities={qraActivities}
+        onClose={() => setShowBulkAssign(false)}
+        onSaved={handleBulkSaved}
+      />
     </div>
   )
 }
