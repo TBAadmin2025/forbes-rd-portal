@@ -4,10 +4,6 @@ import { createServiceClient } from '@/lib/supabase/service'
 
 // GET — list activities for a submission
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-
   const submissionId = request.nextUrl.searchParams.get('submission_id')
   if (!submissionId) {
     return Response.json({ error: 'submission_id required' }, { status: 400 })
