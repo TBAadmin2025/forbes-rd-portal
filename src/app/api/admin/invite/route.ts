@@ -24,8 +24,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { contact_name, company_name, contact_email, admin_notes, send_invite = true } = body
 
-  if (!contact_name || !contact_email) {
-    return Response.json({ error: 'Name and email are required' }, { status: 400 })
+  if (!contact_name) {
+    return Response.json({ error: 'Name is required' }, { status: 400 })
+  }
+  if (send_invite && !contact_email) {
+    return Response.json({ error: 'Email is required when sending an invite' }, { status: 400 })
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
@@ -96,7 +99,7 @@ export async function POST(request: NextRequest) {
         client_user_id: null,
         contact_name,
         company_name: company_name || null,
-        contact_email,
+        contact_email: contact_email || null,
         admin_notes: admin_notes || null,
         status: 'invited',
         invited_at: new Date().toISOString(),

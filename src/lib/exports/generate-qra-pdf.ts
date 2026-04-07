@@ -2,7 +2,7 @@ import { styles } from '@/lib/exports/pdf-styles'
 
 export async function generateQRAPDF(
   submission: Record<string, unknown>,
-  projects: Array<Record<string, unknown> & { qra_challenges?: Record<string, unknown>[] }>
+  activities: Array<Record<string, unknown>>
 ): Promise<Buffer> {
   const React = (await import('react')).default
   const { renderToBuffer } = await import('@react-pdf/renderer')
@@ -10,7 +10,6 @@ export async function generateQRAPDF(
 
   const h = React.createElement
 
-  // Helper: render a labelled field block
   const field = (label: string, value: unknown) => {
     const text = String(value || '—')
     return h(View, { style: { marginBottom: 10 } },
@@ -19,7 +18,6 @@ export async function generateQRAPDF(
     )
   }
 
-  // Helper: page footer
   function footer(pageNum: number) {
     return h(View, { style: styles.footer },
       h(Text, null, 'Forbes Management | admin@forbesmgt.com | Confidential'),
@@ -33,9 +31,7 @@ export async function generateQRAPDF(
   const taxYearsCovered = '2022–2025'
 
   const date = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    year: 'numeric', month: 'long', day: 'numeric',
   })
 
   // --- Page 1: Cover ---
@@ -56,11 +52,10 @@ export async function generateQRAPDF(
     footer(1),
   )
 
-  // --- No projects fallback ---
-  if (!projects || projects.length === 0) {
+  if (!activities || activities.length === 0) {
     const emptyPage = h(Page, { size: 'LETTER', style: styles.page },
       h(Text, { style: { fontSize: 12, color: '#7A7060', marginTop: 40 } },
-        'No R&D projects have been documented for this submission.',
+        'No QRA activities have been documented for this submission.',
       ),
       footer(2),
     )
@@ -71,67 +66,39 @@ export async function generateQRAPDF(
     return Buffer.from(buffer)
   }
 
-  // --- Project pages ---
-  const projectPages = projects.map((project, idx) => {
-    const challenges = (project.qra_challenges || []).slice().sort(
-      (a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0),
-    )
+  // Sort by project number
+  const sorted = [...activities].sort(
+    (a, b) => (Number(a.project_number) || 0) - (Number(b.project_number) || 0),
+  )
 
-    const startDate = project.start_date ? String(project.start_date) : null
-    const endDate = project.end_date ? String(project.end_date) : null
-    const dateRange =
-      startDate && endDate
-        ? `${startDate} — ${endDate}`
-        : startDate || endDate || null
-
+  // --- Activity pages ---
+  const activityPages = sorted.map((activity, idx) => {
     const children: ReturnType<typeof h>[] = []
 
-    // Horizontal rule between projects (not before the first)
     if (idx > 0) {
       children.push(
         h(View, { style: { height: 1, backgroundColor: '#E4D9C6', marginBottom: 20 } }),
       )
     }
 
-    // Project header
+    const projectNum = activity.project_number ? `${activity.project_number}. ` : ''
     children.push(
-      h(Text, { style: styles.sectionTitle }, String(project.name || project.project_name || `Project ${idx + 1}`)),
+      h(Text, { style: styles.sectionTitle },
+        `${projectNum}${String(activity.name || `Project ${idx + 1}`)}`,
+      ),
     )
 
-    if (dateRange) {
-      children.push(
-        h(Text, { style: { fontSize: 11, color: '#7A7060', marginBottom: 14 } }, dateRange),
-      )
-    }
-
-    // Field sections
-    children.push(field('What was created or improved?', project.description))
-    children.push(field('Business Problem', project.business_problem))
-    children.push(field('Technologies & Tools', project.technologies_used))
-    children.push(field('What Specifically Improved', project.improvements))
-    children.push(field('Measurable Outcomes', project.measurable_outcomes))
-
-    // Challenges
-    challenges.forEach((challenge, cIdx) => {
-      children.push(
-        h(Text, { style: { fontSize: 14, fontWeight: 'bold', color: '#111111', marginTop: 16, marginBottom: 10 } },
-          `Technical Challenge ${cIdx + 1}`,
-        ),
-      )
-      children.push(field('What was the technical problem?', challenge.technical_problem))
-      children.push(field('Why couldn\'t you use an existing solution?', challenge.why_no_existing_solution))
-      children.push(field('Approaches & alternatives tried', challenge.approaches_tried))
-      children.push(field('Testing methods', challenge.testing_methods))
-      children.push(field('Number of iterations', challenge.iteration_count != null ? String(challenge.iteration_count) : '—'))
-      children.push(field('Outcome & learnings', challenge.outcome))
-    })
+    children.push(field('Description', activity.description))
+    children.push(field('Technical Uncertainty', activity.technical_uncertainty))
+    children.push(field('Experimentation', activity.experimentation))
+    children.push(field('Outcomes', activity.outcomes))
 
     children.push(footer(idx + 2))
 
-    return h(Page, { size: 'LETTER', style: styles.page, key: `project-${idx}` }, ...children)
+    return h(Page, { size: 'LETTER', style: styles.page, key: `activity-${idx}` }, ...children)
   })
 
-  const doc = h(PDFDocument, null, coverPage, ...projectPages)
+  const doc = h(PDFDocument, null, coverPage, ...activityPages)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buffer = await renderToBuffer(doc as any)
   return Buffer.from(buffer)

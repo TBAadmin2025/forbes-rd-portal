@@ -193,10 +193,10 @@ export async function POST(request: NextRequest) {
     if (selected.qra_pdf) {
       try {
         const { data: projects } = await supabase
-          .from('qra_projects')
-          .select('*, qra_challenges(*)')
+          .from('qra_activities')
+          .select('*')
           .eq('submission_id', submission_id)
-          .order('created_at', { ascending: true })
+          .order('project_number', { ascending: true })
 
         if (projects && projects.length > 0) {
           const qraBuffer = await generateQRAPDF(submission, projects)

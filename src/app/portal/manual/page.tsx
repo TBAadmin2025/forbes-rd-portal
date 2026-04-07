@@ -182,7 +182,7 @@ export default function ManualPage() {
                   body: JSON.stringify({ current_step: 3 }),
                 })
               }
-              router.push(portalUrl('/portal/projects', sid))
+              router.push(portalUrl('/portal/review', sid))
             }}
           >
             Continue →

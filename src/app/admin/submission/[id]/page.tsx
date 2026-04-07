@@ -121,9 +121,9 @@ export default function SubmissionDetailPage() {
         .eq('submission_id', id)
       setEmployeeCount(empCount || 0)
 
-      // QRA project count
+      // QRA activity count
       const { count: projCount } = await supabase
-        .from('qra_projects')
+        .from('qra_activities')
         .select('*', { count: 'exact', head: true })
         .eq('submission_id', id)
       setProjectCount(projCount || 0)

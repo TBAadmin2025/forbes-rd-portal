@@ -9,8 +9,8 @@ interface WelcomeHeroProps {
 
 const STEPS = [
   { num: '01', label: 'Business info' },
-  { num: '02', label: 'Data & documents' },
-  { num: '03', label: 'R&D projects' },
+  { num: '02', label: 'Your data' },
+  { num: '03', label: 'Documents' },
   { num: '04', label: 'Review & submit' },
 ]
 

@@ -11,10 +11,10 @@ import InfoBox from '@/components/shared/InfoBox'
 import YearBlock from '@/components/portal/YearBlock'
 import UploadCategory from '@/components/portal/UploadCategory'
 import UploadModal from '@/components/portal/UploadModal'
-import ExtractionProgress from '@/components/portal/ExtractionProgress'
-import QRAProjectForm from '@/components/portal/QRAProjectForm'
+import QRAActivitiesTab from '@/components/admin/QRAActivitiesTab'
+import EmployeesTab from '@/components/admin/EmployeesTab'
 import type { UploadedFile } from '@/components/portal/UploadCategory'
-import type { Employee, Supply, Submission } from '@/lib/types/database.types'
+import type { Employee, Supply, Submission, QRAActivity, ClientEmployee } from '@/lib/types/database.types'
 import { formatCurrency } from '@/lib/utils/formatting'
 
 type Category = 'payroll' | 'pandl' | 'taxid' | 'gross_receipts'
@@ -32,7 +32,7 @@ const US_STATES = [
   'Virginia','Washington','West Virginia','Wisconsin','Wyoming',
 ]
 
-type Section = 'info' | 'data' | 'documents' | 'projects' | 'discovery' | 'review'
+type Section = 'info' | 'qra' | 'employees' | 'data' | 'documents' | 'discovery' | 'review'
 
 export default function WorkspacePage() {
   const params = useParams()
@@ -118,20 +118,60 @@ export default function WorkspacePage() {
     rd_value_engineering: null,
   })
 
-  // Data entry — mode toggle
-  const [dataMode, setDataMode] = useState<'upload' | 'manual'>('manual')
-
-  // Upload state
+  // Documents state
   const [files, setFiles] = useState<Record<Category, UploadedFile[]>>({
     payroll: [], pandl: [], taxid: [], gross_receipts: [],
   })
   const [activeCategory, setActiveCategory] = useState<Category | null>(null)
-  const [showExtraction, setShowExtraction] = useState(false)
-  const [extractionDone, setExtractionDone] = useState(false)
 
-  // Manual state
+  // QRA Activities + Client Employees (for data entry tab)
+  const [qraActivities, setQraActivities] = useState<QRAActivity[]>([])
+  const [clientEmployees, setClientEmployees] = useState<ClientEmployee[]>([])
+
+  // Data entry: per-year employees + supplies
   const [employeesByYear, setEmployeesByYear] = useState<Record<number, Employee[]>>({})
   const [suppliesByYear, setSuppliesByYear] = useState<Record<number, Supply[]>>({})
+
+  // Activate portal state
+  const [activatingPortal, setActivatingPortal] = useState(false)
+
+  // Reload employees by year (called after employees tab adds/removes someone)
+  const loadEmployeesByYear = useCallback(async () => {
+    const empRes = await fetch(`/api/employees?submission_id=${id}`)
+    if (empRes.ok) {
+      const allEmps: Employee[] = await empRes.json()
+      const empByYear: Record<number, Employee[]> = {}
+      for (const e of allEmps) {
+        if (!empByYear[e.tax_year]) empByYear[e.tax_year] = []
+        empByYear[e.tax_year].push(e)
+      }
+      setEmployeesByYear(empByYear)
+    }
+  }, [id])
+
+  // Send portal invite
+  const handleSendInvite = async () => {
+    if (!submission?.contact_email) {
+      alert('Please add a contact email on the Business Info tab first.')
+      return
+    }
+    if (!window.confirm(`Send portal invite to ${submission.contact_email}?`)) return
+    setActivatingPortal(true)
+    const res = await fetch('/api/admin/invite', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ submission_id: id }),
+    })
+    if (res.ok) {
+      const { data: sub } = await supabase.from('submissions').select('*').eq('id', id).single()
+      if (sub) setSubmission(sub as Submission)
+      alert(`Portal invite sent to ${submission.contact_email}!`)
+    } else {
+      const err = await res.json()
+      alert(err.error || 'Failed to send invite')
+    }
+    setActivatingPortal(false)
+  }
 
   // Load everything
   useEffect(() => {
@@ -213,7 +253,19 @@ export default function WorkspacePage() {
         rd_value_engineering: sub.rd_value_engineering,
       })
 
-      if (sub.submission_method === 'upload') setDataMode('upload')
+      // Load QRA activities
+      const qraRes = await fetch(`/api/qra-activities?submission_id=${id}`)
+      if (qraRes.ok) {
+        const qraData = await qraRes.json()
+        setQraActivities(qraData)
+      }
+
+      // Load client employees (master list)
+      const ceRes = await fetch(`/api/client-employees?submission_id=${id}`)
+      if (ceRes.ok) {
+        const ceData = await ceRes.json()
+        setClientEmployees(ceData)
+      }
 
       // Load existing documents
       const { data: docs } = await supabase
@@ -236,17 +288,11 @@ export default function WorkspacePage() {
         setFiles(grouped)
       }
 
-      // Load employees + supplies
-      for (const year of YEARS) {
-        const { data: emps } = await supabase
-          .from('employees')
-          .select('*')
-          .eq('submission_id', id)
-          .eq('tax_year', year)
-        if (emps?.length) {
-          setEmployeesByYear(prev => ({ ...prev, [year]: emps as Employee[] }))
-        }
+      // Load employees (via API for activity_ids hydration)
+      await loadEmployeesByYear()
 
+      // Load supplies
+      for (const year of YEARS) {
         const { data: sups } = await supabase
           .from('supplies')
           .select('*')
@@ -337,49 +383,6 @@ export default function WorkspacePage() {
     setTimeout(() => setSaved(false), 3000)
   }
 
-  // Handle extraction after upload
-  const handleExtract = useCallback(async (category: Category) => {
-    const categoryFiles = files[category]
-    if (!categoryFiles.length) return
-
-    setShowExtraction(true)
-    setExtractionDone(false)
-
-    // Get document IDs for this category from DB
-    const { data: docs } = await supabase
-      .from('documents')
-      .select('id')
-      .eq('submission_id', id)
-      .eq('category', category)
-      .eq('extraction_status', 'pending')
-
-    for (const doc of docs || []) {
-      try {
-        await fetch('/api/extract', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ document_id: doc.id, submission_id: id, category }),
-        })
-      } catch {
-        // continue
-      }
-    }
-
-    // Reload data
-    for (const year of YEARS) {
-      const { data: emps } = await supabase
-        .from('employees').select('*').eq('submission_id', id).eq('tax_year', year)
-      if (emps) setEmployeesByYear(prev => ({ ...prev, [year]: emps as Employee[] }))
-
-      const { data: sups } = await supabase
-        .from('supplies').select('*').eq('submission_id', id).eq('tax_year', year)
-      if (sups) setSuppliesByYear(prev => ({ ...prev, [year]: sups as Supply[] }))
-    }
-
-    setExtractionDone(true)
-    setTimeout(() => setShowExtraction(false), 1500)
-  }, [files, id, supabase])
-
   // Submit on behalf
   const handleSubmit = async () => {
     await supabase
@@ -387,7 +390,6 @@ export default function WorkspacePage() {
       .update({
         status: 'submitted',
         submitted_at: new Date().toISOString(),
-        submission_method: dataMode,
       })
       .eq('id', id)
 
@@ -412,9 +414,10 @@ export default function WorkspacePage() {
 
   const sections: { key: Section; label: string; icon: string }[] = [
     { key: 'info', label: 'Business Info', icon: '🏢' },
+    { key: 'qra', label: 'QRA Activities', icon: '🔬' },
+    { key: 'employees', label: 'Employees', icon: '👥' },
     { key: 'data', label: 'Data Entry', icon: '📊' },
     { key: 'documents', label: 'Documents', icon: '📁' },
-    { key: 'projects', label: 'R&D Projects', icon: '🔬' },
     { key: 'discovery', label: 'Discovery', icon: '🔍' },
     { key: 'review', label: 'Review & Submit', icon: '✅' },
   ]
@@ -450,9 +453,21 @@ export default function WorkspacePage() {
             {submission.company_name || 'No company'} · Complete their submission from here
           </div>
         </div>
-        <Tag variant={submission.status === 'invited' ? 'invited' : submission.status === 'in_progress' ? 'progress' : submission.status === 'submitted' ? 'submitted' : 'complete'}>
-          {submission.status.replace('_', ' ')}
-        </Tag>
+        <div className="flex items-center" style={{ gap: 12 }}>
+          {!submission.client_user_id && (
+            <Button
+              variant="emerald"
+              size="sm"
+              onClick={handleSendInvite}
+              disabled={activatingPortal}
+            >
+              {activatingPortal ? 'Sending...' : 'Send Portal Invite'}
+            </Button>
+          )}
+          <Tag variant={submission.status === 'invited' ? 'invited' : submission.status === 'in_progress' ? 'progress' : submission.status === 'submitted' ? 'submitted' : 'complete'}>
+            {submission.status.replace('_', ' ')}
+          </Tag>
+        </div>
       </div>
 
       {/* Section tabs */}
@@ -672,6 +687,37 @@ export default function WorkspacePage() {
         </div>
       )}
 
+      {/* ===== QRA ACTIVITIES ===== */}
+      {activeSection === 'qra' && (
+        <div style={{ animation: 'fadeUp 0.2s ease' }}>
+          <QRAActivitiesTab submissionId={id} />
+          <div className="flex justify-end" style={{ marginTop: 20 }}>
+            <Button variant="dark" size="sm" onClick={() => setActiveSection('employees')}>
+              Continue to Employees →
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== EMPLOYEES ===== */}
+      {activeSection === 'employees' && (
+        <div style={{ animation: 'fadeUp 0.2s ease' }}>
+          <EmployeesTab submissionId={id} />
+          <div className="flex justify-end" style={{ marginTop: 20 }}>
+            <Button
+              variant="dark"
+              size="sm"
+              onClick={async () => {
+                await loadEmployeesByYear()
+                setActiveSection('data')
+              }}
+            >
+              Continue to Data Entry →
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ===== DATA ENTRY ===== */}
       {activeSection === 'data' && (
         <div style={{ animation: 'fadeUp 0.2s ease' }}>
@@ -680,8 +726,9 @@ export default function WorkspacePage() {
               key={year}
               year={year}
               submissionId={id}
-              initialEmployees={employeesByYear[year]}
-              initialSupplies={suppliesByYear[year]}
+              initialEmployees={employeesByYear[year] || []}
+              initialSupplies={suppliesByYear[year] || []}
+              qraActivities={qraActivities}
               defaultExpanded={year === 2025}
             />
           ))}
@@ -723,18 +770,6 @@ export default function WorkspacePage() {
             />
           )}
 
-          <div className="flex justify-end" style={{ marginTop: 20 }}>
-            <Button variant="dark" size="sm" onClick={() => setActiveSection('projects')}>
-              Continue to R&D Projects →
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* ===== R&D PROJECTS ===== */}
-      {activeSection === 'projects' && (
-        <div style={{ animation: 'fadeUp 0.2s ease' }}>
-          <QRAProjectForm submissionId={id} />
           <div className="flex justify-end" style={{ marginTop: 20 }}>
             <Button variant="dark" size="sm" onClick={() => setActiveSection('discovery')}>
               Continue to Discovery →
@@ -983,7 +1018,7 @@ export default function WorkspacePage() {
                 { label: 'State', value: businessState },
                 { label: 'Contact', value: contactName || '—' },
                 { label: 'Email', value: contactEmail || '—' },
-                { label: 'Method', value: dataMode === 'upload' ? 'Document Upload' : 'Manual Entry' },
+                { label: 'QRA Activities', value: `${qraActivities.length}` },
               ].map((item) => (
                 <div key={item.label}>
                   <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 4 }}>

@@ -152,7 +152,7 @@ export default function UploadPage() {
         </Button>
         <Button
           variant="dark"
-          onClick={() => router.push(portalUrl('/portal/projects', sid))}
+          onClick={() => router.push(portalUrl('/portal/review', sid))}
         >
           Continue →
         </Button>

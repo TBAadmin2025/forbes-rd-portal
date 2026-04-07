@@ -13,9 +13,8 @@ const STEP_ROUTES: Record<string, number> = {
   '/portal/data-entry': 2,
   '/portal/manual': 2,
   '/portal/upload': 3,
-  '/portal/projects': 4,
-  '/portal/review': 5,
-  '/portal/confirmation': 6,
+  '/portal/review': 4,
+  '/portal/confirmation': 5,
 }
 
 function PortalLayoutInner({ children }: { children: React.ReactNode }) {

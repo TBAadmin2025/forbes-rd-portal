@@ -1,21 +1,21 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import EmployeeRow from './EmployeeRow'
 import SupplyRow from './SupplyRow'
 import { calcQualifiedAmount } from '@/lib/utils/calculations'
 import { formatCurrency } from '@/lib/utils/formatting'
-import type { Employee, Supply } from '@/lib/types/database.types'
+import type { Employee, Supply, QRAActivity } from '@/lib/types/database.types'
 
 interface YearBlockProps {
   year: number
   submissionId: string
   initialEmployees?: Employee[]
   initialSupplies?: Supply[]
+  qraActivities?: QRAActivity[]
   defaultExpanded?: boolean
 }
 
-type LocalEmployee = Partial<Employee> & { _localId: string }
 type LocalSupply = Partial<Supply> & { _localId: string }
 
 let nextId = 0
@@ -28,34 +28,31 @@ export default function YearBlock({
   submissionId,
   initialEmployees = [],
   initialSupplies = [],
+  qraActivities = [],
   defaultExpanded = false,
 }: YearBlockProps) {
   const [expanded, setExpanded] = useState(defaultExpanded)
-  const [employees, setEmployees] = useState<LocalEmployee[]>(
-    initialEmployees.map((e) => ({ ...e, _localId: e.id || localId() }))
-  )
+  const [employees, setEmployees] = useState<Employee[]>(initialEmployees)
   const [supplies, setSupplies] = useState<LocalSupply[]>(
     initialSupplies.map((s) => ({ ...s, _localId: s.id || localId() }))
   )
 
-  const addEmployee = () => {
-    setEmployees((prev) => [
-      ...prev,
-      {
-        _localId: localId(),
-        tax_year: year,
-        submission_id: submissionId,
-        full_name: '',
-        employee_type: 'Employee' as const,
-        state: 'Georgia',
-        total_wages: 0,
-        total_hours_worked: 0,
-        rd_percentage: 0,
-        project_name: null,
-      },
-    ])
-  }
+  // Update local state when parent props change (e.g., after add/remove employees)
+  useEffect(() => {
+    setEmployees(initialEmployees)
+  }, [initialEmployees])
 
+  // Employee callback
+  const handleEmployeeUpdated = useCallback(
+    (id: string, data: Partial<Employee>) => {
+      setEmployees((prev) =>
+        prev.map((e) => (e.id === id ? { ...e, ...data } : e))
+      )
+    },
+    []
+  )
+
+  // Supply callbacks
   const addSupply = () => {
     setSupplies((prev) => [
       ...prev,
@@ -64,39 +61,13 @@ export default function YearBlock({
         tax_year: year,
         submission_id: submissionId,
         description: '',
+        vendor: null,
         project_name: null,
         amount: 0,
       },
     ])
   }
 
-  // Employee callbacks
-  const handleEmployeeSaved = useCallback(
-    (lid: string, saved: Employee) => {
-      setEmployees((prev) =>
-        prev.map((e) => (e._localId === lid ? { ...saved, _localId: lid } : e))
-      )
-    },
-    []
-  )
-
-  const handleEmployeeUpdated = useCallback(
-    (_id: string, data: Partial<Employee>) => {
-      setEmployees((prev) =>
-        prev.map((e) => (e.id === _id ? { ...e, ...data } : e))
-      )
-    },
-    []
-  )
-
-  const handleEmployeeDelete = useCallback(
-    (_id: string | undefined, lid: string) => {
-      setEmployees((prev) => prev.filter((e) => e._localId !== lid))
-    },
-    []
-  )
-
-  // Supply callbacks
   const handleSupplySaved = useCallback(
     (lid: string, saved: Supply) => {
       setSupplies((prev) =>
@@ -107,10 +78,8 @@ export default function YearBlock({
   )
 
   const handleSupplyUpdated = useCallback(
-    (_id: string, data: Partial<Supply>) => {
-      setSupplies((prev) =>
-        prev.map((s) => (s.id === _id ? { ...s, ...data } : s))
-      )
+    (id: string, data: Partial<Supply>) => {
+      setSupplies((prev) => prev.map((s) => (s.id === id ? { ...s, ...data } : s)))
     },
     []
   )
@@ -122,17 +91,13 @@ export default function YearBlock({
     []
   )
 
-  // Year total — only count saved rows (those with an id)
-  const empTotal = employees
-    .filter((e) => !!e.id)
-    .reduce((sum, e) => {
-      const wages = e.total_wages ?? 0
-      const pct = e.rd_percentage ?? 0
-      return sum + calcQualifiedAmount(wages, pct)
-    }, 0)
-  const supTotal = supplies
-    .filter((s) => !!s.id)
-    .reduce((sum, s) => sum + (s.amount ?? 0), 0)
+  // Year total
+  const empTotal = employees.reduce((sum, e) => {
+    const wages = e.total_wages ?? 0
+    const pct = e.rd_percentage ?? 0
+    return sum + calcQualifiedAmount(wages, pct)
+  }, 0)
+  const supTotal = supplies.filter((s) => !!s.id).reduce((sum, s) => sum + (s.amount ?? 0), 0)
   const yearTotal = empTotal + supTotal
 
   const thStyle: React.CSSProperties = {
@@ -163,44 +128,26 @@ export default function YearBlock({
           transition: 'border-radius 0.2s',
         }}
       >
-        <span
-          className="font-serif"
-          style={{ fontSize: 22, fontWeight: 700, color: 'var(--ivory)' }}
-        >
+        <span className="font-serif" style={{ fontSize: 22, fontWeight: 700, color: 'var(--ivory)' }}>
           {year}
         </span>
         <div className="flex items-center" style={{ gap: 16 }}>
           <div style={{ textAlign: 'right' }}>
-            <div
-              style={{
-                fontSize: 9,
-                textTransform: 'uppercase',
-                letterSpacing: '2px',
-                color: 'rgba(240,231,215,0.55)',
-              }}
-            >
+            <div style={{
+              fontSize: 9, textTransform: 'uppercase', letterSpacing: '2px',
+              color: 'rgba(240,231,215,0.55)',
+            }}>
               Year Total
             </div>
-            <div
-              className="font-serif"
-              style={{
-                fontSize: 18,
-                fontWeight: 600,
-                color: 'var(--champagne)',
-              }}
-            >
+            <div className="font-serif" style={{ fontSize: 18, fontWeight: 600, color: 'var(--champagne)' }}>
               {yearTotal > 0 ? formatCurrency(yearTotal) : '$0'}
             </div>
           </div>
-          <span
-            style={{
-              fontSize: 12,
-              color: 'rgba(240,231,215,0.5)',
-              transition: 'transform 0.2s',
-              display: 'inline-block',
-              transform: expanded ? 'rotate(0)' : 'rotate(180deg)',
-            }}
-          >
+          <span style={{
+            fontSize: 12, color: 'rgba(240,231,215,0.5)',
+            transition: 'transform 0.2s', display: 'inline-block',
+            transform: expanded ? 'rotate(0)' : 'rotate(180deg)',
+          }}>
             ▲
           </span>
         </div>
@@ -228,8 +175,8 @@ export default function YearBlock({
               <thead>
                 <tr>
                   <th style={{ ...thStyle, minWidth: 200 }}>Name</th>
-                  <th style={{ ...thStyle, minWidth: 150 }}>Type</th>
-                  <th style={{ ...thStyle, minWidth: 150 }}>State</th>
+                  <th style={{ ...thStyle, minWidth: 130 }}>Type</th>
+                  <th style={{ ...thStyle, minWidth: 130 }}>State</th>
                   <th style={{ ...thStyle, textAlign: 'right', minWidth: 150 }}>Total Wages</th>
                   <th style={{ ...thStyle, textAlign: 'right', minWidth: 130 }}>Total Hrs</th>
                   <th style={{ ...thStyle, textAlign: 'right', minWidth: 110 }}>% R&D</th>
@@ -241,48 +188,36 @@ export default function YearBlock({
                     Qualified Amt
                     <div style={{ fontSize: 9, fontWeight: 400, letterSpacing: '1px', color: 'var(--muted)', marginTop: 2 }}>AUTO</div>
                   </th>
-                  <th style={{ ...thStyle, minWidth: 200 }}>Project</th>
-                  <th style={{ ...thStyle, minWidth: 50, width: 50 }}></th>
+                  <th style={{ ...thStyle, minWidth: 240 }}>R&D Projects</th>
+                  <th style={{ ...thStyle, minWidth: 30, width: 30 }}></th>
                 </tr>
               </thead>
               <tbody>
-                {employees.map((emp) => (
-                  <EmployeeRow
-                    key={emp._localId}
-                    employee={emp}
-                    submissionId={submissionId}
-                    taxYear={year}
-                    onSaved={handleEmployeeSaved}
-                    onUpdated={handleEmployeeUpdated}
-                    onDelete={handleEmployeeDelete}
-                  />
-                ))}
+                {employees.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} style={{
+                      padding: '24px 12px',
+                      textAlign: 'center',
+                      fontSize: 12,
+                      color: 'var(--muted)',
+                      fontWeight: 300,
+                      fontStyle: 'italic',
+                    }}>
+                      No employees worked in {year}. Add employees on the Employees tab and select this year.
+                    </td>
+                  </tr>
+                ) : (
+                  employees.map((emp) => (
+                    <EmployeeRow
+                      key={emp.id}
+                      employee={emp}
+                      qraActivities={qraActivities}
+                      onUpdated={handleEmployeeUpdated}
+                    />
+                  ))
+                )}
               </tbody>
             </table>
-          </div>
-
-          {/* Add Employee button */}
-          <div style={{ padding: '10px 12px' }}>
-            <button
-              onClick={addEmployee}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '7px 14px',
-                border: '1.5px dashed rgba(108,22,28,0.2)',
-                background: 'transparent',
-                borderRadius: 3,
-                fontSize: 10,
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '1.5px',
-                color: 'var(--muted)',
-                cursor: 'pointer',
-              }}
-            >
-              + Add Person
-            </button>
           </div>
 
           {/* Supplies divider */}
@@ -307,6 +242,7 @@ export default function YearBlock({
               <thead>
                 <tr>
                   <th style={thStyle}>Description</th>
+                  <th style={thStyle}>Vendor</th>
                   <th style={thStyle}>R&D Project</th>
                   <th style={{ ...thStyle, textAlign: 'right' }}>Amount</th>
                   <th style={{ ...thStyle, width: 30 }}></th>

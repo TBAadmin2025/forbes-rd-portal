@@ -29,11 +29,13 @@ export default function SupplyRow({
   const [flash, setFlash] = useState(false)
 
   const [description, setDescription] = useState(supply.description || '')
+  const [vendor, setVendor] = useState(supply.vendor || '')
   const [projectName, setProjectName] = useState(supply.project_name || '')
   const [amount, setAmount] = useState(supply.amount ?? 0)
 
   const [snapshot, setSnapshot] = useState({
     description: supply.description || '',
+    vendor: supply.vendor || '',
     projectName: supply.project_name || '',
     amount: supply.amount ?? 0,
   })
@@ -57,6 +59,7 @@ export default function SupplyRow({
             submission_id: submissionId,
             tax_year: taxYear,
             description,
+            vendor: vendor || null,
             project_name: projectName || null,
             amount,
           }),
@@ -64,7 +67,7 @@ export default function SupplyRow({
         const created = await res.json()
         if (created.id) {
           onSaved(supply._localId, created)
-          setSnapshot({ description, projectName, amount })
+          setSnapshot({ description, vendor, projectName, amount })
           setMode('viewing')
           setFlash(true)
           setTimeout(() => setFlash(false), 600)
@@ -73,13 +76,14 @@ export default function SupplyRow({
     }, 1500)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, description, projectName, amount])
+  }, [mode, description, vendor, projectName, amount])
 
   const handleSaveEdit = async () => {
     if (!supply.id || !canSave) return
     try {
       const data: Partial<Supply> = {
         description,
+        vendor: vendor || null,
         project_name: projectName || null,
         amount,
       }
@@ -89,20 +93,21 @@ export default function SupplyRow({
         body: JSON.stringify(data),
       })
       onUpdated(supply.id, data)
-      setSnapshot({ description, projectName, amount })
+      setSnapshot({ description, vendor, projectName, amount })
       setMode('viewing')
     } catch { /* silent */ }
   }
 
   const handleCancelEdit = () => {
     setDescription(snapshot.description)
+    setVendor(snapshot.vendor)
     setProjectName(snapshot.projectName)
     setAmount(snapshot.amount)
     setMode('viewing')
   }
 
   const handleStartEdit = () => {
-    setSnapshot({ description, projectName, amount })
+    setSnapshot({ description, vendor, projectName, amount })
     setMode('editing')
   }
 
@@ -142,6 +147,7 @@ export default function SupplyRow({
       <>
         <tr style={{ borderBottom: '1px solid var(--border)', background: rowBg, transition: 'background 0.4s' }}>
           <td style={viewText}>{description}</td>
+          <td style={viewText}>{vendor || '—'}</td>
           <td style={viewText}>{projectName || '—'}</td>
           <td style={viewNum}>{formatCurrency(amount)}</td>
           <td style={{ ...cellPad, whiteSpace: 'nowrap', textAlign: 'right' }}>
@@ -156,7 +162,7 @@ export default function SupplyRow({
 
         {showDeleteModal && (
           <tr>
-            <td colSpan={4} style={{ padding: 0 }}>
+            <td colSpan={5} style={{ padding: 0 }}>
               <div style={{
                 position: 'fixed', inset: 0, background: 'rgba(28,28,28,0.5)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
@@ -202,6 +208,10 @@ export default function SupplyRow({
       <td style={cellPad}>
         <input style={inputStyle} placeholder="Expense description" value={description}
           onChange={(e) => setDescription(e.target.value)} />
+      </td>
+      <td style={cellPad}>
+        <input style={inputStyle} placeholder="Vendor name" value={vendor}
+          onChange={(e) => setVendor(e.target.value)} />
       </td>
       <td style={cellPad}>
         <input style={inputStyle} placeholder="R&D project" value={projectName}

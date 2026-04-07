@@ -11,13 +11,6 @@ interface AddClientModalProps {
   onSuccess: () => void
 }
 
-interface ConfirmationState {
-  submissionId: string
-  clientName: string
-  clientEmail: string
-  portalSent: boolean
-}
-
 export default function AddClientModal({
   isOpen,
   onClose,
@@ -28,13 +21,11 @@ export default function AddClientModal({
   const [businessName, setBusinessName] = useState('')
   const [email, setEmail] = useState('')
   const [note, setNote] = useState('')
-  const [sendInvite, setSendInvite] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
-  const [confirmation, setConfirmation] = useState<ConfirmationState | null>(null)
 
   const handleSubmit = async () => {
-    if (!fullName || !email) return
+    if (!fullName) return
     setSending(true)
     setError('')
 
@@ -47,7 +38,7 @@ export default function AddClientModal({
           company_name: businessName,
           contact_email: email,
           admin_notes: note || null,
-          send_invite: sendInvite,
+          send_invite: false, // never send invite from this modal
         }),
       })
 
@@ -62,12 +53,17 @@ export default function AddClientModal({
       setSending(false)
       onSuccess()
 
-      setConfirmation({
-        submissionId: data.submission?.id,
-        clientName: fullName,
-        clientEmail: email,
-        portalSent: sendInvite,
-      })
+      // Reset form state
+      setFullName('')
+      setBusinessName('')
+      setEmail('')
+      setNote('')
+      onClose()
+
+      // Redirect straight to the workspace to start adding info
+      if (data.submission?.id) {
+        router.push(`/admin/submission/${data.submission.id}/workspace`)
+      }
     } catch {
       setError('Something went wrong')
       setSending(false)
@@ -79,24 +75,8 @@ export default function AddClientModal({
     setBusinessName('')
     setEmail('')
     setNote('')
-    setSendInvite(true)
-    setConfirmation(null)
     setError('')
     onClose()
-  }
-
-  const handleGoToClient = () => {
-    if (confirmation?.submissionId) {
-      router.push(`/admin/submission/${confirmation.submissionId}`)
-    }
-    handleClose()
-  }
-
-  const handleStartWorkspace = () => {
-    if (confirmation?.submissionId) {
-      router.push(`/admin/submission/${confirmation.submissionId}/workspace`)
-    }
-    handleClose()
   }
 
   if (!isOpen) return null
@@ -126,221 +106,101 @@ export default function AddClientModal({
         <div
           className="relative overflow-hidden"
           style={{
-            background: confirmation ? 'var(--emerald)' : 'var(--cherry)',
+            background: 'var(--cherry)',
             padding: '22px 28px',
             borderRadius: '6px 6px 0 0',
-            transition: 'background 0.3s',
           }}
         >
-          <div
-            className="fm-pattern absolute inset-0 pointer-events-none"
-            style={{ opacity: 0.25 }}
-          />
+          <div className="fm-pattern absolute inset-0 pointer-events-none" style={{ opacity: 0.25 }} />
           <button
             onClick={handleClose}
             style={{
-              position: 'absolute',
-              top: 14,
-              right: 14,
-              background: 'rgba(240,231,215,0.15)',
-              border: 'none',
-              width: 26,
-              height: 26,
-              borderRadius: '50%',
-              color: 'var(--ivory)',
-              fontSize: 15,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              position: 'absolute', top: 14, right: 14,
+              background: 'rgba(240,231,215,0.15)', border: 'none',
+              width: 26, height: 26, borderRadius: '50%',
+              color: 'var(--ivory)', fontSize: 15, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               zIndex: 2,
             }}
           >
             ×
           </button>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div
-              className="font-serif"
-              style={{ fontSize: 20, fontWeight: 700, color: 'var(--ivory)' }}
-            >
-              {confirmation ? 'Client Added' : 'Add New Client'}
+            <div className="font-serif" style={{ fontSize: 20, fontWeight: 700, color: 'var(--ivory)' }}>
+              Add New Client
             </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: 'rgba(240,231,215,0.55)',
-                marginTop: 3,
-                fontWeight: 300,
-              }}
-            >
-              {confirmation
-                ? confirmation.portalSent
-                  ? 'Portal invite sent successfully.'
-                  : 'Client record created.'
-                : 'Create a client record. Optionally send a portal invite.'}
+            <div style={{ fontSize: 11, color: 'rgba(240,231,215,0.55)', marginTop: 3, fontWeight: 300 }}>
+              Create a client record. You can send them a portal invite later from the workspace.
             </div>
           </div>
         </div>
 
-        {/* Confirmation View */}
-        {confirmation ? (
-          <div style={{ padding: '28px 28px 22px' }}>
+        {/* Form Body */}
+        <div style={{ padding: '24px 28px' }}>
+          {error && (
             <div
               style={{
-                background: 'var(--em-light)',
-                borderRadius: 4,
-                padding: '20px 24px',
-                marginBottom: 20,
+                background: 'rgba(108,22,28,0.05)', color: 'var(--cherry)',
+                fontSize: 12, padding: '10px 14px', borderRadius: 3, marginBottom: 16,
               }}
             >
-              <div style={{ fontSize: 32, marginBottom: 12 }}>
-                {confirmation.portalSent ? '📧' : '✅'}
-              </div>
-              <div
-                className="font-serif"
-                style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 8 }}
-              >
-                {confirmation.clientName}
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 300, lineHeight: 1.7 }}>
-                {confirmation.portalSent
-                  ? <>A portal invite has been sent to <strong style={{ color: 'var(--charcoal)', fontWeight: 500 }}>{confirmation.clientEmail}</strong>. They&apos;ll receive an email to set their password and access the portal.</>
-                  : <>Client record created. You can begin entering their information now or activate their portal access later.</>
-                }
-              </div>
+              {error}
             </div>
+          )}
 
-            <div className="flex" style={{ gap: 10 }}>
-              {confirmation.portalSent ? (
-                <>
-                  <Button variant="ghost" size="sm" onClick={handleClose} style={{ flex: 1 }}>
-                    Done
-                  </Button>
-                  <Button variant="cherry" onClick={handleGoToClient} style={{ flex: 1 }}>
-                    View Client
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="ghost" size="sm" onClick={handleGoToClient} style={{ flex: 1 }}>
-                    View Profile
-                  </Button>
-                  <Button variant="cherry" onClick={handleStartWorkspace} style={{ flex: 1 }}>
-                    Begin Work
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Form Body */}
-            <div style={{ padding: '24px 28px' }}>
-              {error && (
-                <div
-                  style={{
-                    background: 'rgba(108,22,28,0.05)',
-                    color: 'var(--cherry)',
-                    fontSize: 12,
-                    padding: '10px 14px',
-                    borderRadius: 3,
-                    marginBottom: 16,
-                  }}
-                >
-                  {error}
-                </div>
-              )}
+          <FormField label="Client's Full Name">
+            <input
+              className="finput"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Required"
+            />
+          </FormField>
 
-              <FormField label="Client's Full Name">
-                <input
-                  className="finput"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
-              </FormField>
+          <FormField label="Business Name">
+            <input
+              className="finput"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="Optional"
+            />
+          </FormField>
 
-              <FormField label="Business Name">
-                <input
-                  className="finput"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                />
-              </FormField>
+          <FormField label="Email Address" hint="You can add this later if you don't have it yet">
+            <input
+              className="finput"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Optional"
+            />
+          </FormField>
 
-              <FormField label="Email Address">
-                <input
-                  className="finput"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </FormField>
+          <FormField label="Note (Internal)">
+            <textarea
+              className="finput"
+              placeholder="Optional — only visible to your team"
+              rows={2}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              style={{ resize: 'vertical' }}
+            />
+          </FormField>
+        </div>
 
-              <FormField label="Note (Internal)">
-                <textarea
-                  className="finput"
-                  placeholder="Optional — only visible to your team"
-                  rows={2}
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  style={{ resize: 'vertical' }}
-                />
-              </FormField>
-
-              {/* Portal invite toggle */}
-              <div
-                style={{
-                  background: sendInvite ? 'rgba(0,79,53,0.05)' : 'var(--warm)',
-                  border: sendInvite ? '1.5px solid rgba(0,79,53,0.2)' : '1.5px solid var(--border)',
-                  borderRadius: 4,
-                  padding: '14px 16px',
-                  marginTop: 4,
-                  transition: 'all 0.15s',
-                }}
-              >
-                <label className="flex items-start" style={{ gap: 12, cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={sendInvite}
-                    onChange={(e) => setSendInvite(e.target.checked)}
-                    style={{ width: 18, height: 18, accentColor: 'var(--emerald)', marginTop: 1, flexShrink: 0 }}
-                  />
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--charcoal)' }}>
-                      Send portal invite now
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 300, marginTop: 2, lineHeight: 1.5 }}>
-                      {sendInvite
-                        ? 'Client will receive an email to set their password and access the portal.'
-                        : 'Client record will be created without portal access. You can activate it later.'}
-                    </div>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div
-              className="flex justify-end"
-              style={{ padding: '0 28px 22px', gap: 10 }}
-            >
-              <Button variant="ghost" size="sm" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button
-                variant={sendInvite ? 'cherry' : 'dark'}
-                onClick={handleSubmit}
-                disabled={sending || !fullName || !email}
-              >
-                {sending
-                  ? 'Creating...'
-                  : sendInvite
-                    ? 'Create & Send Invite'
-                    : 'Create Client Record'}
-              </Button>
-            </div>
-          </>
-        )}
+        {/* Footer */}
+        <div className="flex justify-end" style={{ padding: '0 28px 22px', gap: 10 }}>
+          <Button variant="ghost" size="sm" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="cherry"
+            onClick={handleSubmit}
+            disabled={sending || !fullName}
+          >
+            {sending ? 'Creating...' : 'Create & Begin Work →'}
+          </Button>
+        </div>
       </div>
     </div>
   )

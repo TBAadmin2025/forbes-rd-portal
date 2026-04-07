@@ -113,9 +113,21 @@ export interface Submission {
   updated_at: string
 }
 
+export interface ClientEmployee {
+  id: string
+  submission_id: string
+  full_name: string
+  employee_type: 'Employee' | 'Contractor'
+  state: string | null
+  years_worked: number[]
+  created_at: string
+  updated_at: string
+}
+
 export interface Employee {
   id: string
   submission_id: string
+  client_employee_id: string | null
   tax_year: number
   full_name: string
   employee_type: 'Employee' | 'Contractor'
@@ -130,6 +142,8 @@ export interface Employee {
   ai_confidence: 'high' | 'medium' | 'low' | null
   created_at: string
   updated_at: string
+  // Hydrated by API: ids of QRA activities assigned to this employee-year
+  activity_ids?: string[]
 }
 
 export interface Supply {
@@ -138,6 +152,7 @@ export interface Supply {
   tax_year: number
   description: string
   project_name: string | null
+  vendor: string | null
   amount: number
   ai_extracted: boolean
   ai_confidence: 'high' | 'medium' | 'low' | null
@@ -186,31 +201,17 @@ export interface QRESummary {
   total_qre: number
 }
 
-export interface QRAProject {
+export interface QRAActivity {
   id: string
   submission_id: string
-  project_name: string
-  start_date: string | null
-  end_date: string | null
+  project_number: number | null
+  name: string
   description: string | null
-  business_problem: string | null
-  technologies_used: string | null
-  improvements: string | null
-  measurable_outcomes: string | null
-  created_at: string
-  updated_at: string
-}
-
-export interface QRAChallenge {
-  id: string
-  project_id: string
-  technical_problem: string | null
-  why_no_existing_solution: string | null
-  approaches_tried: string | null
-  testing_methods: string | null
-  iteration_count: number | null
-  outcome: string | null
-  sort_order: number
+  technical_uncertainty: string | null
+  experimentation: string | null
+  outcomes: string | null
+  raw_text: string | null
+  ai_extracted: boolean
   created_at: string
   updated_at: string
 }
