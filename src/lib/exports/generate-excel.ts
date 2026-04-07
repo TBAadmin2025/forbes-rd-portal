@@ -2,7 +2,6 @@ import * as XLSX from 'xlsx'
 import {
   calcConservativeFederal,
   calcASCFederal,
-  calcGeorgiaCredit,
   calcPrior3YrAvg,
 } from '@/lib/utils/calculations'
 
@@ -15,9 +14,13 @@ interface ExcelInput {
   totalQRE: number
   grossReceipts?: Record<string, unknown>[]
   qraActivities?: Record<string, unknown>[]
+  filingHistory?: Record<string, unknown>[]
 }
 
-export function generateExcel({ submission, employees, supplies, summaries, qreByYear, totalQRE, grossReceipts = [], qraActivities = [] }: ExcelInput): Buffer {
+export function generateExcel({ submission, employees, supplies, summaries, qreByYear, totalQRE, grossReceipts = [], qraActivities = [], filingHistory = [] }: ExcelInput): Buffer {
+  // Tax window — derive from this submission's tax_years
+  const taxYears = ((submission.tax_years as number[]) || []).slice().sort((a, b) => a - b)
+  const currentYear = taxYears.length > 0 ? taxYears[taxYears.length - 1] : new Date().getFullYear() - 1
   const wb = XLSX.utils.book_new()
 
   const headerStyle = {
@@ -25,14 +28,13 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
     font: { color: { rgb: 'F0E7D7' }, bold: true },
   }
 
-  // Sheet 1: Summary
+  // Sheet 1: Summary — federal credits only (state credits computed at preparation)
   const summaryRows = summaries.map((s) => {
     const yr = (s.tax_year as number) || 0
     const tqre = (s.total_qre as number) || 0
     const prior3Avg = calcPrior3YrAvg(qreByYear, yr)
     const conserv = calcConservativeFederal(tqre)
     const asc = calcASCFederal(tqre, prior3Avg)
-    const ga = calcGeorgiaCredit(conserv)
     return {
       'Company': submission.company_name || '',
       'FEIN': submission.fein || '',
@@ -45,8 +47,6 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
       'Total QRE': tqre,
       'Conservative Federal': conserv,
       'Full ASC Federal': asc,
-      'Georgia Credit': ga,
-      'Total Est. Value': conserv + ga,
       'Submission Date': submission.submitted_at
         ? new Date(submission.submitted_at as string).toLocaleDateString()
         : '',
@@ -54,8 +54,7 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
   })
 
   const grandConserv = calcConservativeFederal(totalQRE)
-  const grandAsc = calcASCFederal(qreByYear[2025] || 0, calcPrior3YrAvg(qreByYear, 2025))
-  const grandGa = calcGeorgiaCredit(grandConserv)
+  const grandAsc = calcASCFederal(qreByYear[currentYear] || 0, calcPrior3YrAvg(qreByYear, currentYear))
   summaryRows.push({
     'Company': 'GRAND TOTAL',
     'FEIN': '', 'State': '', 'Contact': '', 'Email': '',
@@ -65,13 +64,11 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
     'Total QRE': totalQRE,
     'Conservative Federal': grandConserv,
     'Full ASC Federal': grandAsc,
-    'Georgia Credit': grandGa,
-    'Total Est. Value': grandConserv + grandGa,
     'Submission Date': '',
   })
 
   const ws1 = XLSX.utils.json_to_sheet(summaryRows)
-  const colCount1 = 14
+  const colCount1 = 12
   for (let c = 0; c < colCount1; c++) {
     const addr = XLSX.utils.encode_cell({ r: 0, c })
     if (ws1[addr]) ws1[addr].s = headerStyle
@@ -171,15 +168,15 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
     { 'Section': '', 'Question': 'Consultant Name', 'Answer': str(submission.field_consultant_name) },
     { 'Section': '', 'Question': 'Consultant Email', 'Answer': str(submission.field_consultant_email) },
 
-    // Filing status
+    // Filing status — one row per year in this submission's window
     { 'Section': 'TAX FILING INFORMATION', 'Question': '', 'Answer': '' },
-    { 'Section': '', 'Question': '2022 Filing Status', 'Answer': str(submission.filing_status_2022) },
-    { 'Section': '', 'Question': 'Date Filed 2022 Original Return', 'Answer': str(submission.filing_date_2022) },
-    { 'Section': '', 'Question': '2023 Filing Status', 'Answer': str(submission.filing_status_2023) },
-    { 'Section': '', 'Question': 'Date Filed 2023 Original Return', 'Answer': str(submission.filing_date_2023) },
-    { 'Section': '', 'Question': '2024 Filing Status', 'Answer': str(submission.filing_status_2024) },
-    { 'Section': '', 'Question': 'Date Filed 2024 Original Return', 'Answer': str(submission.filing_date_2024) },
-    { 'Section': '', 'Question': '2025 Filing Status', 'Answer': str(submission.filing_status_2025) },
+    ...taxYears.flatMap((yr) => {
+      const rec = filingHistory.find((r) => (r.tax_year as number) === yr)
+      return [
+        { 'Section': '', 'Question': `${yr} Filing Status`, 'Answer': str(rec?.filing_status) },
+        { 'Section': '', 'Question': `Date Filed ${yr} Original Return`, 'Answer': str(rec?.filing_date) },
+      ]
+    }),
     { 'Section': '', 'Question': 'Computing Credit for Short Year?', 'Answer': yesNo(submission.short_year_credit) },
     { 'Section': '', 'Question': 'Part of a Controlled Group?', 'Answer': yesNo(submission.controlled_group) },
     { 'Section': '', 'Question': 'Tax Years Being Filed For', 'Answer': str(submission.tax_years_filed_for) },
@@ -188,7 +185,7 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
     { 'Section': 'CREDIT METHOD ELIGIBILITY', 'Question': '', 'Answer': '' },
     { 'Section': '', 'Question': 'Year Started Making Revenue', 'Answer': num(submission.year_started_revenue) },
     { 'Section': '', 'Question': 'Year Started R&D Efforts', 'Answer': num(submission.year_started_rd) },
-    { 'Section': '', 'Question': 'Gross Revenue Exceed $5M in 2024?', 'Answer': yesNo(submission.gross_revenue_over_5m) },
+    { 'Section': '', 'Question': 'Gross Revenue Exceeded $5M?', 'Answer': yesNo(submission.gross_revenue_over_5m) },
 
     // Contracts
     { 'Section': 'CONTRACTS / RIGHTS', 'Question': '', 'Answer': '' },
@@ -228,8 +225,7 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
   ws4['!freeze'] = { xSplit: 0, ySplit: 1 }
   XLSX.utils.book_append_sheet(wb, ws4, 'Discovery Questionnaire')
 
-  // Sheet 5: Payroll Data Key — employee wages across all years side-by-side
-  const years = [2022, 2023, 2024, 2025]
+  // Sheet 5: Payroll Data Key — employee wages across all tax years side-by-side
   const employeeMap: Record<string, Record<number, number>> = {}
 
   employees.forEach((e) => {
@@ -244,27 +240,33 @@ export function generateExcel({ submission, employees, supplies, summaries, qreB
     const row: Record<string, string | number> = {
       'Employee Name': name,
     }
-    years.forEach((yr) => {
+    taxYears.forEach((yr) => {
       row[`Total Gross Wages ${yr}`] = yearWages[yr] || 0
     })
     return row
   })
 
-  const ws5 = XLSX.utils.json_to_sheet(payrollRows.length > 0 ? payrollRows : [{ 'Employee Name': '', 'Total Gross Wages 2022': 0, 'Total Gross Wages 2023': 0, 'Total Gross Wages 2024': 0, 'Total Gross Wages 2025': 0 }])
+  const emptyPayrollRow: Record<string, string | number> = { 'Employee Name': '' }
+  taxYears.forEach((yr) => { emptyPayrollRow[`Total Gross Wages ${yr}`] = 0 })
 
-  // Add FEIN and State Tax ID at top as metadata
-  const payrollColCount = 5
+  const ws5 = XLSX.utils.json_to_sheet(payrollRows.length > 0 ? payrollRows : [emptyPayrollRow])
+
+  const payrollColCount = 1 + taxYears.length
   for (let c = 0; c < payrollColCount; c++) {
     const addr = XLSX.utils.encode_cell({ r: 0, c })
     if (ws5[addr]) ws5[addr].s = headerStyle
   }
-  ws5['!cols'] = [{ wch: 30 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 22 }]
+  ws5['!cols'] = [{ wch: 30 }, ...taxYears.map(() => ({ wch: 22 }))]
   ws5['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(payrollRows.length, 1), c: payrollColCount - 1 } }) }
   ws5['!freeze'] = { xSplit: 0, ySplit: 1 }
   XLSX.utils.book_append_sheet(wb, ws5, 'Payroll Data Key')
 
-  // Sheet 6: Gross Receipts (2018-2025)
-  const grRows = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025].map((yr) => {
+  // Sheet 6: Gross Receipts — 4 prior years before earliest tax year through current year
+  const earliestTaxYear = taxYears[0] || currentYear
+  const grStart = earliestTaxYear - 4
+  const grYearList: number[] = []
+  for (let y = grStart; y <= currentYear; y++) grYearList.push(y)
+  const grRows = grYearList.map((yr) => {
     const receipt = grossReceipts.find((r) => (r.tax_year as number) === yr)
     return {
       'Tax Year': yr,

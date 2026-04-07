@@ -79,13 +79,14 @@ export default function WorkspacePage() {
   const [fieldConsultantName, setFieldConsultantName] = useState('')
   const [fieldConsultantEmail, setFieldConsultantEmail] = useState('')
   const [sicCode, setSicCode] = useState('')
-  const [filingStatus2022, setFilingStatus2022] = useState('')
-  const [filingDate2022, setFilingDate2022] = useState('')
-  const [filingStatus2023, setFilingStatus2023] = useState('')
-  const [filingDate2023, setFilingDate2023] = useState('')
-  const [filingStatus2024, setFilingStatus2024] = useState('')
-  const [filingDate2024, setFilingDate2024] = useState('')
-  const [filingStatus2025, setFilingStatus2025] = useState('')
+  // Filing history keyed by tax year
+  const [filingHistory, setFilingHistory] = useState<Record<number, { status: string; date: string }>>({})
+  const setFilingField = (year: number, field: 'status' | 'date', value: string) => {
+    setFilingHistory((prev) => ({
+      ...prev,
+      [year]: { status: prev[year]?.status || '', date: prev[year]?.date || '', [field]: value },
+    }))
+  }
   const [shortYearCredit, setShortYearCredit] = useState<boolean | null>(null)
   const [controlledGroup, setControlledGroup] = useState<boolean | null>(null)
   const [taxYearsFiledFor, setTaxYearsFiledFor] = useState('')
@@ -230,13 +231,16 @@ export default function WorkspacePage() {
       setFieldConsultantName(sub.field_consultant_name || '')
       setFieldConsultantEmail(sub.field_consultant_email || '')
       setSicCode(sub.sic_code || '')
-      setFilingStatus2022(sub.filing_status_2022 || '')
-      setFilingDate2022(sub.filing_date_2022 || '')
-      setFilingStatus2023(sub.filing_status_2023 || '')
-      setFilingDate2023(sub.filing_date_2023 || '')
-      setFilingStatus2024(sub.filing_status_2024 || '')
-      setFilingDate2024(sub.filing_date_2024 || '')
-      setFilingStatus2025(sub.filing_status_2025 || '')
+      // Load filing history rows from child table
+      const { data: historyRows } = await supabase
+        .from('submission_filing_history')
+        .select('tax_year, filing_status, filing_date')
+        .eq('submission_id', id)
+      const histMap: Record<number, { status: string; date: string }> = {}
+      ;(historyRows || []).forEach((r: { tax_year: number; filing_status: string | null; filing_date: string | null }) => {
+        histMap[r.tax_year] = { status: r.filing_status || '', date: r.filing_date || '' }
+      })
+      setFilingHistory(histMap)
       setShortYearCredit(sub.short_year_credit)
       setControlledGroup(sub.controlled_group)
       setTaxYearsFiledFor(sub.tax_years_filed_for || '')
@@ -377,13 +381,6 @@ export default function WorkspacePage() {
         field_consultant_name: fieldConsultantName || null,
         field_consultant_email: fieldConsultantEmail || null,
         sic_code: sicCode || null,
-        filing_status_2022: filingStatus2022 || null,
-        filing_date_2022: filingDate2022 || null,
-        filing_status_2023: filingStatus2023 || null,
-        filing_date_2023: filingDate2023 || null,
-        filing_status_2024: filingStatus2024 || null,
-        filing_date_2024: filingDate2024 || null,
-        filing_status_2025: filingStatus2025 || null,
         short_year_credit: shortYearCredit,
         controlled_group: controlledGroup,
         tax_years_filed_for: taxYearsFiledFor || null,
@@ -396,6 +393,22 @@ export default function WorkspacePage() {
         ...rdIndicators,
       })
       .eq('id', id)
+
+    // Upsert filing history rows for any year with data
+    const historyRows = Object.entries(filingHistory)
+      .filter(([, v]) => v.status || v.date)
+      .map(([year, v]) => ({
+        submission_id: id,
+        tax_year: parseInt(year, 10),
+        filing_status: v.status || null,
+        filing_date: v.date || null,
+        updated_at: new Date().toISOString(),
+      }))
+    if (historyRows.length > 0) {
+      await supabase
+        .from('submission_filing_history')
+        .upsert(historyRows, { onConflict: 'submission_id,tax_year' })
+    }
 
     setSaving(false)
     setSaved(true)
@@ -845,15 +858,15 @@ export default function WorkspacePage() {
               <div className="font-serif" style={{ fontSize: 18, fontWeight: 700, color: 'var(--charcoal)', marginBottom: 16 }}>
                 Tax Filing Information
               </div>
-              {/* For each year 2022-2024, show filing status dropdown and date filed */}
-              {[
-                { year: '2022', status: filingStatus2022, setStatus: setFilingStatus2022, date: filingDate2022, setDate: setFilingDate2022 },
-                { year: '2023', status: filingStatus2023, setStatus: setFilingStatus2023, date: filingDate2023, setDate: setFilingDate2023 },
-                { year: '2024', status: filingStatus2024, setStatus: setFilingStatus2024, date: filingDate2024, setDate: setFilingDate2024 },
-              ].map(({ year, status, setStatus, date, setDate }) => (
+              {/* One row per tax year in this submission's window */}
+              {(submission?.tax_years || []).slice().sort((a, b) => a - b).map((year) => (
                 <div key={year} className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
                   <FormField label={`${year} Filing Status`}>
-                    <select className="finput" value={status} onChange={(e) => setStatus(e.target.value)}>
+                    <select
+                      className="finput"
+                      value={filingHistory[year]?.status || ''}
+                      onChange={(e) => setFilingField(year, 'status', e.target.value)}
+                    >
                       <option value="">Select...</option>
                       <option value="filed">Filed</option>
                       <option value="extended">Extended</option>
@@ -862,20 +875,16 @@ export default function WorkspacePage() {
                     </select>
                   </FormField>
                   <FormField label={`Date Filed ${year} Original Return`}>
-                    <input className="finput" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                    <input
+                      className="finput"
+                      type="date"
+                      value={filingHistory[year]?.date || ''}
+                      onChange={(e) => setFilingField(year, 'date', e.target.value)}
+                    />
                   </FormField>
                 </div>
               ))}
-              <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
-                <FormField label="2025 Filing Status">
-                  <select className="finput" value={filingStatus2025} onChange={(e) => setFilingStatus2025(e.target.value)}>
-                    <option value="">Select...</option>
-                    <option value="filed">Filed</option>
-                    <option value="extended">Extended</option>
-                    <option value="not_filed">Not Filed</option>
-                    <option value="amended">Amended</option>
-                  </select>
-                </FormField>
+              <div className="grid gap-4" style={{ gridTemplateColumns: '1fr', marginBottom: 16 }}>
                 <FormField label="Tax Years Being Filed For">
                   <input className="finput" placeholder="e.g., 2022, 2023, 2024" value={taxYearsFiledFor} onChange={(e) => setTaxYearsFiledFor(e.target.value)} />
                 </FormField>

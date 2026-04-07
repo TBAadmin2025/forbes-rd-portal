@@ -1,18 +1,8 @@
 interface ConfirmationHeroProps {
   firstName: string
-  totalQRE: number
-  federalCredit: number
-  georgiaCredit: number
 }
 
-import { formatCurrency } from '@/lib/utils/formatting'
-
-export default function ConfirmationHero({
-  firstName,
-  totalQRE: _totalQRE,
-  federalCredit: _federalCredit,
-  georgiaCredit: _georgiaCredit,
-}: ConfirmationHeroProps) {
+export default function ConfirmationHero({ firstName }: ConfirmationHeroProps) {
   return (
     <div
       style={{
@@ -52,7 +42,7 @@ export default function ConfirmationHero({
             lineHeight: 1.8,
           }}
         >
-          Your data has been submitted to Forbes Management. We'll review
+          Your data has been submitted to Forbes Management. We&apos;ll review
           everything and prepare your R&D tax credit study within 2–3 business
           days.
         </div>

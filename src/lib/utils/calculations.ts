@@ -19,11 +19,6 @@ export function calcASCFederal(currentQRE: number, prior3YrAvg: number): number 
   return Math.round(Math.max(currentQRE * 0.06, base * 0.14) * 100) / 100
 }
 
-// Georgia state credit: 10% of federal
-export function calcGeorgiaCredit(federalCredit: number): number {
-  return Math.round(federalCredit * 0.10 * 100) / 100
-}
-
 // Calculate 3-year average QRE for ASC method
 export function calcPrior3YrAvg(qreByYear: Record<number, number>, currentYear: number): number {
   const priorYears = [currentYear - 1, currentYear - 2, currentYear - 3]

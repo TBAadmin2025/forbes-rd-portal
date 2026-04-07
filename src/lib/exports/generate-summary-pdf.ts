@@ -2,7 +2,6 @@ import { styles, fmt } from '@/lib/exports/pdf-styles'
 import {
   calcConservativeFederal,
   calcASCFederal,
-  calcGeorgiaCredit,
   calcPrior3YrAvg,
 } from '@/lib/utils/calculations'
 
@@ -30,21 +29,20 @@ export async function generateSummaryPDF(input: SummaryPDFInput): Promise<Buffer
     year: 'numeric',
   })
 
-  // Credit calculations — prefer DB values, fall back to computed
+  // Tax window — derive everything from this submission's tax_years
+  const taxYears = (submission.tax_years as number[]) || []
+  const currentYear = taxYears.length > 0 ? Math.max(...taxYears) : new Date().getFullYear() - 1
+  const years = [...taxYears].sort((a, b) => b - a) // descending for display
+
+  // Credit calculations — prefer DB values, fall back to computed federal-only
   const credit = credits[0] || null
   const grandConserv = calcConservativeFederal(totalQRE)
-  const grandAsc = calcASCFederal(qreByYear[2025] || 0, calcPrior3YrAvg(qreByYear, 2025))
-  const grandGa = calcGeorgiaCredit(grandConserv)
+  const grandAsc = calcASCFederal(qreByYear[currentYear] || 0, calcPrior3YrAvg(qreByYear, currentYear))
 
   const conservFed = (credit?.conservative_federal as number) ?? grandConserv
-  const conservGa = (credit?.conservative_georgia as number) ?? grandGa
-  const conservTotal = (credit?.conservative_total as number) ?? conservFed + conservGa
   const ascFed = (credit?.asc_federal as number) ?? grandAsc
-  const ascGa = (credit?.asc_georgia as number) ?? calcGeorgiaCredit(grandAsc)
-  const ascTotal = (credit?.asc_total as number) ?? ascFed + ascGa
 
   // Group employees by year
-  const years = [2025, 2024, 2023, 2022]
   const empsByYear: Record<number, Record<string, unknown>[]> = {}
   employees.forEach((e) => {
     const yr = e.tax_year as number
@@ -121,35 +119,29 @@ export async function generateSummaryPDF(input: SummaryPDFInput): Promise<Buffer
         React.createElement(Text, { style: styles.calloutLabel }, 'TOTAL QUALIFIED RESEARCH EXPENSES'),
         React.createElement(Text, { style: styles.calloutValue }, fmt(totalQRE))
       ),
-      // Credit table
+      // Credit table — federal only; state credits computed at preparation
       React.createElement(
         View,
         { style: styles.tableHeader },
         React.createElement(Text, { style: styles.tableHeaderCell }, 'Method'),
-        React.createElement(Text, { style: styles.tableHeaderCell }, 'Federal'),
-        React.createElement(Text, { style: styles.tableHeaderCell }, 'Georgia'),
-        React.createElement(Text, { style: styles.tableHeaderCell }, 'Total')
+        React.createElement(Text, { style: styles.tableHeaderCell }, 'Federal Credit')
       ),
       React.createElement(
         View,
         { style: styles.tableRow },
         React.createElement(Text, { style: styles.tableCell }, 'Conservative (6%)'),
-        React.createElement(Text, { style: styles.tableCellRight }, fmt(conservFed)),
-        React.createElement(Text, { style: styles.tableCellRight }, fmt(conservGa)),
-        React.createElement(Text, { style: styles.tableCellRight }, fmt(conservTotal))
+        React.createElement(Text, { style: styles.tableCellRight }, fmt(conservFed))
       ),
       React.createElement(
         View,
         { style: styles.tableRow },
         React.createElement(Text, { style: styles.tableCell }, 'Full ASC (14%)'),
-        React.createElement(Text, { style: styles.tableCellRight }, fmt(ascFed)),
-        React.createElement(Text, { style: styles.tableCellRight }, fmt(ascGa)),
-        React.createElement(Text, { style: styles.tableCellRight }, fmt(ascTotal))
+        React.createElement(Text, { style: styles.tableCellRight }, fmt(ascFed))
       ),
       React.createElement(
         Text,
         { style: styles.disclaimer },
-        'Estimates only. Final amounts subject to IRS review and professional tax preparation.'
+        'Federal estimates only. Applicable state R&D credits will be calculated by Forbes during preparation. Final amounts subject to IRS review.'
       ),
       React.createElement(FooterComponent, { pageNum: 2 })
     ),

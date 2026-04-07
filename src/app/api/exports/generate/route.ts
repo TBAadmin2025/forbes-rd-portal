@@ -86,6 +86,12 @@ export async function POST(request: NextRequest) {
       .eq('submission_id', submission_id)
       .order('tax_year', { ascending: true })
 
+    const { data: filingHistory } = await supabase
+      .from('submission_filing_history')
+      .select('*')
+      .eq('submission_id', submission_id)
+      .order('tax_year', { ascending: true })
+
     // QRA activities for this submission
     const { data: qraActivities } = await supabase
       .from('qra_activities')
@@ -144,6 +150,7 @@ export async function POST(request: NextRequest) {
           summaries, qreByYear, totalQRE,
           grossReceipts: grossReceipts || [],
           qraActivities: activities,
+          filingHistory: filingHistory || [],
         })
         const fileName = `${clientSlug}-QRE-Data.xlsx`
         const path = `${basePath}/${fileName}`
@@ -183,7 +190,7 @@ export async function POST(request: NextRequest) {
     // Discovery PDF
     if (selected.discovery_pdf) {
       try {
-        const discoveryBuffer = await generateDiscoveryPDF(submission)
+        const discoveryBuffer = await generateDiscoveryPDF(submission, filingHistory || [])
         const fileName = `${clientSlug}-Discovery-Questionnaire.pdf`
         const path = `${basePath}/${fileName}`
         await supabase.storage.from('rd-documents').upload(path, discoveryBuffer, {

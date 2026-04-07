@@ -5,14 +5,14 @@ import { createClient } from '@/lib/supabase/client'
 import ConfirmationHero from '@/components/portal/ConfirmationHero'
 import InfoBox from '@/components/shared/InfoBox'
 import { formatCurrency } from '@/lib/utils/formatting'
-import { calcConservativeFederal, calcGeorgiaCredit } from '@/lib/utils/calculations'
+import { calcConservativeFederal } from '@/lib/utils/calculations'
 import { useAdminSid } from '@/lib/utils/use-submission-id'
 
 interface PageData {
   firstName: string
   totalQRE: number
   federalCredit: number
-  georgiaCredit: number
+  yearLabel: string
   documents: { file_name: string }[]
 }
 
@@ -29,8 +29,8 @@ export default function ConfirmationPage() {
       if (!user) return
 
       const subQuery = sid
-        ? supabase.from('submissions').select('id, contact_name').eq('id', sid).single()
-        : supabase.from('submissions').select('id, contact_name').eq('client_user_id', user.id).single()
+        ? supabase.from('submissions').select('id, contact_name, tax_years').eq('id', sid).single()
+        : supabase.from('submissions').select('id, contact_name, tax_years').eq('client_user_id', user.id).single()
       const { data: submission } = await subQuery
 
       if (!submission) return
@@ -47,7 +47,12 @@ export default function ConfirmationPage() {
 
       const totalQRE = (summaries || []).reduce((s, r) => s + (r.total_qre || 0), 0)
       const federalCredit = calcConservativeFederal(totalQRE)
-      const georgiaCredit = calcGeorgiaCredit(federalCredit)
+
+      const taxYears: number[] = submission.tax_years || []
+      const sorted = [...taxYears].sort((a, b) => a - b)
+      const yearLabel = sorted.length > 1
+        ? `${sorted[0]}–${sorted[sorted.length - 1]}`
+        : sorted.length === 1 ? `${sorted[0]}` : ''
 
       const firstName = (submission.contact_name || '').split(' ')[0] || 'there'
 
@@ -55,7 +60,7 @@ export default function ConfirmationPage() {
         firstName,
         totalQRE,
         federalCredit,
-        georgiaCredit,
+        yearLabel,
         documents: docs || [],
       })
     }
@@ -67,26 +72,20 @@ export default function ConfirmationPage() {
 
   return (
     <div style={{ animation: 'fadeUp 0.3s ease' }}>
-      <ConfirmationHero
-        firstName={data.firstName}
-        totalQRE={data.totalQRE}
-        federalCredit={data.federalCredit}
-        georgiaCredit={data.georgiaCredit}
-      />
+      <ConfirmationHero firstName={data.firstName} />
 
-      {/* Three tiles */}
+      {/* Two tiles — federal only; state credit calculated at preparation */}
       <div
         className="grid"
         style={{
-          gridTemplateColumns: '1fr 1fr 1fr',
+          gridTemplateColumns: '1fr 1fr',
           gap: 14,
           marginBottom: 20,
         }}
       >
         {[
-          { label: 'Total QRE', value: data.totalQRE, sub: '2022–2025' },
+          { label: 'Total QRE', value: data.totalQRE, sub: data.yearLabel },
           { label: 'Est. Federal Credit', value: data.federalCredit, sub: 'Conservative 6%' },
-          { label: 'Georgia Credit', value: data.georgiaCredit, sub: '10% of federal' },
         ].map((tile) => (
           <div
             key={tile.label}
@@ -130,9 +129,17 @@ export default function ConfirmationPage() {
         ))}
       </div>
 
+      <InfoBox>
+        <strong style={{ fontWeight: 600, color: 'var(--cherry)' }}>
+          State credit calculated at preparation.
+        </strong>{' '}
+        Federal estimates shown above. Forbes will calculate any applicable
+        state R&D credits when preparing your final return.
+      </InfoBox>
+
       {/* Uploaded documents */}
       {data.documents.length > 0 && (
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginTop: 20, marginBottom: 20 }}>
           <div
             style={{
               fontSize: 10,
@@ -171,7 +178,7 @@ export default function ConfirmationPage() {
         <strong style={{ fontWeight: 600, color: 'var(--cherry)' }}>
           Need to make a change?
         </strong>{' '}
-        Email admin@forbesmgt.com and we'll reopen your submission.
+        Email admin@forbesmgt.com and we&apos;ll reopen your submission.
       </InfoBox>
     </div>
   )

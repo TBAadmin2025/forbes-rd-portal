@@ -32,7 +32,11 @@ function yesNo(val: unknown): { text: string; style: (typeof styles)[keyof typeo
   return { text: '—', style: styles.indicatorNa }
 }
 
-export async function generateDiscoveryPDF(submission: Record<string, unknown>): Promise<Buffer> {
+export async function generateDiscoveryPDF(
+  submission: Record<string, unknown>,
+  filingHistory: Record<string, unknown>[] = [],
+): Promise<Buffer> {
+  const taxYears = ((submission.tax_years as number[]) || []).slice().sort((a, b) => a - b)
   const React = (await import('react')).default
   const { renderToBuffer } = await import('@react-pdf/renderer')
   const { Document: PDFDocument, Page, Text, View } = await import('@react-pdf/renderer')
@@ -135,15 +139,15 @@ export async function generateDiscoveryPDF(submission: Record<string, unknown>):
     fieldRow('Consultant Email', str(submission.field_consultant_email)),
     fieldRow('SIC Code', str(submission.sic_code)),
 
-    // Tax Filing Status
+    // Tax Filing Status — one row per year in this submission's window
     h(Text, { style: styles.sectionSubtitle }, 'Tax Filing Status'),
-    fieldRow('2022 Filing Status', str(submission.filing_status_2022)),
-    fieldRow('2022 Filing Date', str(submission.filing_date_2022)),
-    fieldRow('2023 Filing Status', str(submission.filing_status_2023)),
-    fieldRow('2023 Filing Date', str(submission.filing_date_2023)),
-    fieldRow('2024 Filing Status', str(submission.filing_status_2024)),
-    fieldRow('2024 Filing Date', str(submission.filing_date_2024)),
-    fieldRow('2025 Filing Status', str(submission.filing_status_2025)),
+    ...taxYears.flatMap((yr) => {
+      const rec = filingHistory.find((r) => (r.tax_year as number) === yr)
+      return [
+        fieldRow(`${yr} Filing Status`, str(rec?.filing_status)),
+        fieldRow(`${yr} Filing Date`, str(rec?.filing_date)),
+      ]
+    }),
 
     // Tax Details
     h(Text, { style: styles.sectionSubtitle }, 'Tax Details'),

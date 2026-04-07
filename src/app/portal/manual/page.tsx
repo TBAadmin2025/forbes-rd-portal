@@ -9,14 +9,13 @@ import InfoBox from '@/components/shared/InfoBox'
 import YearBlock from '@/components/portal/YearBlock'
 import type { Employee, Supply } from '@/lib/types/database.types'
 
-const YEARS = [2025, 2024, 2023, 2022]
-
 export default function ManualPage() {
   const router = useRouter()
   const supabase = createClient()
   const sid = useAdminSid()
 
   const [submissionId, setSubmissionId] = useState<string | null>(null)
+  const [taxYears, setTaxYears] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
   const [employeesByYear, setEmployeesByYear] = useState<Record<number, Employee[]>>({})
   const [suppliesByYear, setSuppliesByYear] = useState<Record<number, Supply[]>>({})
@@ -36,7 +35,7 @@ export default function ManualPage() {
       // Try to find existing submission via API (bypasses RLS)
       console.log('manual: fetching submission via API...')
       const getRes = await fetch(sid ? `/api/submissions/${sid}` : '/api/submissions')
-      let submission: { id: string } | null = null
+      let submission: { id: string; tax_years?: number[] } | null = null
 
       if (getRes.ok) {
         const sub = await getRes.json()
@@ -99,9 +98,14 @@ export default function ManualPage() {
         supByYear[s.tax_year].push(s)
       })
 
+      const years = (submission.tax_years && submission.tax_years.length > 0)
+        ? [...submission.tax_years].sort((a, b) => b - a)
+        : [2025, 2024, 2023, 2022]
+
       // Set all state at once so YearBlocks mount with data already available
       setEmployeesByYear(empByYear)
       setSuppliesByYear(supByYear)
+      setTaxYears(years)
       setSubmissionId(submission.id)
       setLoading(false)
     }
@@ -139,14 +143,14 @@ export default function ManualPage() {
 
       {submissionId && (
         <div style={{ marginTop: 20 }}>
-          {YEARS.map((year) => (
+          {taxYears.map((year, idx) => (
             <YearBlock
               key={year}
               year={year}
               submissionId={submissionId}
               initialEmployees={employeesByYear[year] || []}
               initialSupplies={suppliesByYear[year] || []}
-              defaultExpanded={year === 2025}
+              defaultExpanded={idx === 0}
             />
           ))}
         </div>

@@ -11,6 +11,7 @@ export interface Submission {
   id: string
   client_user_id: string | null
   status: 'internal' | 'invited' | 'in_progress' | 'submitted' | 'sent'
+  tax_years: number[]
   submission_method: 'upload' | 'manual' | null
   company_name: string | null
   dba_name: string | null
@@ -49,15 +50,6 @@ export interface Submission {
   field_consultant_name: string | null
   field_consultant_email: string | null
   sic_code: string | null
-
-  // Filing status
-  filing_status_2022: string | null
-  filing_date_2022: string | null
-  filing_status_2023: string | null
-  filing_date_2023: string | null
-  filing_status_2024: string | null
-  filing_date_2024: string | null
-  filing_status_2025: string | null
 
   // Tax details
   short_year_credit: boolean | null
@@ -109,6 +101,15 @@ export interface Submission {
   export_qra_pdf_url: string | null
   export_document_zip_url: string | null
   export_full_package_url: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SubmissionFilingHistory {
+  submission_id: string
+  tax_year: number
+  filing_status: string | null
+  filing_date: string | null
   created_at: string
   updated_at: string
 }

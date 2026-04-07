@@ -28,7 +28,12 @@ export async function generateQRAPDF(
   const companyName = String(submission.company_name || '—')
   const entityType = submission.entity_type ? String(submission.entity_type) : null
   const election280c = submission.section_280c_election
-  const taxYearsCovered = '2022–2025'
+  const taxYearsArr = ((submission.tax_years as number[]) || []).slice().sort((a, b) => a - b)
+  const taxYearsCovered = taxYearsArr.length > 1
+    ? `${taxYearsArr[0]}–${taxYearsArr[taxYearsArr.length - 1]}`
+    : taxYearsArr.length === 1
+      ? `${taxYearsArr[0]}`
+      : ''
 
   const date = new Date().toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',

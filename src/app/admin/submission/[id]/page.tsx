@@ -513,7 +513,7 @@ export default function SubmissionDetailPage() {
         employeeCount={employeeCount}
         projectCount={projectCount}
         hasCompanyInfo={!!(submission?.company_name && submission?.fein)}
-        hasDiscovery={!!(submission?.field_consultant_name || submission?.filing_status_2022)}
+        hasDiscovery={!!submission?.field_consultant_name}
         exportSentAt={submission?.export_sent_at}
         onExportGenerated={() => {
           // Refresh submission data via API

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { calcConservativeFederal, calcASCFederal, calcGeorgiaCredit } from '@/lib/utils/calculations'
+import { calcConservativeFederal, calcASCFederal, calcPrior3YrAvg } from '@/lib/utils/calculations'
 import { formatCurrency } from '@/lib/utils/formatting'
 
 interface CreditSummaryProps {
@@ -16,7 +16,7 @@ interface SummaryData {
   state: string
   conservativeFederal: number
   ascFederal: number
-  georgiaCredit: number
+  yearLabel: string
 }
 
 export default function CreditSummary({ submissionId }: CreditSummaryProps) {
@@ -31,10 +31,10 @@ export default function CreditSummary({ submissionId }: CreditSummaryProps) {
         .select('*')
         .eq('submission_id', submissionId)
 
-      // Fetch submission for company info
+      // Fetch submission for company info + tax window
       const { data: submission } = await supabase
         .from('submissions')
-        .select('company_name, fein, business_state')
+        .select('company_name, fein, business_state, tax_years')
         .eq('id', submissionId)
         .single()
 
@@ -42,19 +42,27 @@ export default function CreditSummary({ submissionId }: CreditSummaryProps) {
 
       const totalQRE = summaries.reduce((sum, s) => sum + (s.total_qre || 0), 0)
 
-      // Build QRE by year for ASC calculation
       const qreByYear: Record<number, number> = {}
       summaries.forEach((s) => {
         if (s.tax_year) qreByYear[s.tax_year] = s.total_qre || 0
       })
 
-      // Use 2025 as current year for credit calculation
-      const currentQRE = qreByYear[2025] || 0
-      const prior3Avg = ([2024, 2023, 2022].map((y) => qreByYear[y] || 0).reduce((a, b) => a + b, 0)) / 3
+      // Derive current year from this submission's tax window
+      const taxYears: number[] = submission.tax_years || []
+      const currentYear = taxYears.length > 0 ? Math.max(...taxYears) : new Date().getFullYear() - 1
+      const currentQRE = qreByYear[currentYear] || 0
+      const prior3Avg = calcPrior3YrAvg(qreByYear, currentYear)
 
       const conservativeFederal = calcConservativeFederal(totalQRE)
       const ascFederal = calcASCFederal(currentQRE, prior3Avg)
-      const georgiaCredit = calcGeorgiaCredit(conservativeFederal)
+
+      const sortedYears = [...taxYears].sort((a, b) => a - b)
+      const yearLabel =
+        sortedYears.length > 1
+          ? `${sortedYears[0]}–${sortedYears[sortedYears.length - 1]} combined`
+          : sortedYears.length === 1
+            ? `${sortedYears[0]}`
+            : 'All years combined'
 
       setData({
         totalQRE,
@@ -63,7 +71,7 @@ export default function CreditSummary({ submissionId }: CreditSummaryProps) {
         state: submission.business_state || '',
         conservativeFederal,
         ascFederal,
-        georgiaCredit,
+        yearLabel,
       })
     }
     load()
@@ -133,7 +141,7 @@ export default function CreditSummary({ submissionId }: CreditSummaryProps) {
                 fontWeight: 300,
               }}
             >
-              2022–2025 combined
+              {data.yearLabel}
             </div>
           </div>
 
@@ -175,10 +183,10 @@ export default function CreditSummary({ submissionId }: CreditSummaryProps) {
           </div>
         </div>
 
-        {/* Credit breakdown: 3 columns */}
+        {/* Credit breakdown: federal estimates only — state credits vary by jurisdiction */}
         <div
           className="grid"
-          style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}
+          style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}
         >
           {[
             {
@@ -190,11 +198,6 @@ export default function CreditSummary({ submissionId }: CreditSummaryProps) {
               label: 'Full ASC Federal',
               value: data.ascFederal,
               method: '14% method',
-            },
-            {
-              label: 'Georgia State',
-              value: data.georgiaCredit,
-              method: '10% of federal',
             },
           ].map((item) => (
             <div
@@ -237,12 +240,34 @@ export default function CreditSummary({ submissionId }: CreditSummaryProps) {
           ))}
         </div>
 
-        {/* Credit note */}
+        {/* State credit note */}
+        <div
+          style={{
+            fontSize: 11,
+            color: 'rgba(240,231,215,0.55)',
+            marginTop: 20,
+            padding: '12px 16px',
+            background: 'rgba(255,255,255,0.04)',
+            borderRadius: 3,
+            textAlign: 'center',
+            lineHeight: 1.6,
+            fontWeight: 300,
+          }}
+        >
+          <strong style={{ color: 'var(--champagne)', fontWeight: 600 }}>
+            State credit not shown.
+          </strong>{' '}
+          Each state computes R&D credits differently and many require state-sourced
+          QRE and gross receipts data we don&apos;t collect. Forbes will calculate
+          applicable state credits during preparation.
+        </div>
+
+        {/* General disclaimer */}
         <div
           style={{
             fontSize: 11,
             color: 'rgba(240,231,215,0.5)',
-            marginTop: 20,
+            marginTop: 12,
             textAlign: 'center',
             fontStyle: 'italic',
             fontWeight: 300,

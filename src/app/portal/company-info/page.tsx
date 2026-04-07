@@ -59,8 +59,9 @@ export default function CompanyInfoPage() {
   const [dateIncorporated, setDateIncorporated] = useState('')
   const [taxYearEnd, setTaxYearEnd] = useState('')
 
-  // Gross receipts (8 years)
+  // Gross receipts + tax window (driven by submission.tax_years)
   const [grossReceipts, setGrossReceipts] = useState<Record<number, string>>({})
+  const [taxYears, setTaxYears] = useState<number[]>([])
 
   useEffect(() => {
     async function loadData() {
@@ -80,6 +81,7 @@ export default function CompanyInfoPage() {
 
       if (submission) {
         setSubmissionId(submission.id)
+        setTaxYears((submission.tax_years && submission.tax_years.length > 0) ? submission.tax_years : [2022, 2023, 2024, 2025])
         setCompanyName(submission.company_name || '')
         setDbaName(submission.dba_name || '')
         setContactName(submission.contact_name || profile?.full_name || '')
@@ -170,8 +172,12 @@ export default function CompanyInfoPage() {
         })
         .eq('id', submissionId)
 
-      // Save gross receipts
-      const grYears = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+      // Save gross receipts — 4 prior years + tax window
+      const sortedYears = [...taxYears].sort((a, b) => a - b)
+      const earliest = sortedYears[0] || new Date().getFullYear() - 4
+      const latest = sortedYears[sortedYears.length - 1] || new Date().getFullYear() - 1
+      const grYears: number[] = []
+      for (let y = earliest - 4; y <= latest; y++) grYears.push(y)
       for (const yr of grYears) {
         const amount = grossReceipts[yr]
         if (amount && parseFloat(amount) > 0) {
@@ -393,32 +399,28 @@ export default function CompanyInfoPage() {
             Total gross receipts for each year. This is used to calculate your R&D credit eligibility.
           </div>
 
-          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 12 }}>
-            {[2025, 2024, 2023, 2022].map((yr) => (
-              <FormField key={yr} label={String(yr)}>
-                <input
-                  className="finput"
-                  type="number"
-                  placeholder="$0"
-                  value={grossReceipts[yr] || ''}
-                  onChange={(e) => setGrossReceipts(prev => ({ ...prev, [yr]: e.target.value }))}
-                />
-              </FormField>
-            ))}
-          </div>
-          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-            {[2021, 2020, 2019, 2018].map((yr) => (
-              <FormField key={yr} label={String(yr)}>
-                <input
-                  className="finput"
-                  type="number"
-                  placeholder="$0"
-                  value={grossReceipts[yr] || ''}
-                  onChange={(e) => setGrossReceipts(prev => ({ ...prev, [yr]: e.target.value }))}
-                />
-              </FormField>
-            ))}
-          </div>
+          {(() => {
+            const sorted = [...taxYears].sort((a, b) => a - b)
+            const earliest = sorted[0] || new Date().getFullYear() - 4
+            const latest = sorted[sorted.length - 1] || new Date().getFullYear() - 1
+            const allGrYears: number[] = []
+            for (let y = latest; y >= earliest - 4; y--) allGrYears.push(y)
+            return (
+              <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                {allGrYears.map((yr) => (
+                  <FormField key={yr} label={String(yr)}>
+                    <input
+                      className="finput"
+                      type="number"
+                      placeholder="$0"
+                      value={grossReceipts[yr] || ''}
+                      onChange={(e) => setGrossReceipts(prev => ({ ...prev, [yr]: e.target.value }))}
+                    />
+                  </FormField>
+                ))}
+              </div>
+            )
+          })()}
         </Card>
       </div>
 
