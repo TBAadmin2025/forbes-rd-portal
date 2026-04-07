@@ -12,6 +12,7 @@ interface UploadModalProps {
   onClose: () => void
   onFilesUploaded: (files: UploadedFile[]) => void
   submissionId: string
+  taxYears?: number[]
 }
 
 const CATEGORY_LABELS: Record<Category, { label: string; title: string }> = {
@@ -37,10 +38,15 @@ export default function UploadModal({
   onClose,
   onFilesUploaded,
   submissionId,
+  taxYears,
 }: UploadModalProps) {
   const isTaxId = category === 'taxid'
-  const years = isTaxId ? [null] : [2022, 2023, 2024, 2025]
-  const [selectedYear, setSelectedYear] = useState<number | null>(isTaxId ? null : 2025)
+  const sortedYears = (taxYears && taxYears.length > 0)
+    ? [...taxYears].sort((a, b) => a - b)
+    : [2022, 2023, 2024, 2025]
+  const defaultYear = sortedYears[sortedYears.length - 1]
+  const years: (number | null)[] = isTaxId ? [null] : sortedYears
+  const [selectedYear, setSelectedYear] = useState<number | null>(isTaxId ? null : defaultYear)
   const [files, setFiles] = useState<LocalFile[]>([])
   const [dragging, setDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -90,7 +96,7 @@ export default function UploadModal({
       onFilesUploaded(uploaded)
     }
     setFiles([])
-    setSelectedYear(isTaxId ? null : 2025)
+    setSelectedYear(isTaxId ? null : defaultYear)
     onClose()
   }
 

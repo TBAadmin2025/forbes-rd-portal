@@ -7,7 +7,7 @@ import { useAdminSid, portalUrl } from '@/lib/utils/use-submission-id'
 import Button from '@/components/shared/Button'
 import InfoBox from '@/components/shared/InfoBox'
 import YearBlock from '@/components/portal/YearBlock'
-import type { Employee, Supply } from '@/lib/types/database.types'
+import type { Employee, Supply, QRAActivity } from '@/lib/types/database.types'
 
 export default function ManualPage() {
   const router = useRouter()
@@ -16,6 +16,7 @@ export default function ManualPage() {
 
   const [submissionId, setSubmissionId] = useState<string | null>(null)
   const [taxYears, setTaxYears] = useState<number[]>([])
+  const [qraActivities, setQraActivities] = useState<QRAActivity[]>([])
   const [loading, setLoading] = useState(true)
   const [employeesByYear, setEmployeesByYear] = useState<Record<number, Employee[]>>({})
   const [suppliesByYear, setSuppliesByYear] = useState<Record<number, Supply[]>>({})
@@ -76,13 +77,16 @@ export default function ManualPage() {
       console.log('manual: submissionId =', submission.id)
 
       // Load existing data via API (bypasses RLS) BEFORE setting submissionId
-      const [empRes, supRes] = await Promise.all([
+      const [empRes, supRes, qraRes] = await Promise.all([
         fetch(`/api/employees?submission_id=${submission.id}`),
         fetch(`/api/supplies?submission_id=${submission.id}`),
+        fetch(`/api/qra-activities?submission_id=${submission.id}`),
       ])
 
       const emps: Employee[] = empRes.ok ? await empRes.json() : []
       const sups: Supply[] = supRes.ok ? await supRes.json() : []
+      const qra: QRAActivity[] = qraRes.ok ? await qraRes.json() : []
+      setQraActivities(qra)
 
       console.log('manual: loaded', emps.length, 'employees,', sups.length, 'supplies')
 
@@ -150,6 +154,7 @@ export default function ManualPage() {
               submissionId={submissionId}
               initialEmployees={employeesByYear[year] || []}
               initialSupplies={suppliesByYear[year] || []}
+              qraActivities={qraActivities}
               defaultExpanded={idx === 0}
             />
           ))}

@@ -11,38 +11,41 @@ interface UploadCategoryProps {
   category: Category
   files: UploadedFile[]
   onClick: () => void
+  taxYears?: number[]
 }
 
-const CATEGORY_META: Record<Category, { icon: string; title: string; desc: string; years: string; optional?: boolean }> = {
+const CATEGORY_META: Record<Category, { icon: string; title: string; desc: string; optional?: boolean }> = {
   payroll: {
     icon: '📊',
     title: 'Payroll Reports',
     desc: 'W2 and 1099 data for all R&D employees and contractors',
-    years: '2022 · 2023 · 2024 · 2025',
   },
   pandl: {
     icon: '📈',
     title: 'P&L / Expense Reports',
     desc: 'Profit & Loss statements or detailed expense reports',
-    years: '2022 · 2023 · 2024 · 2025',
   },
   taxid: {
     icon: '🏛️',
     title: 'FEIN & State Tax ID Docs',
     desc: 'IRS EIN confirmation letter and state registration',
-    years: 'Current documents',
   },
   gross_receipts: {
     icon: '💰',
     title: 'Gross Receipts',
     desc: 'Only needed if not already in your P&L uploads',
-    years: '2022 · 2023 · 2024 · 2025',
     optional: true,
   },
 }
 
-export default function UploadCategory({ category, files, onClick }: UploadCategoryProps) {
-  const meta = CATEGORY_META[category]
+export default function UploadCategory({ category, files, onClick, taxYears }: UploadCategoryProps) {
+  const baseMeta = CATEGORY_META[category]
+  const yearLabel = category === 'taxid'
+    ? 'Current documents'
+    : (taxYears && taxYears.length > 0
+        ? [...taxYears].sort((a, b) => a - b).join(' · ')
+        : '')
+  const meta = { ...baseMeta, years: yearLabel }
   const hasFiles = files.length > 0
 
   return (

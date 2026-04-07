@@ -19,7 +19,6 @@ import { formatCurrency } from '@/lib/utils/formatting'
 
 type Category = 'payroll' | 'pandl' | 'taxid' | 'gross_receipts'
 const CATEGORIES: Category[] = ['payroll', 'pandl', 'taxid', 'gross_receipts']
-const YEARS = [2025, 2024, 2023, 2022]
 
 const US_STATES = [
   'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut',
@@ -166,8 +165,12 @@ export default function WorkspacePage() {
     return () => window.removeEventListener('qra-activities-updated', handler)
   }, [loadQraActivities])
 
-  // Send portal invite
+  // Send portal invite — gated on having QRA activities + contact email
   const handleSendInvite = async () => {
+    if (qraActivities.length === 0) {
+      alert('Upload the QRA PDF and save activities on the QRA Activities tab before inviting the client.')
+      return
+    }
     if (!submission?.contact_email) {
       alert('Please add a contact email on the Business Info tab first.')
       return
@@ -311,8 +314,9 @@ export default function WorkspacePage() {
       // Load employees (via API for activity_ids hydration)
       await loadEmployeesByYear()
 
-      // Load supplies
-      for (const year of YEARS) {
+      // Load supplies for every year in this submission's tax window
+      const submissionYears: number[] = sub.tax_years || []
+      for (const year of submissionYears) {
         const { data: sups } = await supabase
           .from('supplies')
           .select('*')
@@ -436,7 +440,10 @@ export default function WorkspacePage() {
     )
   }
 
-  const totalQRE = YEARS.reduce((sum, year) => {
+  const taxYears: number[] = (submission?.tax_years || [])
+  const orderedYears = [...taxYears].sort((a, b) => b - a)
+
+  const totalQRE = taxYears.reduce((sum, year) => {
     const emps = employeesByYear[year] || []
     const sups = suppliesByYear[year] || []
     return sum
@@ -487,14 +494,31 @@ export default function WorkspacePage() {
         </div>
         <div className="flex items-center" style={{ gap: 12 }}>
           {!submission.client_user_id && (
-            <Button
-              variant="emerald"
-              size="sm"
-              onClick={handleSendInvite}
-              disabled={activatingPortal}
-            >
-              {activatingPortal ? 'Sending...' : 'Send Portal Invite'}
-            </Button>
+            <div className="flex items-center" style={{ gap: 8 }}>
+              <Button
+                variant="emerald"
+                size="sm"
+                onClick={handleSendInvite}
+                disabled={activatingPortal || qraActivities.length === 0}
+                title={qraActivities.length === 0 ? 'Upload QRA PDF first' : ''}
+              >
+                {activatingPortal ? 'Sending...' : 'Send Portal Invite'}
+              </Button>
+              {qraActivities.length === 0 && (
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--muted)',
+                    fontWeight: 300,
+                    fontStyle: 'italic',
+                    maxWidth: 160,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Upload QRA PDF before inviting
+                </span>
+              )}
+            </div>
           )}
           <Tag
             variant={
@@ -774,7 +798,7 @@ export default function WorkspacePage() {
       {/* ===== DATA ENTRY ===== */}
       {activeSection === 'data' && (
         <div style={{ animation: 'fadeUp 0.2s ease' }}>
-          {YEARS.map((year) => (
+          {orderedYears.map((year, idx) => (
             <YearBlock
               key={year}
               year={year}
@@ -782,7 +806,7 @@ export default function WorkspacePage() {
               initialEmployees={employeesByYear[year] || []}
               initialSupplies={suppliesByYear[year] || []}
               qraActivities={qraActivities}
-              defaultExpanded={year === 2025}
+              defaultExpanded={idx === 0}
             />
           ))}
 
@@ -803,6 +827,7 @@ export default function WorkspacePage() {
                 key={cat}
                 category={cat}
                 files={files[cat]}
+                taxYears={taxYears}
                 onClick={() => setActiveCategory(cat)}
               />
             ))}
@@ -820,6 +845,7 @@ export default function WorkspacePage() {
                 }))
               }}
               submissionId={id}
+              taxYears={taxYears}
             />
           )}
 
@@ -1103,7 +1129,7 @@ export default function WorkspacePage() {
                 </tr>
               </thead>
               <tbody>
-                {YEARS.map((year) => {
+                {orderedYears.map((year) => {
                   const emps = employeesByYear[year] || []
                   const sups = suppliesByYear[year] || []
                   const payrollQRE = emps.reduce((s, e) => s + (e.qualified_amount || 0), 0)

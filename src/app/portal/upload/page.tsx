@@ -19,6 +19,7 @@ export default function UploadPage() {
   const sid = useAdminSid()
 
   const [submissionId, setSubmissionId] = useState<string | null>(null)
+  const [taxYears, setTaxYears] = useState<number[]>([])
   const [files, setFiles] = useState<Record<Category, UploadedFile[]>>({
     payroll: [], pandl: [], taxid: [], gross_receipts: [],
   })
@@ -44,6 +45,14 @@ export default function UploadPage() {
 
       if (!subId) return
       setSubmissionId(subId)
+
+      // Load tax_years from this submission so the upload UI matches the window
+      const { data: subRow } = await supabase
+        .from('submissions')
+        .select('tax_years')
+        .eq('id', subId)
+        .single()
+      if (subRow?.tax_years) setTaxYears(subRow.tax_years)
 
       // Load existing documents
       const { data: docs } = await supabase
@@ -103,6 +112,7 @@ export default function UploadPage() {
             key={cat}
             category={cat}
             files={files[cat]}
+            taxYears={taxYears}
             onClick={() => setActiveCategory(cat)}
           />
         ))}
@@ -121,6 +131,7 @@ export default function UploadPage() {
             }))
           }}
           submissionId={submissionId}
+          taxYears={taxYears}
         />
       )}
 
