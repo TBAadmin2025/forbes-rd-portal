@@ -33,7 +33,7 @@ export default function WelcomePage() {
         const step = sub.current_step ?? 0
         if (step > 0 && step < 4) {
           setResumeRoute(portalUrl(STEP_ROUTES[step] || '/portal/company-info', sid))
-        } else if (sub.status === 'submitted') {
+        } else if (sub.status === 'submitted' || sub.status === 'sent') {
           setResumeRoute(portalUrl('/portal/confirmation', sid))
         }
       } catch {

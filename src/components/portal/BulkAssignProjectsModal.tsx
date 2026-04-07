@@ -231,7 +231,7 @@ export default function BulkAssignProjectsModal({
                 fontStyle: 'italic',
               }}
             >
-              No QRA activities yet. Upload the QRA PDF on the QRA Activities tab.
+              No R&D projects available yet. Forbes Management adds these from your QRA documents.
             </div>
           ) : (
             sortedActivities.map((a) => {

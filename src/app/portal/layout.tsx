@@ -80,7 +80,7 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
             if (Array.isArray(emps) && emps.length > 0) max = Math.max(max, 2)
           }
         }
-        if (sub.status === 'submitted') max = 4
+        if (sub.status === 'submitted' || sub.status === 'sent') max = 4
         if (sub.current_step) max = Math.max(max, sub.current_step)
         setMaxStepReached(max)
       } catch {

@@ -41,10 +41,8 @@ export default function UploadModal({
   taxYears,
 }: UploadModalProps) {
   const isTaxId = category === 'taxid'
-  const sortedYears = (taxYears && taxYears.length > 0)
-    ? [...taxYears].sort((a, b) => a - b)
-    : [2022, 2023, 2024, 2025]
-  const defaultYear = sortedYears[sortedYears.length - 1]
+  const sortedYears = (taxYears || []).slice().sort((a, b) => a - b)
+  const defaultYear = sortedYears.length > 0 ? sortedYears[sortedYears.length - 1] : null
   const years: (number | null)[] = isTaxId ? [null] : sortedYears
   const [selectedYear, setSelectedYear] = useState<number | null>(isTaxId ? null : defaultYear)
   const [files, setFiles] = useState<LocalFile[]>([])

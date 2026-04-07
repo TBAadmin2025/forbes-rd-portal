@@ -81,7 +81,7 @@ export default function CompanyInfoPage() {
 
       if (submission) {
         setSubmissionId(submission.id)
-        setTaxYears((submission.tax_years && submission.tax_years.length > 0) ? submission.tax_years : [2022, 2023, 2024, 2025])
+        setTaxYears(submission.tax_years || [])
         setCompanyName(submission.company_name || '')
         setDbaName(submission.dba_name || '')
         setContactName(submission.contact_name || profile?.full_name || '')
