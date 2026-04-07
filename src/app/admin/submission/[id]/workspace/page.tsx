@@ -158,6 +158,13 @@ export default function WorkspacePage() {
     }
   }, [id])
 
+  // Listen for QRA save events from the QRAActivitiesTab and refresh state
+  useEffect(() => {
+    const handler = () => loadQraActivities()
+    window.addEventListener('qra-activities-updated', handler)
+    return () => window.removeEventListener('qra-activities-updated', handler)
+  }, [loadQraActivities])
+
   // Send portal invite
   const handleSendInvite = async () => {
     if (!submission?.contact_email) {

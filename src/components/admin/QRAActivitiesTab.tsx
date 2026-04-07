@@ -111,6 +111,8 @@ export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps
       setSavedActivities(data.activities || [])
       setExtracted([])
       setState('saved')
+      // Notify the workspace to refresh its qraActivities state
+      window.dispatchEvent(new CustomEvent('qra-activities-updated'))
     } else {
       setError('Failed to save activities')
     }
@@ -129,6 +131,7 @@ export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps
     if (res.ok) {
       setSavedActivities((prev) => prev.filter((a) => a.id !== id))
       if (savedActivities.length === 1) setState('empty')
+      window.dispatchEvent(new CustomEvent('qra-activities-updated'))
     }
   }
 
