@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import Button from '@/components/shared/Button'
 import FormField from '@/components/shared/FormField'
 import Tag from '@/components/shared/Tag'
+import { useToast } from '@/components/shared/Toast'
 import type { GuideArticle } from '@/lib/types/database.types'
 
 const CATEGORIES = ['Getting Started', 'Clients', 'Data Entry', 'Exports', 'R&D Projects', 'Team']
@@ -20,6 +21,7 @@ export default function GuideArticlePage() {
   const router = useRouter()
   const slug = params.slug as string
   const supabase = createClient()
+  const { confirm: confirmAction } = useToast()
 
   const [article, setArticle] = useState<GuideArticle | null>(null)
   const [allArticles, setAllArticles] = useState<GuideArticle[]>([])
@@ -80,7 +82,7 @@ export default function GuideArticlePage() {
   }
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this article? This cannot be undone.')) return
+    if (!(await confirmAction('Delete this article? This cannot be undone.'))) return
     setDeleting(true)
     const res = await fetch(`/api/guide/${slug}`, { method: 'DELETE' })
     if (res.ok) router.push('/admin/guide')

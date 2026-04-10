@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { formatCurrency } from '@/lib/utils/formatting'
+import { useToast } from '@/components/shared/Toast'
 import type { Supply, QRAActivity } from '@/lib/types/database.types'
 import Button from '@/components/shared/Button'
 
@@ -33,6 +34,7 @@ export default function SupplyDetailDrawer({
   onUpdated,
   onDeleted,
 }: SupplyDetailDrawerProps) {
+  const { confirm: confirmAction } = useToast()
   const [description, setDescription] = useState('')
   const [vendor, setVendor] = useState('')
   const [projectName, setProjectName] = useState('')
@@ -156,7 +158,7 @@ export default function SupplyDetailDrawer({
 
   async function handleDelete() {
     if (!supply?.id) return
-    if (!window.confirm('Delete this expense? This cannot be undone.')) return
+    if (!(await confirmAction('Delete this expense? This cannot be undone.'))) return
     try {
       await fetch(`/api/supplies/${supply.id}`, { method: 'DELETE' })
       onDeleted(supply.id)

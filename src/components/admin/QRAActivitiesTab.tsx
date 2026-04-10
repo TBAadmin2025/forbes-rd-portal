@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Card from '@/components/shared/Card'
 import Button from '@/components/shared/Button'
 import InfoBox from '@/components/shared/InfoBox'
+import { useToast } from '@/components/shared/Toast'
 import type { QRAActivity } from '@/lib/types/database.types'
 
 interface QRAActivitiesTabProps {
@@ -23,6 +24,7 @@ interface ExtractedActivity {
 }
 
 export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps) {
+  const { confirm: confirmAction } = useToast()
   const [state, setState] = useState<State>('loading')
   const [savedActivities, setSavedActivities] = useState<QRAActivity[]>([])
   const [extracted, setExtracted] = useState<ExtractedActivity[]>([])
@@ -119,14 +121,14 @@ export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps
   }
 
   async function handleReupload() {
-    if (!window.confirm('Re-extracting will replace all existing QRA activities. Continue?')) return
+    if (!(await confirmAction('Re-extracting will replace all existing QRA activities. Continue?'))) return
     setExtracted([])
     setError(null)
     setState('empty')
   }
 
   async function handleDeleteActivity(id: string) {
-    if (!window.confirm('Delete this activity?')) return
+    if (!(await confirmAction('Delete this activity? This cannot be undone.'))) return
     const res = await fetch(`/api/qra-activities/${id}`, { method: 'DELETE' })
     if (res.ok) {
       setSavedActivities((prev) => prev.filter((a) => a.id !== id))
@@ -352,15 +354,15 @@ export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps
       >
         <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
         <div className="font-serif" style={{ fontSize: 18, fontWeight: 600, color: 'var(--charcoal)', marginBottom: 6 }}>
-          Drag & drop your QRA PDF here
+          Drag & drop your QRA document here
         </div>
         <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 300 }}>
-          or click to browse files
+          PDF or Word (.docx) — click to browse
         </div>
         <input
           ref={fileInputRef}
           type="file"
-          accept="application/pdf"
+          accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
           style={{ display: 'none' }}
           onChange={(e) => {
             const f = e.target.files?.[0]

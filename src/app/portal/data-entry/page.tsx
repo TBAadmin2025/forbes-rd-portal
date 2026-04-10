@@ -116,8 +116,52 @@ export default function DataEntryPage() {
         Changes save as you type.
       </InfoBox>
 
+      {qraActivities.length === 0 && (
+        <div
+          className="flex items-center"
+          style={{
+            gap: 12,
+            padding: '12px 18px',
+            marginTop: 16,
+            background: 'rgba(226,196,155,0.12)',
+            border: '1px solid rgba(226,196,155,0.3)',
+            borderLeft: '4px solid var(--champagne)',
+            borderRadius: '0 4px 4px 0',
+          }}
+        >
+          <span style={{ fontSize: 18 }}>🔬</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--charcoal)' }}>
+              R&D projects pending
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 300 }}>
+              Forbes Management is setting up your R&D project list. You can add employees and expenses now — project assignment will be available once the QRA is ready.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {qraActivities.length > 0 && (
+        <div
+          className="flex items-center"
+          style={{
+            gap: 10,
+            padding: '10px 16px',
+            marginTop: 16,
+            background: 'rgba(0,79,53,0.04)',
+            border: '1px solid rgba(0,79,53,0.15)',
+            borderRadius: 4,
+          }}
+        >
+          <span style={{ color: 'var(--emerald)', fontSize: 14, fontWeight: 700 }}>✓</span>
+          <span style={{ fontSize: 12, color: 'var(--emerald)', fontWeight: 500 }}>
+            {qraActivities.length} R&D project{qraActivities.length !== 1 ? 's' : ''} available for assignment
+          </span>
+        </div>
+      )}
+
       {submissionId && (
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 16 }}>
           {taxYears.map((year, idx) => (
             <YearBlock
               key={year}

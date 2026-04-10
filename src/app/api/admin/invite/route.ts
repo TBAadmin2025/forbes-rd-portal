@@ -146,3 +146,74 @@ export async function PATCH(request: NextRequest) {
     message: `Portal invite sent to ${submission.contact_email}.`,
   })
 }
+
+// PUT: resend portal invite for an existing client (auth user already exists)
+export async function PUT(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const serviceClient = createServiceClient()
+  const { data: profile } = await serviceClient
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin' && profile?.role !== 'super_admin') {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const body = await request.json()
+  const { submission_id } = body
+
+  if (!submission_id) {
+    return Response.json({ error: 'submission_id required' }, { status: 400 })
+  }
+
+  const { data: submission } = await serviceClient
+    .from('submissions')
+    .select('*')
+    .eq('id', submission_id)
+    .single()
+
+  if (!submission) {
+    return Response.json({ error: 'Submission not found' }, { status: 404 })
+  }
+
+  if (!submission.client_user_id) {
+    return Response.json({ error: 'No portal user to resend to. Use PATCH to send the first invite.' }, { status: 400 })
+  }
+
+  if (!submission.contact_email) {
+    return Response.json({ error: 'Client has no email address.' }, { status: 400 })
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
+  // Re-invite the existing auth user
+  const { error: inviteError } = await serviceClient.auth.admin.inviteUserByEmail(
+    submission.contact_email,
+    {
+      data: {
+        full_name: submission.contact_name || '',
+        company_name: submission.company_name || null,
+        role: 'client',
+      },
+      redirectTo: `${siteUrl}/auth/callback`,
+    }
+  )
+
+  if (inviteError) {
+    return Response.json({ error: inviteError.message }, { status: 500 })
+  }
+
+  await serviceClient
+    .from('submissions')
+    .update({ invited_at: new Date().toISOString() })
+    .eq('id', submission_id)
+
+  return Response.json({
+    message: `Invite resent to ${submission.contact_email}.`,
+  })
+}

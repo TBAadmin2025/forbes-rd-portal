@@ -54,8 +54,17 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'file and submission_id required' }, { status: 400 })
   }
 
-  if (file.type !== 'application/pdf') {
-    return Response.json({ error: 'Only PDF files are supported' }, { status: 400 })
+  const ALLOWED_TYPES: Record<string, string> = {
+    'application/pdf': 'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword': 'application/msword',
+  }
+  const mediaType = ALLOWED_TYPES[file.type]
+  if (!mediaType) {
+    return Response.json(
+      { error: 'Unsupported file type. Upload a PDF or Word document (.pdf, .docx, .doc).' },
+      { status: 400 },
+    )
   }
 
   try {
@@ -87,7 +96,7 @@ export async function POST(request: NextRequest) {
                 type: 'document',
                 source: {
                   type: 'base64',
-                  media_type: 'application/pdf',
+                  media_type: mediaType,
                   data: base64Content,
                 },
               },

@@ -5,6 +5,7 @@ import Button from '@/components/shared/Button'
 import FormField from '@/components/shared/FormField'
 import Tag from '@/components/shared/Tag'
 import EmployeeImportModal from '@/components/portal/EmployeeImportModal'
+import { useToast } from '@/components/shared/Toast'
 import type { ClientEmployee } from '@/lib/types/database.types'
 
 interface EmployeesTabProps {
@@ -35,6 +36,7 @@ function emptyDraft(taxYears: number[]): DraftEmployee {
 }
 
 export default function EmployeesTab({ submissionId, taxYears }: EmployeesTabProps) {
+  const { confirm: confirmAction } = useToast()
   const orderedYears = [...taxYears].sort((a, b) => b - a)
   const [employees, setEmployees] = useState<ClientEmployee[]>([])
   const [loading, setLoading] = useState(true)
@@ -93,7 +95,7 @@ export default function EmployeesTab({ submissionId, taxYears }: EmployeesTabPro
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Delete this employee? This will also remove their data from all years.')) return
+    if (!(await confirmAction('Delete this employee? This will also remove their data from all years.'))) return
     const res = await fetch(`/api/client-employees/${id}`, { method: 'DELETE' })
     if (res.ok) {
       setEmployees((prev) => prev.filter((e) => e.id !== id))

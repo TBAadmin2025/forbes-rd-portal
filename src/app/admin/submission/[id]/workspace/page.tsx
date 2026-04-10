@@ -16,6 +16,7 @@ import EmployeesTab from '@/components/admin/EmployeesTab'
 import type { UploadedFile } from '@/components/portal/UploadCategory'
 import type { Employee, Supply, Submission, QRAActivity, ClientEmployee } from '@/lib/types/database.types'
 import { formatCurrency } from '@/lib/utils/formatting'
+import { useToast } from '@/components/shared/Toast'
 
 type Category = 'payroll' | 'pandl' | 'taxid' | 'gross_receipts'
 const CATEGORIES: Category[] = ['payroll', 'pandl', 'taxid', 'gross_receipts']
@@ -38,6 +39,7 @@ export default function WorkspacePage() {
   const router = useRouter()
   const id = params.id as string
   const supabase = createClient()
+  const { toast, confirm: confirmAction } = useToast()
 
   const [submission, setSubmission] = useState<Submission | null>(null)
   const [activeSection, setActiveSection] = useState<Section>('info')
@@ -168,14 +170,14 @@ export default function WorkspacePage() {
   // Send portal invite — gated on having QRA activities + contact email
   const handleSendInvite = async () => {
     if (qraActivities.length === 0) {
-      alert('Upload the QRA PDF and save activities on the QRA Activities tab before inviting the client.')
+      toast('Upload the QRA document and save activities before inviting the client.', 'error')
       return
     }
     if (!submission?.contact_email) {
-      alert('Please add a contact email on the Business Info tab first.')
+      toast('Please add a contact email on the Business Info tab first.', 'error')
       return
     }
-    if (!window.confirm(`Send portal invite to ${submission.contact_email}?`)) return
+    if (!(await confirmAction(`Send portal invite to ${submission.contact_email}?`))) return
     setActivatingPortal(true)
     const res = await fetch('/api/admin/invite', {
       method: 'PATCH',
@@ -185,10 +187,10 @@ export default function WorkspacePage() {
     if (res.ok) {
       const { data: sub } = await supabase.from('submissions').select('*').eq('id', id).single()
       if (sub) setSubmission(sub as Submission)
-      alert(`Portal invite sent to ${submission.contact_email}!`)
+      toast(`Portal invite sent to ${submission.contact_email}`, 'success')
     } else {
       const err = await res.json()
-      alert(err.error || 'Failed to send invite')
+      toast(err.error || 'Failed to send invite', 'error')
     }
     setActivatingPortal(false)
   }
@@ -493,14 +495,14 @@ export default function WorkspacePage() {
           </div>
         </div>
         <div className="flex items-center" style={{ gap: 12 }}>
-          {!submission.client_user_id && (
+          {!submission.client_user_id ? (
             <div className="flex items-center" style={{ gap: 8 }}>
               <Button
                 variant="emerald"
                 size="sm"
                 onClick={handleSendInvite}
                 disabled={activatingPortal || qraActivities.length === 0}
-                title={qraActivities.length === 0 ? 'Upload QRA PDF first' : ''}
+                title={qraActivities.length === 0 ? 'Upload QRA document first' : ''}
               >
                 {activatingPortal ? 'Sending...' : 'Send Portal Invite'}
               </Button>
@@ -515,10 +517,34 @@ export default function WorkspacePage() {
                     lineHeight: 1.4,
                   }}
                 >
-                  Upload QRA PDF before inviting
+                  Upload QRA document before inviting
                 </span>
               )}
             </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                if (!(await confirmAction(`Resend portal invite to ${submission.contact_email}?`))) return
+                setActivatingPortal(true)
+                const res = await fetch('/api/admin/invite', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ submission_id: id }),
+                })
+                if (res.ok) {
+                  toast(`Invite resent to ${submission.contact_email}`, 'success')
+                } else {
+                  const err = await res.json()
+                  toast(err.error || 'Failed to resend invite', 'error')
+                }
+                setActivatingPortal(false)
+              }}
+              disabled={activatingPortal}
+            >
+              {activatingPortal ? 'Sending...' : 'Resend Invite'}
+            </Button>
           )}
           <Tag
             variant={
@@ -533,6 +559,32 @@ export default function WorkspacePage() {
           </Tag>
         </div>
       </div>
+
+      {/* QRA requirement banner */}
+      {qraActivities.length === 0 && (
+        <div
+          className="flex items-center"
+          style={{
+            gap: 12,
+            padding: '12px 18px',
+            marginBottom: 16,
+            background: 'rgba(108,22,28,0.04)',
+            border: '1px solid rgba(108,22,28,0.15)',
+            borderLeft: '4px solid var(--cherry)',
+            borderRadius: '0 4px 4px 0',
+          }}
+        >
+          <span style={{ fontSize: 18 }}>🔬</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--cherry)' }}>
+              QRA document required
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 300 }}>
+              Upload the QRA document on the <strong style={{ fontWeight: 600 }}>QRA Activities</strong> tab before inviting the client or assigning projects.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Section tabs */}
       <div

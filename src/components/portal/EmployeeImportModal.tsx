@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Button from '@/components/shared/Button'
+import { useToast } from '@/components/shared/Toast'
 import {
   parseEmployeeCsv,
   EMPLOYEE_CSV_TEMPLATE,
@@ -25,6 +26,7 @@ export default function EmployeeImportModal({
   onClose,
   onImported,
 }: EmployeeImportModalProps) {
+  const { toast } = useToast()
   const [rows, setRows] = useState<ParsedEmployeeRow[]>([])
   const [headerError, setHeaderError] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
@@ -73,10 +75,12 @@ export default function EmployeeImportModal({
     })
     setImporting(false)
     if (res.ok) {
+      const data = await res.json()
+      toast(`Imported ${data.count || validRows.length} employee${(data.count || validRows.length) === 1 ? '' : 's'}`, 'success')
       onImported()
       handleClose()
     } else {
-      alert('Import failed. Please try again.')
+      toast('Import failed. Please try again.', 'error')
     }
   }
 
