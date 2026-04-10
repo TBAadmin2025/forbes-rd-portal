@@ -10,9 +10,9 @@ interface StatsRowProps {
 
 export default function StatsRow({ stats }: StatsRowProps) {
   const cards = [
-    { label: 'Internal Drafts', value: stats.internal, border: 'var(--muted)', sub: 'Forbes prepping' },
-    { label: 'With Client', value: stats.withClient, border: 'var(--champagne)', sub: 'Invited or working' },
-    { label: 'Ready to Review', value: stats.submitted, border: 'var(--cherry)', sub: 'Needs attention' },
+    { label: 'Internal', value: stats.internal, border: 'var(--muted)', sub: 'Forbes prepping' },
+    { label: 'With Client', value: stats.withClient, border: 'var(--champagne)', sub: 'Invited or in progress' },
+    { label: 'Submitted for Review', value: stats.submitted, border: 'var(--cherry)', sub: 'Needs attention' },
     { label: 'Sent to Partner', value: stats.sent, border: 'var(--charcoal)', sub: `${stats.total} total` },
   ]
 

@@ -26,7 +26,7 @@ const COLUMNS: {
   },
   {
     key: 'invited',
-    label: 'Invited',
+    label: 'Invited to Portal',
     statuses: ['invited'],
     labelColor: 'var(--champ-dk)',
     badgeBg: 'rgba(226,196,155,0.2)',
@@ -34,7 +34,7 @@ const COLUMNS: {
   },
   {
     key: 'progress',
-    label: 'Working On It',
+    label: 'Client In Progress',
     statuses: ['in_progress'],
     labelColor: 'var(--emerald)',
     badgeBg: 'rgba(0,79,53,0.12)',
@@ -42,7 +42,7 @@ const COLUMNS: {
   },
   {
     key: 'submitted',
-    label: 'Ready to Review',
+    label: 'Submitted for Review',
     statuses: ['submitted'],
     labelColor: 'var(--cherry)',
     badgeBg: 'rgba(108,22,28,0.1)',

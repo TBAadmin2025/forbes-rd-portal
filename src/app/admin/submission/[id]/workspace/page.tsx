@@ -363,10 +363,8 @@ export default function WorkspacePage() {
         employee_states: employeeStates || null,
         date_incorporated: dateIncorporated || null,
         tax_year_end: taxYearEnd || null,
-        status:
-          submission?.status === 'internal' || submission?.status === 'invited'
-            ? 'in_progress'
-            : submission?.status,
+        // Don't promote status from admin side — in_progress should only
+        // be triggered by client activity on the portal
         started_at: submission?.started_at || new Date().toISOString(),
       })
       .eq('id', id)
