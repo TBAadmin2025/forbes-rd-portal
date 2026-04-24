@@ -55,8 +55,15 @@ export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps
 
   async function handleFileSelect(file: File) {
     setError(null)
-    if (file.type !== 'application/pdf') {
-      setError('Please upload a PDF file.')
+    const allowed = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+    ]
+    const name = file.name.toLowerCase()
+    const extOk = name.endsWith('.pdf') || name.endsWith('.docx') || name.endsWith('.doc')
+    if (!allowed.includes(file.type) && !extOk) {
+      setError('Please upload a PDF or Word document (.pdf, .docx, .doc).')
       return
     }
     setState('uploading')
@@ -76,7 +83,7 @@ export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps
       }
       const data = await res.json()
       if (!data.activities || data.activities.length === 0) {
-        setError('No projects found in PDF.')
+        setError('No projects found in document.')
         setState('error')
         return
       }
