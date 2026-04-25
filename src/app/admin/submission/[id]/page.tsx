@@ -395,9 +395,9 @@ export default function SubmissionDetailPage() {
                     {doc.tax_year}
                   </span>
                 )}
-                {doc.storage_url && (
+                {doc.id && (
                   <a
-                    href={doc.storage_url}
+                    href={`/api/documents/${doc.id}/view`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
