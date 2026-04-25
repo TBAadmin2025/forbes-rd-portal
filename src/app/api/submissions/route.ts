@@ -41,7 +41,22 @@ export async function GET() {
     .single()
 
   if (error) return Response.json({ error: error.message }, { status: 404 })
-  return Response.json(data)
+
+  // Mark the submission as actively in progress on portal access.
+  const now = new Date().toISOString()
+  const updates: Record<string, string> = { last_active_at: now }
+  if (data.status === 'invited') {
+    updates.status = 'in_progress'
+    if (!data.started_at) updates.started_at = now
+  }
+  const { data: touched } = await serviceClient
+    .from('submissions')
+    .update(updates)
+    .eq('id', data.id)
+    .select()
+    .single()
+
+  return Response.json(touched ?? { ...data, ...updates })
 }
 
 export async function POST(request: NextRequest) {
