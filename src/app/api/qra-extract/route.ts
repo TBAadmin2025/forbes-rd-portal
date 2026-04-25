@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import mammoth from 'mammoth'
 import { createClient } from '@/lib/supabase/server'
 
 const QRA_PROMPT = `You are extracting Qualified Research Activity (QRA) projects from a business R&D document.
@@ -54,27 +55,55 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'file and submission_id required' }, { status: 400 })
   }
 
-  const ALLOWED_TYPES: Record<string, string> = {
-    'application/pdf': 'application/pdf',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/msword': 'application/msword',
-  }
-  const mediaType = ALLOWED_TYPES[file.type]
-  if (!mediaType) {
+  const isPdf = file.type === 'application/pdf'
+  const isDocx =
+    file.type ===
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  if (!isPdf && !isDocx) {
     return Response.json(
-      { error: 'Unsupported file type. Upload a PDF or Word document (.pdf, .docx, .doc).' },
+      { error: 'Unsupported file type. Upload a PDF or Word document (.pdf, .docx).' },
       { status: 400 },
     )
   }
 
   try {
-    // Convert PDF to base64
     const arrayBuffer = await file.arrayBuffer()
-    const base64Content = Buffer.from(arrayBuffer).toString('base64')
 
-    // Optionally upload PDF to storage so we have a record of what was extracted
+    // Upload original to storage so we have a record of what was extracted
     const storagePath = `qra-pdfs/${submissionId}/${Date.now()}-${file.name}`
     await supabase.storage.from('rd-documents').upload(storagePath, file, { upsert: true })
+
+    // Build the user content. PDFs go as a document block (Claude reads them
+    // natively); DOCX must be converted to text first because Anthropic's
+    // document block doesn't accept Word formats.
+    let userContent: unknown[]
+    if (isPdf) {
+      const base64Content = Buffer.from(arrayBuffer).toString('base64')
+      userContent = [
+        { type: 'text', text: QRA_PROMPT },
+        {
+          type: 'document',
+          source: {
+            type: 'base64',
+            media_type: 'application/pdf',
+            data: base64Content,
+          },
+        },
+      ]
+    } else {
+      const { value: docxText } = await mammoth.extractRawText({
+        buffer: Buffer.from(arrayBuffer),
+      })
+      if (!docxText.trim()) {
+        return Response.json(
+          { error: 'Could not read any text from the Word document.' },
+          { status: 400 },
+        )
+      }
+      userContent = [
+        { type: 'text', text: `${QRA_PROMPT}\n\nDOCUMENT TEXT:\n${docxText}` },
+      ]
+    }
 
     // Call Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -87,22 +116,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: 'claude-opus-4-5',
         max_tokens: 8192,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: QRA_PROMPT },
-              {
-                type: 'document',
-                source: {
-                  type: 'base64',
-                  media_type: mediaType,
-                  data: base64Content,
-                },
-              },
-            ],
-          },
-        ],
+        messages: [{ role: 'user', content: userContent }],
       }),
     })
 

@@ -58,12 +58,11 @@ export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps
     const allowed = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
     ]
     const name = file.name.toLowerCase()
-    const extOk = name.endsWith('.pdf') || name.endsWith('.docx') || name.endsWith('.doc')
+    const extOk = name.endsWith('.pdf') || name.endsWith('.docx')
     if (!allowed.includes(file.type) && !extOk) {
-      setError('Please upload a PDF or Word document (.pdf, .docx, .doc).')
+      setError('Please upload a PDF or .docx Word document. Legacy .doc is not supported — please save as .docx in Word.')
       return
     }
     setState('uploading')
@@ -369,7 +368,7 @@ export default function QRAActivitiesTab({ submissionId }: QRAActivitiesTabProps
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
+          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           style={{ display: 'none' }}
           onChange={(e) => {
             const f = e.target.files?.[0]
