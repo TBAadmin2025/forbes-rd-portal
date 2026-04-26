@@ -19,6 +19,9 @@ interface ExportResult {
   excel_url?: string
   document_zip_url?: string
   full_package_url?: string
+  pdf_url?: string
+  discovery_pdf_url?: string
+  qra_pdf_url?: string
 }
 
 export default function ExportPanel({
@@ -250,6 +253,31 @@ admin@forbesmgt.com`
                 <a href={result.document_zip_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>📁 Documents ZIP</a>
               )}
             </div>
+
+            {/* Internal reports — Forbes only, NOT in the partner zip */}
+            {(result.pdf_url || result.discovery_pdf_url || result.qra_pdf_url) && (
+              <>
+                <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid rgba(240,231,215,0.12)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(240,231,215,0.5)', marginBottom: 4 }}>
+                    Internal Reports — Forbes Only
+                  </div>
+                  <div style={{ fontSize: 11, color: 'rgba(240,231,215,0.5)', fontWeight: 300, marginBottom: 10 }}>
+                    These are NOT in the partner package. Use them for internal review or to give the client a ballpark of what they may qualify for.
+                  </div>
+                  <div className="flex flex-wrap" style={{ gap: 8 }}>
+                    {result.pdf_url && (
+                      <a href={result.pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>📄 Summary Report</a>
+                    )}
+                    {result.discovery_pdf_url && (
+                      <a href={result.discovery_pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>📋 Discovery PDF</a>
+                    )}
+                    {result.qra_pdf_url && (
+                      <a href={result.qra_pdf_url} target="_blank" rel="noopener noreferrer" style={linkStyle}>🔬 QRA Report</a>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
