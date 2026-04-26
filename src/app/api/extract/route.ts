@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { parseQreSpreadsheet, QreParseError } from '@/lib/extractors/qre-spreadsheet'
 
 const PROMPTS: Record<string, string> = {
   payroll:
@@ -72,6 +73,116 @@ export async function POST(request: NextRequest) {
 
       if (docErr || !doc) {
         errors.push({ document_id: docId, error: 'Document not found' })
+        continue
+      }
+
+      // QRE spreadsheet: parse the xlsx directly, no AI involved.
+      if (doc.category === 'qre_spreadsheet') {
+        await supabase
+          .from('documents')
+          .update({ extraction_status: 'processing' })
+          .eq('id', docId)
+
+        const { data: qreFile, error: qreDlErr } = await supabase.storage
+          .from('rd-documents')
+          .download(doc.storage_path)
+
+        if (qreDlErr || !qreFile) {
+          await supabase
+            .from('documents')
+            .update({
+              extraction_status: 'failed',
+              extraction_result: { error: 'Failed to download file' },
+            })
+            .eq('id', docId)
+          errors.push({ document_id: docId, error: 'Download failed' })
+          continue
+        }
+
+        try {
+          const buf = Buffer.from(await qreFile.arrayBuffer())
+          const parsed = parseQreSpreadsheet(buf)
+
+          // Replace only QRE-spreadsheet-sourced rows for the years covered
+          // by this upload. Manual entries and payroll-PDF rows are untouched.
+          if (parsed.yearsSeen.length > 0) {
+            await supabase
+              .from('employees')
+              .delete()
+              .eq('submission_id', submission_id)
+              .eq('source', 'qre_spreadsheet')
+              .in('tax_year', parsed.yearsSeen)
+
+            await supabase
+              .from('supplies')
+              .delete()
+              .eq('submission_id', submission_id)
+              .eq('source', 'qre_spreadsheet')
+              .in('tax_year', parsed.yearsSeen)
+          }
+
+          // qualified_amount is a generated column — never insert explicitly.
+          for (const e of parsed.employees) {
+            const { data: inserted } = await supabase
+              .from('employees')
+              .insert({
+                submission_id,
+                tax_year: e.tax_year,
+                full_name: e.full_name,
+                employee_type: e.employee_type,
+                state: e.state,
+                total_wages: e.total_wages,
+                rd_percentage: e.rd_percentage,
+                project_name: e.project_name,
+                ai_extracted: false,
+                source: 'qre_spreadsheet',
+              })
+              .select()
+              .single()
+            if (inserted) allEmployees.push(inserted)
+          }
+
+          for (const s of parsed.supplies) {
+            const { data: inserted } = await supabase
+              .from('supplies')
+              .insert({
+                submission_id,
+                tax_year: s.tax_year,
+                description: s.description,
+                project_name: s.project_name,
+                amount: s.amount,
+                ai_extracted: false,
+                source: 'qre_spreadsheet',
+              })
+              .select()
+              .single()
+            if (inserted) allSupplies.push(inserted)
+          }
+
+          updatedFields.push('employees', 'supplies')
+
+          await supabase
+            .from('documents')
+            .update({
+              extraction_status: 'complete',
+              extraction_result: {
+                years: parsed.yearsSeen,
+                employee_count: parsed.employees.length,
+                supply_count: parsed.supplies.length,
+              },
+            })
+            .eq('id', docId)
+        } catch (err) {
+          const message = err instanceof QreParseError ? err.message : 'Failed to parse QRE spreadsheet'
+          await supabase
+            .from('documents')
+            .update({
+              extraction_status: 'failed',
+              extraction_result: { error: message },
+            })
+            .eq('id', docId)
+          errors.push({ document_id: docId, error: message })
+        }
         continue
       }
 
