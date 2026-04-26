@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import StatsRow from '@/components/admin/StatsRow'
+import InventorySnapshot from '@/components/admin/InventorySnapshot'
 import PipelineBoard from '@/components/admin/PipelineBoard'
 import ClientCard from '@/components/admin/ClientCard'
 import type { Submission } from '@/lib/types/database.types'
@@ -121,6 +122,11 @@ export default function DashboardPage() {
 
       {/* Section 2 — Stats */}
       <StatsRow stats={stats} />
+
+      {/* Section 2b — Inventory Snapshot */}
+      <div style={{ marginTop: 32 }}>
+        <InventorySnapshot />
+      </div>
 
       {/* Section 3 — Quick Actions */}
       <div style={{ marginTop: 32 }}>

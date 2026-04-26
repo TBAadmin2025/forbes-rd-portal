@@ -51,7 +51,13 @@ export default function InventoryPage() {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterCompleteness, setFilterCompleteness] = useState<CompletenessFilter>('all')
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(() => {
+    // Honor #<submission_id> in the URL on first paint so deep links from the
+    // dashboard's Inventory Snapshot land on the right row already expanded.
+    if (typeof window === 'undefined') return null
+    const hash = window.location.hash.replace('#', '')
+    return hash || null
+  })
   const [savingId, setSavingId] = useState<string | null>(null)
   const [refreshNonce, setRefreshNonce] = useState(0)
 
