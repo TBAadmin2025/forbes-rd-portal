@@ -541,7 +541,6 @@ export default function SubmissionDetailPage() {
         documentCount={documents.length}
         projectCount={projectCount}
         hasCompanyInfo={!!(submission?.company_name && submission?.fein)}
-        hasDiscovery={!!submission?.field_consultant_name}
         completeness={evaluateSubmission(submission?.tax_years, yearAggregates)}
         exportSentAt={submission?.export_sent_at}
         onExportGenerated={() => {

@@ -1,19 +1,15 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateExcel } from '@/lib/exports/generate-excel'
-import { generateSummaryPDF } from '@/lib/exports/generate-summary-pdf'
-import { generateDiscoveryPDF } from '@/lib/exports/generate-discovery-pdf'
 import { generateDocumentZIP } from '@/lib/exports/generate-document-zip'
-import { generateQRAPDF } from '@/lib/exports/generate-qra-pdf'
 import JSZip from 'jszip'
 
-interface ExportItems {
-  summary_pdf?: boolean
-  excel?: boolean
-  discovery_pdf?: boolean
-  document_zip?: boolean
-  qra_pdf?: boolean
-}
+// The partner package is exactly two artifacts:
+//   1. <Company>-QRE-Spreadsheet.xlsx — in the partner-facing template shape
+//   2. <Company>-Supporting-Docs.zip   — every uploaded supporting document
+// They are also bundled together as <Company>-Full-Export-Package.zip for
+// convenience. Older summary/discovery/QRA PDFs were retired — the
+// spreadsheet is the contract with the partner; the portal is just a UI.
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -23,24 +19,14 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
-  const { submission_id, items } = body as { submission_id: string; items?: ExportItems }
+  const body = await request.json().catch(() => ({}))
+  const { submission_id } = body as { submission_id?: string }
 
   if (!submission_id) {
     return Response.json({ error: 'submission_id required' }, { status: 400 })
   }
 
-  // Default: generate everything if no items specified
-  const selected: ExportItems = items || {
-    summary_pdf: true,
-    excel: true,
-    discovery_pdf: true,
-    document_zip: true,
-    qra_pdf: true,
-  }
-
   try {
-    // Step 1 — Query all data
     const { data: submission, error: subErr } = await supabase
       .from('submissions')
       .select('*')
@@ -51,16 +37,15 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Submission not found' }, { status: 404 })
     }
 
-    // Employees with junction → activity_ids
-    const { data: employeesRaw } = await supabase
+    const { data: employees } = await supabase
       .from('employees')
-      .select('*, employee_year_activities(activity_id)')
+      .select('tax_year, full_name, employee_type, state, total_wages, rd_percentage, project_name')
       .eq('submission_id', submission_id)
       .order('tax_year', { ascending: true })
 
     const { data: supplies } = await supabase
       .from('supplies')
-      .select('*')
+      .select('tax_year, description, project_name, amount')
       .eq('submission_id', submission_id)
       .order('tax_year', { ascending: true })
 
@@ -69,71 +54,9 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('submission_id', submission_id)
 
-    const { data: qreSummary } = await supabase
-      .from('qre_summary')
-      .select('*')
-      .eq('submission_id', submission_id)
-      .order('tax_year', { ascending: true })
-
-    const { data: creditEstimates } = await supabase
-      .from('credit_estimates')
-      .select('*')
-      .eq('submission_id', submission_id)
-
-    const { data: grossReceipts } = await supabase
-      .from('gross_receipts')
-      .select('*')
-      .eq('submission_id', submission_id)
-      .order('tax_year', { ascending: true })
-
-    const { data: filingHistory } = await supabase
-      .from('submission_filing_history')
-      .select('*')
-      .eq('submission_id', submission_id)
-      .order('tax_year', { ascending: true })
-
-    // QRA activities for this submission
-    const { data: qraActivities } = await supabase
-      .from('qra_activities')
-      .select('*')
-      .eq('submission_id', submission_id)
-      .order('project_number', { ascending: true })
-
-    const activities = qraActivities || []
-    const activityMap: Record<string, string> = {}
-    activities.forEach((a: { id: string; name: string; project_number: number | null }) => {
-      activityMap[a.id] = a.project_number ? `${a.project_number}. ${a.name}` : a.name
-    })
-
-    // Hydrate employees with activity_names array
-    type RawEmployeeRow = Record<string, unknown> & {
-      employee_year_activities?: { activity_id: string }[]
-    }
-    const emps = (employeesRaw || []).map((row: RawEmployeeRow) => {
-      const junction = (row.employee_year_activities || []) as { activity_id: string }[]
-      const activity_names = junction
-        .map((j) => activityMap[j.activity_id])
-        .filter(Boolean)
-      const { employee_year_activities: _, ...rest } = row
-      return { ...rest, activity_names }
-    })
-
-    const sups = supplies || []
     const docs = documents || []
-    const summaries = qreSummary || []
-    const credits = creditEstimates || []
 
-    const qreByYear: Record<number, number> = {}
-    summaries.forEach((s: { tax_year: number | null; total_qre: number }) => {
-      if (s.tax_year) qreByYear[s.tax_year] = s.total_qre || 0
-    })
-    const totalQRE = Object.values(qreByYear).reduce((a, b) => a + b, 0)
-
-    // Step 2 — Generate selected items
-    const results: Record<string, string> = {}
-    const generatedFiles: { name: string; buffer: Buffer; contentType: string }[] = []
-
-    // Build client name slug for filenames (e.g. "John Smith" → "John-Smith")
+    // Filename slug — strip everything but alphanum, spaces, hyphens; collapse spaces to hyphens.
     const clientSlug = (submission.contact_name || submission.company_name || 'Client')
       .toString()
       .trim()
@@ -141,75 +64,38 @@ export async function POST(request: NextRequest) {
       .replace(/\s+/g, '-')
 
     const basePath = `exports/${submission_id}`
+    const results: Record<string, string> = {}
+    const generatedFiles: { name: string; buffer: Buffer; contentType: string }[] = []
 
-    // Excel
-    if (selected.excel) {
-      try {
-        const excelBuffer = generateExcel({
-          submission, employees: emps, supplies: sups,
-          summaries, qreByYear, totalQRE,
-          grossReceipts: grossReceipts || [],
-          qraActivities: activities,
-          filingHistory: filingHistory || [],
-        })
-        const fileName = `${clientSlug}-QRE-Data.xlsx`
-        const path = `${basePath}/${fileName}`
-        await supabase.storage.from('rd-documents').upload(path, excelBuffer, {
-          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          upsert: true,
-        })
-        const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
-        results.excel_url = signed?.signedUrl || ''
-        generatedFiles.push({ name: fileName, buffer: excelBuffer, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-      } catch (e) {
-        console.error('Excel generation failed:', e)
-      }
+    // 1. QRE Spreadsheet (partner-facing template shape)
+    try {
+      const excelBuffer = generateExcel({
+        submission,
+        employees: employees || [],
+        supplies: supplies || [],
+      })
+      const fileName = `${clientSlug}-QRE-Spreadsheet.xlsx`
+      const path = `${basePath}/${fileName}`
+      await supabase.storage.from('rd-documents').upload(path, excelBuffer, {
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        upsert: true,
+      })
+      const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
+      results.excel_url = signed?.signedUrl || ''
+      generatedFiles.push({
+        name: fileName,
+        buffer: excelBuffer,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+    } catch (e) {
+      console.error('QRE spreadsheet generation failed:', e)
     }
 
-    // Summary PDF
-    if (selected.summary_pdf) {
-      try {
-        const pdfBuffer = await generateSummaryPDF({
-          submission, employees: emps, supplies: sups,
-          documents: docs, summaries, credits, qreByYear, totalQRE,
-        })
-        const fileName = `${clientSlug}-RD-Summary-Report.pdf`
-        const path = `${basePath}/${fileName}`
-        await supabase.storage.from('rd-documents').upload(path, pdfBuffer, {
-          contentType: 'application/pdf',
-          upsert: true,
-        })
-        const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
-        results.pdf_url = signed?.signedUrl || ''
-        generatedFiles.push({ name: fileName, buffer: pdfBuffer, contentType: 'application/pdf' })
-      } catch (e) {
-        console.error('Summary PDF generation failed:', e)
-      }
-    }
-
-    // Discovery PDF
-    if (selected.discovery_pdf) {
-      try {
-        const discoveryBuffer = await generateDiscoveryPDF(submission, filingHistory || [])
-        const fileName = `${clientSlug}-Discovery-Questionnaire.pdf`
-        const path = `${basePath}/${fileName}`
-        await supabase.storage.from('rd-documents').upload(path, discoveryBuffer, {
-          contentType: 'application/pdf',
-          upsert: true,
-        })
-        const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
-        results.discovery_pdf_url = signed?.signedUrl || ''
-        generatedFiles.push({ name: fileName, buffer: discoveryBuffer, contentType: 'application/pdf' })
-      } catch (e) {
-        console.error('Discovery PDF generation failed:', e)
-      }
-    }
-
-    // Document ZIP
-    if (selected.document_zip && docs.length > 0) {
+    // 2. Supporting Documents ZIP (all uploaded files, organized by category/year)
+    if (docs.length > 0) {
       try {
         const zipBuffer = await generateDocumentZIP(supabase, docs)
-        const fileName = `${clientSlug}-Supporting-Documents.zip`
+        const fileName = `${clientSlug}-Supporting-Docs.zip`
         const path = `${basePath}/${fileName}`
         await supabase.storage.from('rd-documents').upload(path, zipBuffer, {
           contentType: 'application/zip',
@@ -219,37 +105,11 @@ export async function POST(request: NextRequest) {
         results.document_zip_url = signed?.signedUrl || ''
         generatedFiles.push({ name: fileName, buffer: zipBuffer, contentType: 'application/zip' })
       } catch (e) {
-        console.error('Document ZIP generation failed:', e)
+        console.error('Supporting docs ZIP generation failed:', e)
       }
     }
 
-    // QRA PDF
-    if (selected.qra_pdf) {
-      try {
-        const { data: projects } = await supabase
-          .from('qra_activities')
-          .select('*')
-          .eq('submission_id', submission_id)
-          .order('project_number', { ascending: true })
-
-        if (projects && projects.length > 0) {
-          const qraBuffer = await generateQRAPDF(submission, projects)
-          const fileName = `${clientSlug}-QRA-Project-Report.pdf`
-          const path = `${basePath}/${fileName}`
-          await supabase.storage.from('rd-documents').upload(path, qraBuffer, {
-            contentType: 'application/pdf',
-            upsert: true,
-          })
-          const { data: signed } = await supabase.storage.from('rd-documents').createSignedUrl(path, 60 * 60 * 24 * 7)
-          results.qra_pdf_url = signed?.signedUrl || ''
-          generatedFiles.push({ name: fileName, buffer: qraBuffer, contentType: 'application/pdf' })
-        }
-      } catch (e) {
-        console.error('QRA PDF generation failed:', e)
-      }
-    }
-
-    // Full package ZIP (when 2+ items generated)
+    // 3. Full package — bundle the two together for one-click download
     if (generatedFiles.length >= 2) {
       try {
         const fullZip = new JSZip()
@@ -269,26 +129,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3 — Update submission record + mark as complete
     await supabase
       .from('submissions')
       .update({
         status: 'sent',
         completed_at: new Date().toISOString(),
         export_generated_at: new Date().toISOString(),
-        export_pdf_url: results.pdf_url || submission.export_pdf_url,
         export_excel_url: results.excel_url || submission.export_excel_url,
-        export_discovery_pdf_url: results.discovery_pdf_url || submission.export_discovery_pdf_url,
-        export_qra_pdf_url: results.qra_pdf_url || submission.export_qra_pdf_url,
         export_document_zip_url: results.document_zip_url || submission.export_document_zip_url,
         export_full_package_url: results.full_package_url || submission.export_full_package_url,
       })
       .eq('id', submission_id)
 
-    return Response.json({
-      success: true,
-      ...results,
-    })
+    return Response.json({ success: true, ...results })
   } catch (err) {
     console.error('Export generation error:', err)
     return Response.json(
