@@ -193,6 +193,7 @@ export async function POST(request: NextRequest) {
               project_name: emp.project_name || null,
               ai_extracted: true,
               ai_confidence: 'high',
+              source: 'payroll_pdf',
             })
             .select()
             .single()
