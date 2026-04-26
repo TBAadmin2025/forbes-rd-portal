@@ -165,7 +165,7 @@ export interface Document {
   id: string
   submission_id: string
   uploaded_by: string | null
-  category: 'payroll' | 'pandl' | 'taxid' | 'gross_receipts' | 'other'
+  category: 'payroll' | 'pandl' | 'taxid' | 'gross_receipts' | 'qre_spreadsheet' | 'other'
   tax_year: number | null
   file_name: string
   file_size: number | null

@@ -21,11 +21,22 @@ export default function AddClientModal({
   const [businessName, setBusinessName] = useState('')
   const [email, setEmail] = useState('')
   const [note, setNote] = useState('')
+  const [taxYears, setTaxYears] = useState<number[]>([])
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
+  const toggleYear = (y: number) => {
+    setTaxYears((prev) =>
+      prev.includes(y) ? prev.filter((x) => x !== y) : [...prev, y].sort((a, b) => a - b)
+    )
+  }
+
   const handleSubmit = async () => {
     if (!fullName) return
+    if (taxYears.length === 0) {
+      setError('Select at least one tax year')
+      return
+    }
     setSending(true)
     setError('')
 
@@ -38,6 +49,7 @@ export default function AddClientModal({
           company_name: businessName,
           contact_email: email,
           admin_notes: note || null,
+          tax_years: taxYears,
         }),
       })
 
@@ -57,6 +69,7 @@ export default function AddClientModal({
       setBusinessName('')
       setEmail('')
       setNote('')
+      setTaxYears([])
       onClose()
 
       // Redirect straight to the workspace to start adding info
@@ -74,6 +87,7 @@ export default function AddClientModal({
     setBusinessName('')
     setEmail('')
     setNote('')
+    setTaxYears([])
     setError('')
     onClose()
   }
@@ -175,6 +189,35 @@ export default function AddClientModal({
             />
           </FormField>
 
+          <FormField label="Tax Years" hint="Required — pick every year this client is opting into.">
+            <div className="flex" style={{ gap: 6, flexWrap: 'wrap' }}>
+              {[2022, 2023, 2024, 2025].map((y) => {
+                const on = taxYears.includes(y)
+                return (
+                  <button
+                    key={y}
+                    type="button"
+                    onClick={() => toggleYear(y)}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: 3,
+                      border: on ? '2px solid var(--emerald)' : '1.5px solid var(--border)',
+                      background: on ? 'var(--em-light)' : 'var(--white)',
+                      color: on ? 'var(--emerald)' : 'var(--muted)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {on ? '✓ ' : ''}{y}
+                  </button>
+                )
+              })}
+            </div>
+          </FormField>
+
           <FormField label="Note (Internal)">
             <textarea
               className="finput"
@@ -195,7 +238,7 @@ export default function AddClientModal({
           <Button
             variant="cherry"
             onClick={handleSubmit}
-            disabled={sending || !fullName}
+            disabled={sending || !fullName || taxYears.length === 0}
           >
             {sending ? 'Creating...' : 'Create & Begin Work →'}
           </Button>

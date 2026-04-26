@@ -22,6 +22,7 @@ interface NavItem {
 const NAV_ITEMS: (NavItem | 'divider')[] = [
   { label: 'Dashboard', icon: '🏠', href: '/admin/dashboard', tooltip: 'Your home base. See what needs attention and take action.' },
   { label: 'All Clients', icon: '👥', href: '/admin/clients', tooltip: 'See every client you\'ve added and where they are in the process.' },
+  { label: 'Inventory', icon: '🗂️', href: '/admin/inventory', tooltip: 'Audit each client\'s required materials by tax year. Find who\'s missing what.' },
   { label: 'Send to Partner', icon: '📦', href: '/admin/exports', tooltip: 'Generate and send the R&D package to your partner.' },
   { label: 'Schedule Call', icon: '📅', href: '/admin/scheduling', tooltip: 'Book handoff calls with your partner team members.' },
   'divider',

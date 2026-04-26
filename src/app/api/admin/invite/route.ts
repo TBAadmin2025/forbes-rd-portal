@@ -23,10 +23,19 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { contact_name, company_name, contact_email, admin_notes } = body
+  const { contact_name, company_name, contact_email, admin_notes, tax_years } = body
 
   if (!contact_name) {
     return Response.json({ error: 'Name is required' }, { status: 400 })
+  }
+
+  if (!Array.isArray(tax_years) || tax_years.length === 0) {
+    return Response.json({ error: 'At least one tax year is required' }, { status: 400 })
+  }
+
+  const cleanedYears = Array.from(new Set(tax_years.map(Number).filter((n) => Number.isInteger(n))))
+  if (cleanedYears.length === 0) {
+    return Response.json({ error: 'Tax years must be integers' }, { status: 400 })
   }
 
   const { data: submission, error: subError } = await serviceClient
@@ -37,6 +46,7 @@ export async function POST(request: NextRequest) {
       company_name: company_name || null,
       contact_email: contact_email || null,
       admin_notes: admin_notes || null,
+      tax_years: cleanedYears,
       status: 'internal',
       last_active_at: new Date().toISOString(),
     })

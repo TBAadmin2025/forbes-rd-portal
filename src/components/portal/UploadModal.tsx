@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react'
 import Button from '@/components/shared/Button'
 import type { UploadedFile } from './UploadCategory'
 
-type Category = 'payroll' | 'pandl' | 'taxid' | 'gross_receipts'
+type Category = 'payroll' | 'pandl' | 'taxid' | 'gross_receipts' | 'qre_spreadsheet'
 
 interface UploadModalProps {
   category: Category
@@ -20,6 +20,7 @@ const CATEGORY_LABELS: Record<Category, { label: string; title: string }> = {
   pandl: { label: 'P&L', title: 'Upload P&L / Expense Reports' },
   taxid: { label: 'Tax ID', title: 'Upload FEIN & State Tax ID Docs' },
   gross_receipts: { label: 'Gross Receipts', title: 'Upload Gross Receipts' },
+  qre_spreadsheet: { label: 'QRE Spreadsheet', title: 'Upload Legacy QRE Spreadsheet' },
 }
 
 const ACCEPT = '.pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png'

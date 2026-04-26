@@ -18,8 +18,8 @@ import type { Employee, Supply, Submission, QRAActivity, ClientEmployee } from '
 import { formatCurrency } from '@/lib/utils/formatting'
 import { useToast } from '@/components/shared/Toast'
 
-type Category = 'payroll' | 'pandl' | 'taxid' | 'gross_receipts'
-const CATEGORIES: Category[] = ['payroll', 'pandl', 'taxid', 'gross_receipts']
+type Category = 'payroll' | 'pandl' | 'taxid' | 'gross_receipts' | 'qre_spreadsheet'
+const CATEGORIES: Category[] = ['payroll', 'pandl', 'taxid', 'gross_receipts', 'qre_spreadsheet']
 
 const US_STATES = [
   'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut',
@@ -122,7 +122,7 @@ export default function WorkspacePage() {
 
   // Documents state
   const [files, setFiles] = useState<Record<Category, UploadedFile[]>>({
-    payroll: [], pandl: [], taxid: [], gross_receipts: [],
+    payroll: [], pandl: [], taxid: [], gross_receipts: [], qre_spreadsheet: [],
   })
   const [activeCategory, setActiveCategory] = useState<Category | null>(null)
 
@@ -299,7 +299,7 @@ export default function WorkspacePage() {
         .eq('submission_id', id)
       if (docs) {
         const grouped: Record<Category, UploadedFile[]> = {
-          payroll: [], pandl: [], taxid: [], gross_receipts: [],
+          payroll: [], pandl: [], taxid: [], gross_receipts: [], qre_spreadsheet: [],
         }
         for (const d of docs) {
           const cat = d.category as Category

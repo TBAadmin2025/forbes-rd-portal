@@ -5,7 +5,7 @@ export interface UploadedFile {
   year: number | null
 }
 
-type Category = 'payroll' | 'pandl' | 'taxid' | 'gross_receipts'
+type Category = 'payroll' | 'pandl' | 'taxid' | 'gross_receipts' | 'qre_spreadsheet'
 
 interface UploadCategoryProps {
   category: Category
@@ -35,6 +35,11 @@ const CATEGORY_META: Record<Category, { icon: string; title: string; desc: strin
     title: 'Gross Receipts',
     desc: 'Only needed if not already in your P&L uploads',
     optional: true,
+  },
+  qre_spreadsheet: {
+    icon: '📑',
+    title: 'QRE Spreadsheet (Legacy)',
+    desc: 'Pre-portal QRE workbook — substitutes for in-portal employee data per year',
   },
 }
 

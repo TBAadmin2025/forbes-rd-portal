@@ -2,15 +2,16 @@
 
 import { useState } from 'react'
 import Button from '@/components/shared/Button'
+import type { SubmissionCompleteness } from '@/lib/inventory/completeness'
 
 interface ExportPanelProps {
   submissionId: string
   companyName?: string
   documentCount?: number
-  employeeCount?: number
   projectCount?: number
   hasCompanyInfo?: boolean
   hasDiscovery?: boolean
+  completeness: SubmissionCompleteness
   exportSentAt?: string | null
   onExportGenerated: () => void
 }
@@ -38,10 +39,10 @@ export default function ExportPanel({
   submissionId,
   companyName,
   documentCount = 0,
-  employeeCount = 0,
   projectCount = 0,
   hasCompanyInfo = false,
   hasDiscovery = false,
+  completeness,
   exportSentAt,
   onExportGenerated,
 }: ExportPanelProps) {
@@ -65,17 +66,34 @@ export default function ExportPanel({
 
   const selectedCount = Object.values(selected).filter(Boolean).length
 
-  // Pre-flight checklist
-  const checks = [
+  // Pre-flight checklist — same definition the Inventory page uses, so the two
+  // views never disagree on what "complete" means.
+  const yearsSet = completeness.totalYears > 0
+  const yearsDetail = yearsSet
+    ? completeness.taxYears.join(' · ')
+    : 'No tax years selected — set them in Inventory'
+  const inventoryDetail = !yearsSet
+    ? 'Set tax years first'
+    : completeness.complete
+      ? `All ${completeness.totalYears} year${completeness.totalYears !== 1 ? 's' : ''} complete`
+      : completeness.missing.length > 0
+        ? `Missing: ${completeness.missing.slice(0, 3).join(', ')}${completeness.missing.length > 3 ? ` +${completeness.missing.length - 3} more` : ''}`
+        : `${completeness.completeYears}/${completeness.totalYears} years complete`
+
+  const requiredChecks = [
     { label: 'Business information', ready: hasCompanyInfo, detail: hasCompanyInfo ? 'Complete' : 'Missing — add company details first' },
-    { label: 'Employee & expense data', ready: employeeCount > 0, detail: employeeCount > 0 ? `${employeeCount} employee${employeeCount !== 1 ? 's' : ''} entered` : 'No employees entered yet' },
-    { label: 'Supporting documents', ready: documentCount > 0, detail: documentCount > 0 ? `${documentCount} file${documentCount !== 1 ? 's' : ''} uploaded` : 'No documents uploaded' },
+    { label: 'Tax years selected', ready: yearsSet, detail: yearsDetail },
+    { label: 'Per-year materials', ready: completeness.complete, detail: inventoryDetail },
     { label: 'R&D project narratives', ready: projectCount > 0, detail: projectCount > 0 ? `${projectCount} project${projectCount !== 1 ? 's' : ''} documented` : 'No projects documented' },
-    { label: 'Discovery questionnaire', ready: hasDiscovery, detail: hasDiscovery ? 'Complete' : 'Not started — fill out in Discovery tab' },
   ]
 
-  const readyCount = checks.filter(c => c.ready).length
-  const allReady = readyCount === checks.length
+  const optionalChecks = [
+    { label: 'Discovery questionnaire (optional)', ready: hasDiscovery, detail: hasDiscovery ? 'Complete' : 'Not started — fill out in Discovery tab' },
+  ]
+
+  const checks = [...requiredChecks, ...optionalChecks]
+  const readyCount = requiredChecks.filter(c => c.ready).length
+  const allReady = readyCount === requiredChecks.length
 
   const handleGenerate = async () => {
     setGenerating(true)
@@ -185,7 +203,7 @@ admin@forbesmgt.com`
               background: allReady ? 'var(--emerald)' : 'rgba(240,231,215,0.15)',
               color: allReady ? 'var(--white)' : 'var(--champagne)',
             }}>
-              {readyCount}/{checks.length} ready
+              {readyCount}/{requiredChecks.length} required ready
             </span>
           </div>
           {checks.map((check) => (

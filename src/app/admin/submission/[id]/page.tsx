@@ -7,6 +7,7 @@ import Button from '@/components/shared/Button'
 import Tag from '@/components/shared/Tag'
 import ExportPanel from '@/components/admin/ExportPanel'
 import { formatCurrency, formatDate } from '@/lib/utils/formatting'
+import { evaluateSubmission, type AggregateMap } from '@/lib/inventory/completeness'
 import type { Submission, Document as DocType } from '@/lib/types/database.types'
 
 interface QRERow {
@@ -47,8 +48,8 @@ export default function SubmissionDetailPage() {
   const [credits, setCredits] = useState<CreditRow[]>([])
   const [loading, setLoading] = useState(true)
   const [activating, setActivating] = useState(false)
-  const [employeeCount, setEmployeeCount] = useState(0)
   const [projectCount, setProjectCount] = useState(0)
+  const [yearAggregates, setYearAggregates] = useState<AggregateMap>({})
 
   useEffect(() => {
     async function load() {
@@ -114,12 +115,40 @@ export default function SubmissionDetailPage() {
         ])
       }
 
-      // Employee count
-      const { count: empCount } = await supabase
+      // Per-year breakdown for completeness
+      const { data: empRows } = await supabase
         .from('employees')
-        .select('*', { count: 'exact', head: true })
+        .select('tax_year')
         .eq('submission_id', id)
-      setEmployeeCount(empCount || 0)
+
+      // Build per-year aggregate map from documents + employees so the
+      // pre-flight check matches the Inventory page exactly.
+      const agg: AggregateMap = {}
+      const ensure = (year: number) => {
+        if (!agg[year]) {
+          agg[year] = {
+            payrollDocs: 0,
+            pandlDocs: 0,
+            grossReceiptsDocs: 0,
+            qreSpreadsheetDocs: 0,
+            employeeRows: 0,
+          }
+        }
+        return agg[year]
+      }
+      for (const d of (apiDocs as DocType[] | undefined) ?? []) {
+        if (d.tax_year == null) continue
+        const a = ensure(d.tax_year)
+        if (d.category === 'payroll') a.payrollDocs += 1
+        else if (d.category === 'pandl') a.pandlDocs += 1
+        else if (d.category === 'gross_receipts') a.grossReceiptsDocs += 1
+        else if (d.category === 'qre_spreadsheet') a.qreSpreadsheetDocs += 1
+      }
+      for (const e of empRows ?? []) {
+        if (e.tax_year == null) continue
+        ensure(e.tax_year).employeeRows += 1
+      }
+      setYearAggregates(agg)
 
       // QRA activity count
       const { count: projCount } = await supabase
@@ -510,10 +539,10 @@ export default function SubmissionDetailPage() {
         submissionId={id}
         companyName={submission?.company_name || undefined}
         documentCount={documents.length}
-        employeeCount={employeeCount}
         projectCount={projectCount}
         hasCompanyInfo={!!(submission?.company_name && submission?.fein)}
         hasDiscovery={!!submission?.field_consultant_name}
+        completeness={evaluateSubmission(submission?.tax_years, yearAggregates)}
         exportSentAt={submission?.export_sent_at}
         onExportGenerated={() => {
           // Refresh submission data via API
