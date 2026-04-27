@@ -15,7 +15,7 @@
 //   ?  gray   unknown  — not yet audited
 //   —         year not in this client's tax_years
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Tag from '@/components/shared/Tag'
 import type { Submission } from '@/lib/types/database.types'
@@ -27,10 +27,10 @@ import type {
 } from '@/lib/inventory/completeness'
 
 const ALL_YEARS = [2022, 2023, 2024, 2025]
-const REQUIREMENTS: Array<{ key: RequirementKey; short: string; full: string }> = [
-  { key: 'payroll', short: 'P', full: 'Payroll' },
-  { key: 'pandl', short: 'L', full: 'P&L' },
-  { key: 'qre', short: 'Q', full: 'QRE' },
+const REQUIREMENTS: Array<{ key: RequirementKey; label: string; full: string }> = [
+  { key: 'payroll', label: 'Payroll', full: 'Payroll' },
+  { key: 'pandl', label: 'P&L', full: 'P&L' },
+  { key: 'qre', label: 'QRE', full: 'QRE Spreadsheet' },
 ]
 
 interface InventoryRow {
@@ -120,18 +120,30 @@ export default function InventoryPage() {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
   }, [])
 
-  const toggleYear = useCallback(async (row: InventoryRow, year: number) => {
+  // Year toggle is fire-and-forget: optimistic update locally, save in the
+  // background, no reload. Multi-clicking different years stays snappy and
+  // the popover doesn't flicker. A full reload happens when the popover
+  // closes (handleCloseYears) so the UI catches up with any server-side
+  // recomputation (e.g. completeness re-evaluating new years as 'unknown').
+  const toggleYear = useCallback((row: InventoryRow, year: number) => {
     const next = row.tax_years.includes(year)
       ? row.tax_years.filter((y) => y !== year)
       : [...row.tax_years, year].sort((a, b) => a - b)
     updateRowLocal(row.id, { tax_years: next })
-    await fetch(`/api/submissions/${row.id}`, {
+    // Fire and forget — UI is already updated.
+    fetch(`/api/submissions/${row.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tax_years: next }),
-    })
+    }).catch(() => {})
+  }, [updateRowLocal])
+
+  const handleCloseYears = useCallback(() => {
+    setOpenYearsId(null)
+    // Reload once when the user is done editing this client's years so any
+    // dependent state (cells freshly within window) gets accurate data.
     reload()
-  }, [reload, updateRowLocal])
+  }, [reload])
 
   const cycleCell = useCallback(async (row: InventoryRow, year: number, key: RequirementKey, current: RequirementState) => {
     const target = nextState(current)
@@ -251,7 +263,7 @@ export default function InventoryPage() {
               <th style={{ ...thStyle, textAlign: 'left' }}>Status</th>
               <th style={{ ...thStyle, textAlign: 'left' }}>Years</th>
               {ALL_YEARS.map((y) => (
-                <th key={y} colSpan={REQUIREMENTS.length} style={{ ...thStyle, textAlign: 'center', borderLeft: '1px solid rgba(240,231,215,0.15)' }}>
+                <th key={y} colSpan={REQUIREMENTS.length} style={{ ...thStyle, textAlign: 'center', borderLeft: '1px solid rgba(240,231,215,0.15)', padding: '8px 0 4px' }}>
                   {y}
                 </th>
               ))}
@@ -269,14 +281,18 @@ export default function InventoryPage() {
                     title={r.full}
                     style={{
                       ...thStyle,
-                      fontSize: 8,
-                      letterSpacing: '1px',
+                      fontSize: 9,
+                      letterSpacing: '0.5px',
+                      textTransform: 'none',
                       textAlign: 'center',
-                      padding: '4px 0',
+                      padding: '4px 0 8px',
+                      minWidth: 44,
                       borderLeft: r.key === 'payroll' ? '1px solid rgba(240,231,215,0.15)' : 'none',
+                      color: 'rgba(240,231,215,0.7)',
+                      fontWeight: 500,
                     }}
                   >
-                    {r.short}
+                    {r.label}
                   </th>
                 )),
               )}
@@ -313,7 +329,8 @@ export default function InventoryPage() {
                   yearsOpen={yearsOpen}
                   savingCell={savingCell}
                   onToggleNotes={() => setOpenNotesId(notesOpen ? null : r.id)}
-                  onToggleYears={() => setOpenYearsId(yearsOpen ? null : r.id)}
+                  onOpenYears={() => setOpenYearsId(r.id)}
+                  onCloseYears={handleCloseYears}
                   onYearToggle={(y) => toggleYear(r, y)}
                   onCellClick={(year, key, current) => cycleCell(r, year, key, current)}
                   onSaveNotes={(notes) => saveNotes(r.id, notes)}
@@ -336,7 +353,8 @@ interface ClientRowProps {
   yearsOpen: boolean
   savingCell: string | null
   onToggleNotes: () => void
-  onToggleYears: () => void
+  onOpenYears: () => void
+  onCloseYears: () => void
   onYearToggle: (year: number) => void
   onCellClick: (year: number, key: RequirementKey, current: RequirementState) => void
   onSaveNotes: (notes: string) => void
@@ -351,7 +369,8 @@ function ClientRow({
   yearsOpen,
   savingCell,
   onToggleNotes,
-  onToggleYears,
+  onOpenYears,
+  onCloseYears,
   onYearToggle,
   onCellClick,
   onSaveNotes,
@@ -374,32 +393,18 @@ function ClientRow({
         </td>
         <td style={{ padding: '10px 14px', position: 'relative' }}>
           <button
-            onClick={onToggleYears}
+            onClick={() => (yearsOpen ? onCloseYears() : onOpenYears())}
             style={yearsPillStyle(row.tax_years.length === 0)}
-            title="Click to toggle which years apply"
+            title="Click to choose which years apply"
           >
             {row.tax_years.length === 0 ? 'None ▾' : `${row.tax_years.join(', ')} ▾`}
           </button>
           {yearsOpen && (
-            <div style={yearsPopoverStyle}>
-              {ALL_YEARS.map((y) => {
-                const on = row.tax_years.includes(y)
-                return (
-                  <button
-                    key={y}
-                    onClick={() => onYearToggle(y)}
-                    style={{
-                      ...yearChipStyle,
-                      background: on ? 'var(--cherry)' : 'var(--white)',
-                      color: on ? 'var(--ivory)' : 'var(--charcoal)',
-                      borderColor: on ? 'var(--cherry)' : 'var(--border)',
-                    }}
-                  >
-                    {y}
-                  </button>
-                )
-              })}
-            </div>
+            <YearsPopover
+              selected={row.tax_years}
+              onToggle={onYearToggle}
+              onDone={onCloseYears}
+            />
           )}
         </td>
 
@@ -479,6 +484,124 @@ function ClientRow({
         </tr>
       )}
     </>
+  )
+}
+
+function YearsPopover({
+  selected,
+  onToggle,
+  onDone,
+}: {
+  selected: number[]
+  onToggle: (year: number) => void
+  onDone: () => void
+}) {
+  const ref = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onDone()
+    }
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') onDone()
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEsc)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEsc)
+    }
+  }, [onDone])
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: 'absolute',
+        top: 'calc(100% + 4px)',
+        left: 8,
+        background: 'var(--white)',
+        border: '1px solid var(--border)',
+        borderRadius: 4,
+        padding: 6,
+        boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+        zIndex: 20,
+        minWidth: 180,
+      }}
+    >
+      <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', padding: '6px 10px 4px' }}>
+        Tax Years
+      </div>
+      {ALL_YEARS.map((y) => {
+        const on = selected.includes(y)
+        return (
+          <button
+            key={y}
+            onClick={() => onToggle(y)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              width: '100%',
+              background: 'transparent',
+              border: 'none',
+              padding: '7px 10px',
+              fontSize: 12,
+              fontWeight: 500,
+              color: 'var(--charcoal)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              textAlign: 'left',
+              borderRadius: 3,
+              transition: 'background 0.1s',
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.background = 'var(--warm)' }}
+            onMouseOut={(e) => { e.currentTarget.style.background = 'transparent' }}
+          >
+            <span
+              style={{
+                width: 16,
+                height: 16,
+                borderRadius: 3,
+                border: `1.5px solid ${on ? 'var(--cherry)' : 'var(--border)'}`,
+                background: on ? 'var(--cherry)' : 'transparent',
+                color: 'var(--ivory)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 11,
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {on ? '✓' : ''}
+            </span>
+            {y}
+          </button>
+        )
+      })}
+      <div style={{ borderTop: '1px solid var(--border)', marginTop: 4, paddingTop: 4 }}>
+        <button
+          onClick={onDone}
+          style={{
+            width: '100%',
+            background: 'var(--charcoal)',
+            color: 'var(--ivory)',
+            border: 'none',
+            padding: '7px 10px',
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+            borderRadius: 3,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          Done
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -570,16 +693,6 @@ function cellButtonStyle(state: RequirementState): React.CSSProperties {
   }
 }
 
-const yearChipStyle: React.CSSProperties = {
-  padding: '5px 10px',
-  fontSize: 11,
-  fontWeight: 600,
-  borderRadius: 3,
-  cursor: 'pointer',
-  fontFamily: 'inherit',
-  border: '1px solid',
-}
-
 function yearsPillStyle(empty: boolean): React.CSSProperties {
   return {
     background: empty ? 'rgba(108,22,28,0.08)' : 'var(--white)',
@@ -592,20 +705,6 @@ function yearsPillStyle(empty: boolean): React.CSSProperties {
     cursor: 'pointer',
     fontFamily: 'inherit',
   }
-}
-
-const yearsPopoverStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: 'calc(100% + 4px)',
-  left: 8,
-  background: 'var(--white)',
-  border: '1px solid var(--border)',
-  borderRadius: 4,
-  padding: 8,
-  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-  display: 'flex',
-  gap: 6,
-  zIndex: 10,
 }
 
 const iconBtnStyle: React.CSSProperties = {
