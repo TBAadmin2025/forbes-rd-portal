@@ -18,8 +18,21 @@ export default function AdminLayout({
   const [showAddClient, setShowAddClient] = useState(false)
   const [showAddTeamMember, setShowAddTeamMember] = useState(false)
   const [submittedCount, setSubmittedCount] = useState(0)
+  const [uploadQueueCount, setUploadQueueCount] = useState(0)
   const [userName, setUserName] = useState('')
   const [userInitials, setUserInitials] = useState('')
+
+  async function loadUploadQueueCount() {
+    try {
+      const res = await fetch('/api/admin/upload-queue')
+      if (res.ok) {
+        const data = await res.json()
+        setUploadQueueCount(data.count || 0)
+      }
+    } catch {
+      // silent
+    }
+  }
 
   // Listen for custom event from dashboard "Add Client" button
   useEffect(() => {
@@ -56,6 +69,8 @@ export default function AdminLayout({
         .eq('status', 'submitted')
 
       setSubmittedCount(count || 0)
+
+      await loadUploadQueueCount()
     }
     loadData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -68,10 +83,17 @@ export default function AdminLayout({
       .eq('status', 'submitted')
 
     setSubmittedCount(count || 0)
+    await loadUploadQueueCount()
 
     // Notify dashboard and other pages to refresh their data
     window.dispatchEvent(new CustomEvent('refresh-admin-data'))
   }
+
+  // Refresh the upload-queue badge whenever the user navigates between
+  // admin pages — cheap fetch, keeps the count in sync after marks change.
+  useEffect(() => {
+    loadUploadQueueCount()
+  }, [pathname])
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--warm)' }}>
@@ -80,6 +102,7 @@ export default function AdminLayout({
         <AdminSidebar
           activeRoute={pathname}
           submittedCount={submittedCount}
+          uploadQueueCount={uploadQueueCount}
           onAddClient={() => setShowAddClient(true)}
           onAddTeamMember={() => setShowAddTeamMember(true)}
         />

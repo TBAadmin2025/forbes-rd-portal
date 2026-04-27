@@ -6,6 +6,7 @@ import Link from 'next/link'
 interface AdminSidebarProps {
   activeRoute: string
   submittedCount?: number
+  uploadQueueCount?: number
   onAddClient?: () => void
   onAddTeamMember?: () => void
 }
@@ -15,14 +16,15 @@ interface NavItem {
   icon: string
   href?: string
   action?: 'addClient'
-  badge?: boolean
+  badge?: 'submitted' | 'uploadQueue'
   tooltip: string
 }
 
 const NAV_ITEMS: (NavItem | 'divider')[] = [
   { label: 'Dashboard', icon: '🏠', href: '/admin/dashboard', tooltip: 'Your home base. See what needs attention and take action.' },
   { label: 'All Clients', icon: '👥', href: '/admin/clients', tooltip: 'See every client you\'ve added and where they are in the process.' },
-  { label: 'Inventory', icon: '🗂️', href: '/admin/inventory', tooltip: 'Audit each client\'s required materials by tax year. Find who\'s missing what.' },
+  { label: 'Inventory', icon: '🗂️', href: '/admin/inventory', tooltip: 'Audit each client\'s required materials by tax year. Click cells to mark have / n/a / unknown.' },
+  { label: 'Upload Queue', icon: '📤', href: '/admin/upload-queue', badge: 'uploadQueue', tooltip: 'Items the team marked as "have" but haven\'t uploaded yet.' },
   { label: 'Send to Partner', icon: '📦', href: '/admin/exports', tooltip: 'Generate and send the R&D package to your partner.' },
   { label: 'Schedule Call', icon: '📅', href: '/admin/scheduling', tooltip: 'Book handoff calls with your partner team members.' },
   'divider',
@@ -35,9 +37,16 @@ const NAV_ITEMS: (NavItem | 'divider')[] = [
 export default function AdminSidebar({
   activeRoute,
   submittedCount = 0,
+  uploadQueueCount = 0,
   onAddClient,
 }: AdminSidebarProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+
+  const badgeCount = (key: 'submitted' | 'uploadQueue' | undefined) => {
+    if (key === 'submitted') return submittedCount
+    if (key === 'uploadQueue') return uploadQueueCount
+    return 0
+  }
 
   const linkStyle = (isActive: boolean): React.CSSProperties => ({
     display: 'flex',
@@ -120,7 +129,7 @@ export default function AdminSidebar({
                 {item.icon}
               </span>
               <span style={{ flex: 1 }}>{item.label}</span>
-              {item.badge && submittedCount > 0 && (
+              {item.badge && badgeCount(item.badge) > 0 && (
                 <span
                   style={{
                     marginLeft: 'auto',
@@ -132,7 +141,7 @@ export default function AdminSidebar({
                     borderRadius: 100,
                   }}
                 >
-                  {submittedCount}
+                  {badgeCount(item.badge)}
                 </span>
               )}
             </Link>
