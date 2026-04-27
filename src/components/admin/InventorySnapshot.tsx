@@ -99,14 +99,9 @@ export default function InventorySnapshot() {
         <div style={{ flex: 1, height: 1, background: 'var(--champagne)', opacity: 0.4 }} />
       </div>
 
-      {/* A. Scorecard strip */}
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 14 }}>
-        <ScoreCard
-          value={stats.total}
-          label="All Clients"
-          sub="In the portal"
-          tone="charcoal"
-        />
+      {/* A. Scorecard strip — 3 cards, completeness-focused. The "All Clients"
+          total moved to the pipeline summary line below to avoid duplication. */}
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 14 }}>
         <ScoreCard
           value={stats.complete}
           label="Complete"

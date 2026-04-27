@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import StatsRow from '@/components/admin/StatsRow'
 import InventorySnapshot from '@/components/admin/InventorySnapshot'
 import PipelineBoard from '@/components/admin/PipelineBoard'
 import ClientCard from '@/components/admin/ClientCard'
@@ -120,13 +119,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Section 2 — Stats */}
-      <StatsRow stats={stats} />
-
-      {/* Section 2b — Inventory Snapshot */}
-      <div style={{ marginTop: 32 }}>
-        <InventorySnapshot />
-      </div>
+      {/* Section 2 — Inventory Snapshot is the headline metric strip */}
+      <InventorySnapshot />
 
       {/* Section 3 — Quick Actions */}
       <div style={{ marginTop: 32 }}>
@@ -206,11 +200,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Section 4 — Needs Your Attention */}
+      {/* Section 4 — Submitted for Review (different from Inventory's "Needs Attention",
+          which lists incomplete clients; this list is workflow-driven — clients who finished filling out). */}
       <div style={{ marginTop: 36 }}>
         <div className="flex items-center" style={{ gap: 12, marginBottom: 16 }}>
           <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '2.5px', textTransform: 'uppercase', color: 'var(--muted)' }}>
-            Needs Your Attention
+            Submitted for Review
           </span>
           {submitted.length > 0 && (
             <span style={{ background: 'var(--cherry)', color: 'var(--ivory)', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100 }}>
@@ -228,16 +223,19 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div style={{ fontSize: 13, color: 'var(--emerald)', fontWeight: 500, padding: '12px 0' }}>
-            You&apos;re all caught up ✓
+            Nothing waiting on you ✓
           </div>
         )}
       </div>
 
-      {/* Section 5 — All Clients Pipeline */}
+      {/* Section 5 — Pipeline kanban + slim status strip header */}
       <div style={{ marginTop: 36 }}>
-        <div className="flex items-center" style={{ gap: 12, marginBottom: 16 }}>
+        <div className="flex items-center" style={{ gap: 12, marginBottom: 12 }}>
           <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '2.5px', textTransform: 'uppercase', color: 'var(--muted)' }}>
-            All Clients
+            Pipeline
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 300 }}>
+            {stats.internal} internal · {stats.withClient} with client · {stats.submitted} submitted · {stats.sent} sent
           </span>
           <div style={{ flex: 1, height: 1, background: 'var(--champagne)', opacity: 0.4 }} />
         </div>
